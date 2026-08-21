@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>BARRACUDA // Автономный Ударный Дрон</title>
   <meta name="description" content="Тактический симулятор боевого надводного дрона Барракуда с реалистичной 3D-моделью.">
-  <link rel="stylesheet" href="style.css?v=20260821_2">
+  <link rel="stylesheet" href="style.css?v=20260821_11">
 
   <!-- Three.js Core + Extensions -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -52,22 +52,10 @@
   <!-- Screen Flash for Kinetic Strike -->
   <div id="screen-flash"></div>
 
-  <!-- Quick Floating Booster Widget (Non-intrusive Overclock) -->
-  <div id="booster-widget" class="booster-floating-widget" title="Тактический разгон мощности">
-    <div class="booster-ring-glow"></div>
-    <div class="booster-inner-btn" id="btn-overclock">
-      <span class="booster-icon">⚡</span>
-      <div class="booster-info">
-        <span class="booster-title" id="booster-status-title">РАЗГОН +200%</span>
-        <span class="booster-sub" id="booster-status-sub">ГОТОВ К ЗАПУСКУ</span>
-      </div>
-    </div>
-  </div>
-
   <!-- Main Military HUD Frame -->
   <div id="game-frame">
 
-    <!-- TOP BAR: Controls, Balances, Mini-Radar -->
+    <!-- TOP BAR: Controls, Balances, Booster, Mini-Radar -->
     <header class="top-hud-bar">
       <div class="top-left-controls">
         <button class="btn-tactical-pause" id="btn-toggle-tma" title="Скрыть/Показать HUD">👁️</button>
@@ -94,6 +82,16 @@
         <div class="balance-pill buffer-pill">
           <span class="pill-label">БУФЕР</span>
           <span class="pill-value" id="val-buffer">0.0 / 100 МБ</span>
+        </div>
+        <!-- Booster Integrated Widget -->
+        <div id="booster-widget" class="booster-floating-widget" title="Тактический разгон мощности">
+          <div class="booster-inner-btn" id="btn-overclock">
+            <span class="booster-icon">⚡</span>
+            <div class="booster-info">
+              <span class="booster-title" id="booster-status-title">РАЗГОН +200%</span>
+              <span class="booster-sub" id="booster-status-sub">ГОТОВ</span>
+            </div>
+          </div>
         </div>
         <div class="emp-status-indicator" id="emp-status" style="display:none;"></div>
         <div class="mini-radar-box" id="mini-radar" title="Радарный сканер">
@@ -599,8 +597,8 @@
   </div>
 
   <!-- Audio, 3D Engine & Game Logic -->
-  <script src="audio.js?v=20260821_7"></script>
-  <script src="drone3d.js?v=20260821_7"></script>
-  <script src="game.js?v=20260821_7"></script>
+  <script src="audio.js?v=20260821_11"></script>
+  <script src="drone3d.js?v=20260821_11"></script>
+  <script src="game.js?v=20260821_11"></script>
 </body>
 </html>

@@ -87,13 +87,13 @@ body {
    QUICK COMBAT ACTIONS BAR (FLIR, РЭБ, РАКЕТА)
    ========================================================================= */
 .quick-combat-actions-bar {
-  position: absolute;
-  top: 68px;
-  left: 18px;
+  position: relative;
+  margin-top: 8px;
   display: flex;
   gap: 8px;
   z-index: 30;
   pointer-events: auto;
+  align-self: flex-start;
 }
 
 .combat-quick-btn {
@@ -260,9 +260,7 @@ body {
    FLOATING TACTICAL BOOSTER WIDGET
    ========================================================================= */
 .booster-floating-widget {
-  position: absolute;
-  top: 14px;
-  right: 18px;
+  position: relative;
   z-index: 35;
   pointer-events: auto;
   transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
@@ -414,7 +412,6 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-right: 120px; /* Room for booster FAB */
 }
 
 .balance-pill {
@@ -1446,10 +1443,12 @@ body {
   .top-hud-bar {
     gap: 6px;
     flex-wrap: wrap;
+    align-items: center;
   }
 
   .top-left-controls {
     gap: 4px;
+    flex-wrap: nowrap;
   }
 
   .btn-tactical-pause {
@@ -1468,8 +1467,8 @@ body {
   }
 
   .top-right-telemetry {
-    margin-right: 0;
     gap: 4px;
+    flex-wrap: nowrap;
   }
 
   .balance-pill {
@@ -1483,36 +1482,28 @@ body {
     height: 32px;
   }
 
-  /* Floating Booster: Move below top bar so it never overlaps header items */
-  .booster-floating-widget {
-    top: 48px;
-    right: 8px;
-    z-index: 35;
-  }
-
+  /* Booster Widget in flow */
   .booster-inner-btn {
-    padding: 4px 10px 4px 6px;
-    gap: 6px;
+    padding: 3px 8px 3px 5px;
+    gap: 4px;
   }
   .booster-icon {
-    width: 22px;
-    height: 22px;
-    font-size: 12px;
+    width: 20px;
+    height: 20px;
+    font-size: 11px;
   }
   .booster-title {
-    font-size: 10px;
+    font-size: 9px;
   }
   .booster-sub {
-    font-size: 8px;
+    font-size: 7px;
   }
 
-  /* Quick Combat Buttons: Below top bar on the left */
+  /* Quick Combat Buttons */
   .quick-combat-actions-bar {
-    top: 48px;
-    left: 8px;
+    margin-top: 6px;
     gap: 4px;
     flex-wrap: wrap;
-    max-width: 60%;
   }
 
   .combat-quick-btn {
@@ -1536,7 +1527,7 @@ body {
     min-height: 38px;
   }
 
-  /* Right Action Dock - horizontal or compact */
+  /* Right Action Dock */
   .concept-action-rings {
     gap: 6px;
   }
@@ -1603,17 +1594,15 @@ body {
   }
 
   .sector-badge-name {
-    max-width: 75px;
+    max-width: 70px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
 
   .quick-combat-actions-bar {
-    top: 44px;
-    left: 6px;
+    margin-top: 4px;
     gap: 3px;
-    max-width: 58%;
   }
 
   .combat-quick-btn {
@@ -1622,11 +1611,6 @@ body {
   }
   .cq-text {
     font-size: 9px;
-  }
-
-  .booster-floating-widget {
-    top: 44px;
-    right: 6px;
   }
 
   .ring-circle-icon {
