@@ -1,0 +1,258 @@
+[gd_scene load_steps=4 format=3 uid="uid://c5fkg2j7n4l1a"]
+
+[ext_resource type="Script" path="res://scripts/ui/ShopPanel.gd" id="1_shop"]
+[ext_resource type="Shader" path="res://shaders/frosted_glass.gdshader" id="2_glass_shader"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_shop_bg"]
+shader = ExtResource("2_glass_shader")
+shader_parameter/bg_color = Color(0.01, 0.03, 0.02, 0.65)
+shader_parameter/border_color = Color(0, 1, 0.4, 0.9)
+shader_parameter/border_width = 0.006
+shader_parameter/corner_radius = 0.02
+shader_parameter/noise_grain = 0.02
+
+[node name="ShopPanel" type="Control"]
+custom_minimum_size = Vector2(340, 360)
+layout_mode = 3
+anchors_preset = 0
+offset_right = 340.0
+offset_bottom = 360.0
+mouse_filter = 1
+script = ExtResource("1_shop")
+
+[node name="GlassBackground" type="ColorRect" parent="."]
+material = SubResource("ShaderMaterial_shop_bg")
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="VBox" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 16.0
+offset_top = 16.0
+offset_right = -16.0
+offset_bottom = -16.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 12
+
+[node name="HeaderLabel" type="Label" parent="VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.2, 1, 0.45, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
+theme_override_constants/outline_size = 5
+theme_override_font_sizes/font_size = 14
+text = "TACTICAL DRONE UPGRADES"
+
+[node name="HSeparator" type="HSeparator" parent="VBox"]
+layout_mode = 2
+
+[node name="CommsItem" type="HBoxContainer" parent="VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 10
+
+[node name="VBoxInfo" type="VBoxContainer" parent="VBox/CommsItem"]
+layout_mode = 2
+size_flags_horizontal = 3
+alignment = 1
+
+[node name="NameLabel" type="Label" parent="VBox/CommsItem/VBoxInfo"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 1, 0.9, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 5
+theme_override_font_sizes/font_size = 13
+text = "1. COMMS MODULES"
+
+[node name="TierLabel" type="Label" parent="VBox/CommsItem/VBoxInfo"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.1, 0.9, 0.4, 0.85)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 11
+text = "MK 1 // +1.0 MB/CLK"
+
+[node name="BtnBuy" type="Button" parent="VBox/CommsItem"]
+custom_minimum_size = Vector2(90, 44)
+layout_mode = 2
+size_flags_vertical = 4
+mouse_default_cursor_shape = 2
+
+[node name="CostLabel" type="Label" parent="VBox/CommsItem/BtnBuy"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(0.2, 1, 0.4, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 13
+text = "10 MB"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="SonarItem" type="HBoxContainer" parent="VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 10
+
+[node name="VBoxInfo" type="VBoxContainer" parent="VBox/SonarItem"]
+layout_mode = 2
+size_flags_horizontal = 3
+alignment = 1
+
+[node name="NameLabel" type="Label" parent="VBox/SonarItem/VBoxInfo"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 1, 0.9, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 5
+theme_override_font_sizes/font_size = 13
+text = "2. SONAR ARRAYS"
+
+[node name="TierLabel" type="Label" parent="VBox/SonarItem/VBoxInfo"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.1, 0.9, 0.4, 0.85)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 11
+text = "MK 1 // +0.0 MB/SEC"
+
+[node name="BtnBuy" type="Button" parent="VBox/SonarItem"]
+custom_minimum_size = Vector2(90, 44)
+layout_mode = 2
+size_flags_vertical = 4
+mouse_default_cursor_shape = 2
+
+[node name="CostLabel" type="Label" parent="VBox/SonarItem/BtnBuy"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(0.2, 1, 0.4, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 13
+text = "25 MB"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="ArmorItem" type="HBoxContainer" parent="VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 10
+
+[node name="VBoxInfo" type="VBoxContainer" parent="VBox/ArmorItem"]
+layout_mode = 2
+size_flags_horizontal = 3
+alignment = 1
+
+[node name="NameLabel" type="Label" parent="VBox/ArmorItem/VBoxInfo"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 1, 0.9, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 5
+theme_override_font_sizes/font_size = 13
+text = "3. CARBON ARMOR"
+
+[node name="TierLabel" type="Label" parent="VBox/ArmorItem/VBoxInfo"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.1, 0.9, 0.4, 0.85)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 11
+text = "MK 1 // +0.0 MB/SEC"
+
+[node name="BtnBuy" type="Button" parent="VBox/ArmorItem"]
+custom_minimum_size = Vector2(90, 44)
+layout_mode = 2
+size_flags_vertical = 4
+mouse_default_cursor_shape = 2
+
+[node name="CostLabel" type="Label" parent="VBox/ArmorItem/BtnBuy"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(0.2, 1, 0.4, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 13
+text = "50 MB"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="OpticsItem" type="HBoxContainer" parent="VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 10
+
+[node name="VBoxInfo" type="VBoxContainer" parent="VBox/OpticsItem"]
+layout_mode = 2
+size_flags_horizontal = 3
+alignment = 1
+
+[node name="NameLabel" type="Label" parent="VBox/OpticsItem/VBoxInfo"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 1, 0.9, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 5
+theme_override_font_sizes/font_size = 13
+text = "4. FLIR OPTICS"
+
+[node name="TierLabel" type="Label" parent="VBox/OpticsItem/VBoxInfo"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.1, 0.9, 0.4, 0.85)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 11
+text = "MK 1 // +0.0 MB/CLK"
+
+[node name="BtnBuy" type="Button" parent="VBox/OpticsItem"]
+custom_minimum_size = Vector2(90, 44)
+layout_mode = 2
+size_flags_vertical = 4
+mouse_default_cursor_shape = 2
+
+[node name="CostLabel" type="Label" parent="VBox/OpticsItem/BtnBuy"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(0.2, 1, 0.4, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 13
+text = "100 MB"
+horizontal_alignment = 1
+vertical_alignment = 1

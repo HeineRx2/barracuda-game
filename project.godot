@@ -1,0 +1,35 @@
+; Engine configuration file.
+; It's best edited using the editor UI and not directly,
+; but it is also easily readable and manageable by text editors.
+
+config_version=5
+
+[application]
+
+config/name="Barracuda - Tactical Drone Clicker"
+config/description="Web3 tactical military clicker featuring autonomous surface drone Barracuda in ultra-realistic BBC documentary style."
+config/version="0.1.0-alpha"
+run/main_scene="res://scenes/main/Main.tscn"
+config/features=PackedStringArray("4.3", "GL Compatibility")
+
+[autoload]
+
+GameState="*res://scripts/autoload/GameState.gd"
+AudioManager="*res://scripts/autoload/AudioManager.gd"
+TelemetryManager="*res://scripts/autoload/TelemetryManager.gd"
+
+[display]
+
+window/size/viewport_width=1920
+window/size/viewport_height=1080
+window/size/mode=0
+window/stretch/mode="canvas_items"
+window/stretch/aspect="expand"
+window/handheld/orientation=6
+
+[rendering]
+
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
+textures/vram_compression/import_etc2_astc=true
+environment/defaults/default_clear_color=Color(0.02, 0.04, 0.06, 1)

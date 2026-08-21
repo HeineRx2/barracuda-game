@@ -1,0 +1,197 @@
+[gd_scene load_steps=5 format=3 uid="uid://dm20bvx8w1l7x"]
+
+[ext_resource type="Script" path="res://scripts/minigame/AssaultMinigame.gd" id="1_minigame"]
+[ext_resource type="Shader" path="res://shaders/radar_grid.gdshader" id="2_radar_shader"]
+[ext_resource type="Texture2D" path="res://assets/textures/enemy_target.jpg" id="3_target_tex"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_radar"]
+shader = ExtResource("2_radar_shader")
+shader_parameter/grid_color = Color(0, 1, 0.4, 0.45)
+shader_parameter/sweep_color = Color(0.1, 1, 0.5, 0.9)
+shader_parameter/sweep_speed = 2.0
+shader_parameter/ring_count = 5.0
+shader_parameter/grid_line_thickness = 0.002
+shader_parameter/radar_center = Vector2(0.5, 0.5)
+
+[node name="AssaultMinigame" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("1_minigame")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.01, 0.03, 0.02, 0.95)
+
+[node name="RadarGrid" type="ColorRect" parent="."]
+material = SubResource("ShaderMaterial_radar")
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="TargetContainer" type="Control" parent="."]
+custom_minimum_size = Vector2(260, 260)
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -130.0
+offset_top = -130.0
+offset_right = 130.0
+offset_bottom = 130.0
+grow_horizontal = 2
+grow_vertical = 2
+pivot_offset = Vector2(130, 130)
+mouse_filter = 2
+
+[node name="TargetSprite" type="TextureRect" parent="TargetContainer"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("3_target_tex")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Crosshair" type="Control" parent="."]
+custom_minimum_size = Vector2(90, 90)
+layout_mode = 1
+anchors_preset = 0
+offset_right = 90.0
+offset_bottom = 90.0
+pivot_offset = Vector2(45, 45)
+mouse_filter = 2
+
+[node name="LineH" type="ColorRect" parent="Crosshair"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -40.0
+offset_top = -1.0
+offset_right = 40.0
+offset_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0, 1, 0.4, 1)
+
+[node name="LineV" type="ColorRect" parent="Crosshair"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -1.0
+offset_top = -40.0
+offset_right = 1.0
+offset_bottom = 40.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0, 1, 0.4, 1)
+
+[node name="HUD" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="TopBanner" type="VBoxContainer" parent="HUD"]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -300.0
+offset_top = 30.0
+offset_right = 300.0
+offset_bottom = 110.0
+grow_horizontal = 2
+alignment = 1
+
+[node name="HeaderLabel" type="Label" parent="HUD/TopBanner"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.2, 0.2, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 6
+theme_override_font_sizes/font_size = 20
+text = "ALERT // TARGET ACQUISITION PHASE"
+horizontal_alignment = 1
+
+[node name="TimerLabel" type="Label" parent="HUD/TopBanner"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.9, 0.2, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 5
+theme_override_font_sizes/font_size = 16
+text = "TIME TO LOSS: 10.0s"
+horizontal_alignment = 1
+
+[node name="LockProgressContainer" type="VBoxContainer" parent="HUD"]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -350.0
+offset_top = -120.0
+offset_right = 350.0
+offset_bottom = -40.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_constants/separation = 8
+
+[node name="LockProgressBar" type="ProgressBar" parent="HUD/LockProgressContainer"]
+custom_minimum_size = Vector2(700, 24)
+layout_mode = 2
+max_value = 100.0
+show_percentage = false
+
+[node name="LockStatusLabel" type="Label" parent="HUD/LockProgressContainer"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.2, 1, 0.45, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 5
+theme_override_font_sizes/font_size = 15
+text = "SEARCHING TARGET... ACQUIRE LOCK (0%)"
+horizontal_alignment = 1
+
+[node name="AlertFlash" type="ColorRect" parent="."]
+modulate = Color(1, 1, 1, 0)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(1, 0.1, 0.1, 1)

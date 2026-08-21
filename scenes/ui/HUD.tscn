@@ -1,0 +1,284 @@
+[gd_scene load_steps=8 format=3 uid="uid://dd81561t20yvx"]
+
+[ext_resource type="Script" path="res://scripts/ui/HUD.gd" id="1_hud"]
+[ext_resource type="PackedScene" path="res://scenes/ui/DossierPanel.tscn" id="2_dossier"]
+[ext_resource type="PackedScene" path="res://scenes/ui/ShopPanel.tscn" id="3_shop"]
+[ext_resource type="Shader" path="res://shaders/hazard_stripes.gdshader" id="4_hazard_shader"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_progress_bg"]
+bg_color = Color(0.015, 0.05, 0.03, 0.8)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0, 0.5, 0.2, 0.6)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_progress_fill"]
+bg_color = Color(0, 1, 0.4, 0.9)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_hazard"]
+shader = ExtResource("4_hazard_shader")
+shader_parameter/stripe_color_1 = Color(0.9, 0.75, 0, 1)
+shader_parameter/stripe_color_2 = Color(0.06, 0.06, 0.06, 1)
+shader_parameter/stripe_scale = 22.0
+shader_parameter/scroll_speed = 1.2
+shader_parameter/is_active = false
+shader_parameter/corner_radius = 0.04
+
+[node name="HUD" type="CanvasLayer"]
+script = ExtResource("1_hud")
+
+[node name="TopBar" type="Control" parent="."]
+custom_minimum_size = Vector2(0, 70)
+layout_mode = 3
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 70.0
+grow_horizontal = 2
+mouse_filter = 2
+
+[node name="Background" type="ColorRect" parent="TopBar"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.015, 0.035, 0.025, 0.85)
+
+[node name="HBox" type="HBoxContainer" parent="TopBar"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 24.0
+offset_right = -24.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 20
+
+[node name="LeftMetrics" type="VBoxContainer" parent="TopBar/HBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+alignment = 1
+
+[node name="CallsignLabel" type="Label" parent="TopBar/HBox/LeftMetrics"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.2, 1, 0.45, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 5
+theme_override_font_sizes/font_size = 13
+text = "USV-BARRACUDA // AUTONOMOUS HULL 77"
+
+[node name="BufferLabel" type="Label" parent="TopBar/HBox/LeftMetrics"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 1, 0.9, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 15
+text = "BUFFER: 0.0 MB"
+
+[node name="CenterMetrics" type="VBoxContainer" parent="TopBar/HBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+alignment = 1
+
+[node name="PassiveLabel" type="Label" parent="TopBar/HBox/CenterMetrics"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.1, 0.9, 0.4, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 13
+text = "SIGINT PASSIVE: +0.0 MB/s"
+horizontal_alignment = 1
+
+[node name="ClickLabel" type="Label" parent="TopBar/HBox/CenterMetrics"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.1, 0.9, 0.4, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 13
+text = "UPLINK POWER: +1.0 MB/clk"
+horizontal_alignment = 1
+
+[node name="RightMetrics" type="VBoxContainer" parent="TopBar/HBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+alignment = 1
+
+[node name="MultiplierLabel" type="Label" parent="TopBar/HBox/RightMetrics"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.85, 0.2, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 13
+text = "GLOBAL EFFICIENCY: x1.0 [0 BLUEPRINTS]"
+horizontal_alignment = 2
+
+[node name="TimeLabel" type="Label" parent="TopBar/HBox/RightMetrics"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 0.8, 0.7, 0.85)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 12
+text = "T+00:00.00 UTC"
+horizontal_alignment = 2
+
+[node name="DossierAnchor" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 0
+offset_left = 32.0
+offset_top = 100.0
+offset_right = 412.0
+offset_bottom = 340.0
+mouse_filter = 2
+
+[node name="DossierPanel" parent="DossierAnchor" instance=ExtResource("2_dossier")]
+layout_mode = 1
+
+[node name="ShopAnchor" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -372.0
+offset_top = 100.0
+offset_right = -32.0
+offset_bottom = 460.0
+grow_horizontal = 0
+mouse_filter = 1
+
+[node name="ShopPanel" parent="ShopAnchor" instance=ExtResource("3_shop")]
+layout_mode = 1
+
+[node name="BottomPanel" type="Control" parent="."]
+custom_minimum_size = Vector2(0, 150)
+layout_mode = 3
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -150.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+
+[node name="VBox" type="VBoxContainer" parent="BottomPanel"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -450.0
+offset_top = -60.0
+offset_right = 450.0
+offset_bottom = 60.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 12
+
+[node name="ProgressBarContainer" type="Control" parent="BottomPanel/VBox"]
+custom_minimum_size = Vector2(900, 36)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="DataProgressBar" type="ProgressBar" parent="BottomPanel/VBox/ProgressBarContainer"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_styles/background = SubResource("StyleBoxFlat_progress_bg")
+theme_override_styles/fill = SubResource("StyleBoxFlat_progress_fill")
+max_value = 100.0
+show_percentage = false
+
+[node name="ProgressGlow" type="ColorRect" parent="BottomPanel/VBox/ProgressBarContainer"]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0, 1, 0.45, 0.15)
+
+[node name="ProgressLabel" type="Label" parent="BottomPanel/VBox/ProgressBarContainer"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
+theme_override_constants/outline_size = 5
+theme_override_font_sizes/font_size = 14
+text = "DATA BUFFER: 0.0 / 100 MB (0.0%)"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="AssaultButtonContainer" type="Control" parent="BottomPanel/VBox"]
+custom_minimum_size = Vector2(900, 54)
+layout_mode = 2
+
+[node name="HazardRect" type="ColorRect" parent="BottomPanel/VBox/AssaultButtonContainer"]
+material = SubResource("ShaderMaterial_hazard")
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="BtnAssault" type="Button" parent="BottomPanel/VBox/AssaultButtonContainer"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_default_cursor_shape = 2
+flat = true
+
+[node name="AssaultLabel" type="Label" parent="BottomPanel/VBox/AssaultButtonContainer"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.6, 0.6, 0.6, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
+theme_override_constants/outline_size = 5
+theme_override_font_sizes/font_size = 16
+text = "ASSAULT PROTOCOL LOCKED // BUFFER NOT FULL"
+horizontal_alignment = 1
+vertical_alignment = 1

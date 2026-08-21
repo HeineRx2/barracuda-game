@@ -1,0 +1,101 @@
+[gd_scene load_steps=4 format=3 uid="uid://bv83n8k1k4x5w"]
+
+[ext_resource type="Script" path="res://scripts/ui/DossierPanel.gd" id="1_dossier"]
+[ext_resource type="Shader" path="res://shaders/frosted_glass.gdshader" id="2_glass_shader"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_glass"]
+shader = ExtResource("2_glass_shader")
+shader_parameter/bg_color = Color(0.015, 0.04, 0.03, 0.6)
+shader_parameter/border_color = Color(0, 1, 0.4, 0.9)
+shader_parameter/border_width = 0.008
+shader_parameter/corner_radius = 0.03
+shader_parameter/noise_grain = 0.03
+
+[node name="DossierPanel" type="Control"]
+custom_minimum_size = Vector2(380, 240)
+layout_mode = 3
+anchors_preset = 0
+offset_right = 380.0
+offset_bottom = 240.0
+mouse_filter = 2
+script = ExtResource("1_dossier")
+
+[node name="GlassBackground" type="ColorRect" parent="."]
+material = SubResource("ShaderMaterial_glass")
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="VBox" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 18.0
+offset_top = 16.0
+offset_right = -18.0
+offset_bottom = -16.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 8
+
+[node name="HeaderContainer" type="HBoxContainer" parent="VBox"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="StatusIndicator" type="ColorRect" parent="VBox/HeaderContainer"]
+custom_minimum_size = Vector2(10, 10)
+layout_mode = 2
+size_flags_vertical = 4
+color = Color(0, 1, 0.45, 1)
+
+[node name="TitleLabel" type="Label" parent="VBox/HeaderContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.2, 1, 0.45, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
+theme_override_constants/outline_size = 5
+theme_override_font_sizes/font_size = 14
+text = "DIRECTIVE 001 // SECURE DEPLOYMENT"
+
+[node name="TimestampLabel" type="Label" parent="VBox/HeaderContainer"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 0.8, 0.7, 0.8)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 11
+text = "03:14:22Z"
+
+[node name="HSeparator" type="HSeparator" parent="VBox"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="BodyContainer" type="Control" parent="VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="BodyLabel" type="RichTextLabel" parent="VBox/BodyContainer"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/default_color = Color(0.95, 1, 0.95, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
+theme_override_constants/outline_size = 5
+theme_override_font_sizes/normal_font_size = 13
+bbcode_enabled = true
+text = "Autonomous surface vessel BARRACUDA deployed under storm cover. Mission: Penetrate enemy maritime radar envelope and siphon classified telemetry."
+scroll_active = false
