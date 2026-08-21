@@ -1421,3 +1421,228 @@ body {
 .help-tips li strong {
   color: var(--hazard-yellow);
 }
+
+/* =========================================================================
+   RESPONSIVE LAYOUT & MOBILE ADAPTATION
+   ========================================================================= */
+
+@media (max-width: 900px) {
+  #game-frame {
+    padding: 8px 12px;
+  }
+  .top-right-telemetry {
+    margin-right: 0;
+  }
+}
+
+@media (max-width: 768px) {
+  #game-frame {
+    padding: 6px 8px;
+    padding-top: max(6px, env(safe-area-inset-top));
+    padding-bottom: max(6px, env(safe-area-inset-bottom));
+  }
+
+  /* Top Bar */
+  .top-hud-bar {
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .top-left-controls {
+    gap: 4px;
+  }
+
+  .btn-tactical-pause {
+    width: 32px;
+    height: 32px;
+    font-size: 12px;
+  }
+
+  .btn-dossier-pill,
+  .btn-sector-pill,
+  .btn-help-pill {
+    height: 32px;
+    padding: 0 8px;
+    font-size: 10px;
+    gap: 4px;
+  }
+
+  .top-right-telemetry {
+    margin-right: 0;
+    gap: 4px;
+  }
+
+  .balance-pill {
+    padding: 2px 6px;
+  }
+  .pill-label { font-size: 7px; }
+  .pill-value { font-size: 11px; }
+
+  .mini-radar-box {
+    width: 32px;
+    height: 32px;
+  }
+
+  /* Floating Booster: Move below top bar so it never overlaps header items */
+  .booster-floating-widget {
+    top: 48px;
+    right: 8px;
+    z-index: 35;
+  }
+
+  .booster-inner-btn {
+    padding: 4px 10px 4px 6px;
+    gap: 6px;
+  }
+  .booster-icon {
+    width: 22px;
+    height: 22px;
+    font-size: 12px;
+  }
+  .booster-title {
+    font-size: 10px;
+  }
+  .booster-sub {
+    font-size: 8px;
+  }
+
+  /* Quick Combat Buttons: Below top bar on the left */
+  .quick-combat-actions-bar {
+    top: 48px;
+    left: 8px;
+    gap: 4px;
+    flex-wrap: wrap;
+    max-width: 60%;
+  }
+
+  .combat-quick-btn {
+    padding: 4px 8px;
+    font-size: 10px;
+    gap: 4px;
+  }
+
+  /* Middle Arena & Slide Panels */
+  .middle-arena {
+    padding: 4px 0;
+  }
+
+  .concept-dossier-card {
+    width: 280px;
+    max-width: 80vw;
+    padding: 8px 10px;
+  }
+  .dossier-terminal-text {
+    font-size: 10px;
+    min-height: 38px;
+  }
+
+  /* Right Action Dock - horizontal or compact */
+  .concept-action-rings {
+    gap: 6px;
+  }
+
+  .ring-circle-icon {
+    width: 36px;
+    height: 36px;
+    font-size: 14px;
+  }
+
+  .ring-label {
+    font-size: 8px;
+  }
+
+  /* Slide-out drawer: Centered bottom sheet on mobile */
+  .concept-slide-panel {
+    right: 50% !important;
+    transform: translateX(50%) !important;
+    bottom: 80px;
+    width: 94vw;
+    max-width: 380px;
+    max-height: 60vh;
+    padding: 10px 12px;
+  }
+
+  /* Bottom Telemetry Bar */
+  .bottom-concept-bar {
+    padding: 6px 10px;
+    gap: 4px;
+  }
+
+  .telemetry-dual-gauges {
+    gap: 8px;
+  }
+
+  .gauge-header-label {
+    font-size: 10px;
+  }
+
+  .concept-bar-track {
+    height: 7px;
+  }
+
+  .mission-tag {
+    font-size: 9px;
+  }
+
+  .btn-concept-strike {
+    padding: 4px 10px;
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Extra compact for portrait phones */
+  .dossier-pill-text,
+  .help-pill-text {
+    display: none; /* Show icon only */
+  }
+
+  .btn-dossier-pill,
+  .btn-help-pill {
+    padding: 0 8px;
+  }
+
+  .sector-badge-name {
+    max-width: 75px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .quick-combat-actions-bar {
+    top: 44px;
+    left: 6px;
+    gap: 3px;
+    max-width: 58%;
+  }
+
+  .combat-quick-btn {
+    padding: 3px 6px;
+    font-size: 9px;
+  }
+  .cq-text {
+    font-size: 9px;
+  }
+
+  .booster-floating-widget {
+    top: 44px;
+    right: 6px;
+  }
+
+  .ring-circle-icon {
+    width: 32px;
+    height: 32px;
+    font-size: 13px;
+  }
+
+  .ring-label {
+    font-size: 7.5px;
+    letter-spacing: 0.2px;
+  }
+
+  .concept-slide-panel {
+    bottom: 74px;
+    max-height: 55vh;
+  }
+}
+

@@ -913,8 +913,10 @@ class Barracuda3DEngine {
     window.addEventListener('mousemove', (e) => {
       if (Math.hypot(e.clientX - this.mouseDownPos.x, e.clientY - this.mouseDownPos.y) > 6 && e.buttons === 1) {
         this.isDragging = true;
-        this.targetRotation.y += (e.clientX - this.prevMouse.x) * 0.007;
-        this.targetRotation.x = Math.max(0.05, Math.min(1.1, this.targetRotation.x + (e.clientY - this.prevMouse.y) * 0.007));
+        const dx = e.clientX - this.prevMouse.x;
+        const dy = e.clientY - this.prevMouse.y;
+        this.targetRotation.y -= dx * 0.007;
+        this.targetRotation.x = Math.max(0.05, Math.min(1.1, this.targetRotation.x - dy * 0.007));
         this.prevMouse = { x: e.clientX, y: e.clientY };
       }
     });
@@ -937,10 +939,12 @@ class Barracuda3DEngine {
 
     dom.addEventListener('touchmove', (e) => {
       if (e.touches.length === 1) {
-        if (Math.hypot(e.touches[0].clientX - this.mouseDownPos.x, e.touches[0].clientY - this.mouseDownPos.y) > 8) {
+        if (Math.hypot(e.touches[0].clientX - this.mouseDownPos.x, e.touches[0].clientY - this.mouseDownPos.y) > 6) {
           this.isDragging = true;
-          this.targetRotation.y += (e.touches[0].clientX - this.prevMouse.x) * 0.008;
-          this.targetRotation.x = Math.max(0.05, Math.min(1.1, this.targetRotation.x + (e.touches[0].clientY - this.prevMouse.y) * 0.008));
+          const dx = e.touches[0].clientX - this.prevMouse.x;
+          const dy = e.touches[0].clientY - this.prevMouse.y;
+          this.targetRotation.y -= dx * 0.008;
+          this.targetRotation.x = Math.max(0.05, Math.min(1.1, this.targetRotation.x - dy * 0.008));
           this.prevMouse = { x: e.touches[0].clientX, y: e.touches[0].clientY };
         }
       }
