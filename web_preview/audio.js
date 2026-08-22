@@ -742,6 +742,74 @@ class TacticalAudioEngine {
     debris.start(now + 0.05);
     debris.stop(now + 0.8);
   }
+
+  // =========================================================================
+  // AMBIENT SECTOR SOUNDSCAPES
+  // =========================================================================
+  startAmbient(sectorId) {
+    this.init();
+    this.stopAmbient();
+
+    const now = this.ctx.currentTime;
+    this.ambientGain = this.ctx.createGain();
+    this.ambientGain.gain.setValueAtTime(0, now);
+    this.ambientGain.connect(this.masterGain);
+    this._ambientExtras = [];
+
+    // Pure tonal drones — no white noise, no hissing
+    const makeDrone = (freq, type, gain, detune) => {
+      const osc = this.ctx.createOscillator();
+      osc.type = type;
+      osc.frequency.value = freq;
+      if (detune) osc.detune.value = detune;
+      const g = this.ctx.createGain();
+      g.gain.value = gain;
+      osc.connect(g);
+      g.connect(this.ambientGain);
+      osc.start(now);
+      this._ambientExtras.push(osc);
+    };
+
+    switch (sectorId) {
+      case 'sector-1': // Storm — deep ominous rumble
+        this.ambientGain.gain.linearRampToValueAtTime(0.06, now + 3.0);
+        makeDrone(38, 'sine', 0.5, 0);      // sub-bass
+        makeDrone(57, 'sine', 0.25, -8);     // power fifth below
+        makeDrone(76, 'triangle', 0.1, 5);   // octave
+        break;
+      case 'sector-2': // Night — eerie quiet
+        this.ambientGain.gain.linearRampToValueAtTime(0.03, now + 3.0);
+        makeDrone(55, 'sine', 0.3, 0);       // low A
+        makeDrone(78, 'sine', 0.15, -3);     // tritone — unsettling
+        break;
+      case 'sector-3': // Sunset — warm calm
+        this.ambientGain.gain.linearRampToValueAtTime(0.04, now + 3.0);
+        makeDrone(65, 'sine', 0.3, 0);       // low C
+        makeDrone(82, 'sine', 0.2, 4);       // major third — warm
+        makeDrone(98, 'triangle', 0.08, -2); // fifth — open
+        break;
+      case 'sector-4': // Dawn — gentle ethereal
+      default:
+        this.ambientGain.gain.linearRampToValueAtTime(0.03, now + 3.0);
+        makeDrone(50, 'sine', 0.25, 0);      // low bass
+        makeDrone(75, 'sine', 0.15, 6);      // perfect fifth
+        break;
+    }
+
+    this.isAmbientPlaying = true;
+  }
+
+  stopAmbient() {
+    if (this.ambientNode) {
+      try { this.ambientNode.stop(); } catch(e) {}
+      this.ambientNode = null;
+    }
+    if (this._ambientExtras) {
+      this._ambientExtras.forEach(n => { try { n.stop(); } catch(e) {} });
+      this._ambientExtras = [];
+    }
+    this.isAmbientPlaying = false;
+  }
 }
 
 window.tacticalAudio = new TacticalAudioEngine();

@@ -20,6 +20,18 @@ class Barracuda3DEngine {
     this.moduleObjects = {};
     this.swarmDrones = [];
 
+    // Shared pool geometries & materials (created once, reused forever)
+    this._poolGeomDodeca = null;
+    this._poolGeomSphere = null;
+    this._poolMatFire = null;
+    this._poolMatSmoke = null;
+    this._poolMatExplosion = [];
+
+    // Particle pools (pre-allocated, toggled via .visible)
+    this._firePool = [];
+    this._smokePool = [];
+    this._explosionPool = [];
+
     // Enemy Warship on Horizon
     this.enemyShip = null;
     this.enemySearchlight = null;
@@ -97,6 +109,7 @@ class Barracuda3DEngine {
     this.createEnemyWarship();
     this.createLightningSystem();
     this.createRainSystem();
+    this.createParticlePools();
     this.loadGLBModel();
     this.setupEvents();
     this.animate();
@@ -266,6 +279,59 @@ class Barracuda3DEngine {
     }
 
     this.rainParticles.geometry.attributes.position.needsUpdate = true;
+  }
+
+  // =========================================================================
+  // PARTICLE POOL SYSTEM — eliminates GPU memory leaks
+  // =========================================================================
+  createParticlePools() {
+    // Shared geometries (ONE instance each)
+    this._poolGeomDodeca = new THREE.DodecahedronGeometry(0.5, 0);
+    this._poolGeomSphere = new THREE.SphereGeometry(0.15, 6, 6);
+    this._poolGeomBlast = new THREE.DodecahedronGeometry(0.8, 1);
+
+    // Fire pool (burning warship) — 40 meshes
+    for (let i = 0; i < 40; i++) {
+      const mat = new THREE.MeshBasicMaterial({ color: 0xff3300, transparent: true, opacity: 0 });
+      const mesh = new THREE.Mesh(this._poolGeomDodeca, mat);
+      mesh.visible = false;
+      mesh.userData = { vy: 0, life: 0, maxLife: 0, active: false };
+      this.scene.add(mesh);
+      this._firePool.push(mesh);
+    }
+
+    // Smoke pool (missile trails) — 30 meshes
+    for (let i = 0; i < 30; i++) {
+      const mat = new THREE.MeshBasicMaterial({ color: 0xcccccc, transparent: true, opacity: 0 });
+      const mesh = new THREE.Mesh(this._poolGeomSphere, mat);
+      mesh.visible = false;
+      mesh.userData = { life: 0, maxLife: 0, active: false };
+      this.scene.add(mesh);
+      this._smokePool.push(mesh);
+    }
+
+    // Explosion pool — 30 meshes
+    for (let i = 0; i < 30; i++) {
+      const mat = new THREE.MeshBasicMaterial({ color: 0xff4400, transparent: true, opacity: 0 });
+      const mesh = new THREE.Mesh(this._poolGeomBlast, mat);
+      mesh.visible = false;
+      mesh.userData = { vx: 0, vy: 0, vz: 0, life: 0, maxLife: 0, active: false };
+      this.scene.add(mesh);
+      this._explosionPool.push(mesh);
+    }
+  }
+
+  _acquireFromPool(pool) {
+    for (let i = 0; i < pool.length; i++) {
+      if (!pool[i].userData.active) return pool[i];
+    }
+    return null; // pool exhausted — skip particle
+  }
+
+  _releaseToPool(mesh) {
+    mesh.visible = false;
+    mesh.userData.active = false;
+    mesh.scale.set(1, 1, 1);
   }
 
   // =========================================================================
@@ -459,49 +525,90 @@ class Barracuda3DEngine {
 
     window.tacticalAudio.playMissileLaunch();
 
-    const missile = new THREE.Group();
-    const bodyMat = new THREE.MeshStandardMaterial({ color: 0x1a2228, roughness: 0.3, metalness: 0.85 });
-    const noseMat = new THREE.MeshStandardMaterial({ color: 0xffcc00, roughness: 0.3, metalness: 0.5 });
-    const flameMat = new THREE.MeshBasicMaterial({ color: 0xff6600 });
+    // === FPV DRONE MODEL ===
+    const drone = new THREE.Group();
 
-    const body = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.8, 8), bodyMat);
-    body.rotation.x = Math.PI / 2;
-    missile.add(body);
+    // Central body — flat rectangular frame
+    const frameMat = new THREE.MeshStandardMaterial({ color: 0x2a2a2a, roughness: 0.4, metalness: 0.8 });
+    const frame = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.08, 0.35), frameMat);
+    drone.add(frame);
 
-    const nose = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.25, 8), noseMat);
-    nose.rotation.x = -Math.PI / 2;
-    nose.position.z = 0.5;
-    missile.add(nose);
+    // Warhead nose (orange-tipped)
+    const warheadMat = new THREE.MeshStandardMaterial({ color: 0xff6600, roughness: 0.3, metalness: 0.5 });
+    const warhead = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.2, 6), warheadMat);
+    warhead.rotation.x = -Math.PI / 2;
+    warhead.position.z = -0.25;
+    drone.add(warhead);
 
-    const flame = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.4, 8), flameMat);
-    flame.rotation.x = Math.PI / 2;
-    flame.position.z = -0.55;
-    missile.add(flame);
+    // 4 motor arms (X-config)
+    const armMat = new THREE.MeshStandardMaterial({ color: 0x444444, roughness: 0.5, metalness: 0.7 });
+    const armPositions = [
+      { x: 0.25, z: 0.15 }, { x: -0.25, z: 0.15 },
+      { x: 0.25, z: -0.15 }, { x: -0.25, z: -0.15 }
+    ];
 
-    // Light attached to missile
-    const mLight = new THREE.PointLight(0xff8800, 2.0, 10);
-    mLight.position.z = -0.4;
-    missile.add(mLight);
+    const propellers = [];
+    armPositions.forEach(pos => {
+      // Arm strut
+      const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.3, 6), armMat);
+      arm.rotation.z = Math.PI / 2;
+      arm.position.set(pos.x * 0.5, 0.04, pos.z);
+      drone.add(arm);
 
-    // Start position at drone missile rack
-    missile.position.copy(this.boatModel.position);
-    missile.position.y += 0.6;
-    missile.position.z -= 0.8;
+      // Propeller disc
+      const propMat = new THREE.MeshBasicMaterial({ color: 0x88ccff, transparent: true, opacity: 0.4 });
+      const prop = new THREE.Mesh(new THREE.CircleGeometry(0.1, 12), propMat);
+      prop.rotation.x = -Math.PI / 2;
+      prop.position.set(pos.x, 0.08, pos.z);
+      drone.add(prop);
+      propellers.push(prop);
+    });
+
+    // LED light
+    const led = new THREE.PointLight(0x00ff44, 1.5, 5);
+    led.position.set(0, -0.05, 0.15);
+    drone.add(led);
+
+    // Thruster glow (rear)
+    const glowMat = new THREE.MeshBasicMaterial({ color: 0xff4400, transparent: true, opacity: 0.6 });
+    const glow = new THREE.Mesh(new THREE.SphereGeometry(0.04, 6, 6), glowMat);
+    glow.position.z = 0.2;
+    drone.add(glow);
+
+    // Start position at drone deck/stanchions
+    drone.position.copy(this.boatModel.position);
+    drone.position.y += 0.3;
+    drone.position.z -= 0.5;
+
+    const liftOffPos = drone.position.clone();
+    liftOffPos.y += 3.0; // Lift off height
 
     const targetPos = this.enemyShip ? this.enemyShip.position.clone() : new THREE.Vector3(38, 2, -75);
     targetPos.y += 2.5;
 
-    this.scene.add(missile);
+    this.scene.add(drone);
     this.activeMissiles.push({
-      mesh: missile,
-      startPos: missile.position.clone(),
+      mesh: drone,
+      propellers: propellers,
+      glowMesh: glow,
+      startPos: drone.position.clone(),
+      liftOffPos: liftOffPos,
       targetPos: targetPos,
       progress: 0,
-      duration: 1.6,
+      duration: 3.5, // Slower flight
+      phase: 'liftoff', // liftoff -> cruise
       onImpact: onImpactCallback
     });
 
     this.triggerClickBounce();
+  }
+  triggerShipExplosion() {
+    // Big explosion on the target warship
+    const shipPos = this.enemyShip ? this.enemyShip.position.clone() : new THREE.Vector3(38, -0.6, -75);
+    this.create3DExplosion(shipPos);
+    // Create secondary explosions
+    setTimeout(() => this.create3DExplosion(shipPos.clone().add(new THREE.Vector3(3, 2, -5))), 200);
+    setTimeout(() => this.create3DExplosion(shipPos.clone().add(new THREE.Vector3(-4, 1, 3))), 400);
   }
 
   create3DExplosion(pos) {
@@ -510,32 +617,31 @@ class Barracuda3DEngine {
     // Trigger burning on warship
     this.isEnemyBurning = true;
 
-    // Flash light
-    const blastLight = new THREE.PointLight(0xffaa22, 12.0, 50, 1.2);
-    blastLight.position.copy(pos);
-    blastLight.position.y += 3;
-    this.scene.add(blastLight);
-    setTimeout(() => this.scene.remove(blastLight), 500);
+    // Flash light (reuse single light)
+    if (!this._blastLight) {
+      this._blastLight = new THREE.PointLight(0xffaa22, 0, 50, 1.2);
+      this.scene.add(this._blastLight);
+    }
+    this._blastLight.position.copy(pos);
+    this._blastLight.position.y += 3;
+    this._blastLight.intensity = 12.0;
+    setTimeout(() => { if (this._blastLight) this._blastLight.intensity = 0; }, 500);
 
-    // Blast particle sphere
-    const blastGeom = new THREE.DodecahedronGeometry(0.8, 1);
+    // Blast particles from pool
     for (let i = 0; i < 28; i++) {
-      const pMat = new THREE.MeshBasicMaterial({
-        color: Math.random() > 0.4 ? 0xff4400 : 0xffcc00,
-        transparent: true,
-        opacity: 0.95
-      });
-      const p = new THREE.Mesh(blastGeom, pMat);
+      const p = this._acquireFromPool(this._explosionPool);
+      if (!p) break;
+      p.visible = true;
+      p.userData.active = true;
       p.position.copy(pos);
-      p.userData = {
-        vx: (Math.random() - 0.5) * 35,
-        vy: Math.random() * 25 + 8,
-        vz: (Math.random() - 0.5) * 35,
-        life: 0,
-        maxLife: 0.9 + Math.random() * 0.6
-      };
-      this.scene.add(p);
-      this.explosionParticles.push(p);
+      p.scale.set(1, 1, 1);
+      p.material.color.setHex(Math.random() > 0.4 ? 0xff4400 : 0xffcc00);
+      p.material.opacity = 0.95;
+      p.userData.vx = (Math.random() - 0.5) * 35;
+      p.userData.vy = Math.random() * 25 + 8;
+      p.userData.vz = (Math.random() - 0.5) * 35;
+      p.userData.life = 0;
+      p.userData.maxLife = 0.9 + Math.random() * 0.6;
     }
   }
 
@@ -1017,71 +1123,108 @@ class Barracuda3DEngine {
         this.searchlightTarget.position.z = Math.cos(sweepAngle * (Math.PI / 180)) * 60;
       }
 
-      // Burning smoke / fire if hit
+      // Burning smoke / fire if hit — uses pool
       if (this.isEnemyBurning && Math.random() > 0.3) {
-        const fGeom = new THREE.DodecahedronGeometry(0.5, 0);
-        const fMat = new THREE.MeshBasicMaterial({
-          color: Math.random() > 0.5 ? 0xff3300 : 0x222222,
-          transparent: true,
-          opacity: 0.8
-        });
-        const flame = new THREE.Mesh(fGeom, fMat);
-        flame.position.set(
-          this.enemyShip.position.x + (Math.random() - 0.5) * 4,
-          this.enemyShip.position.y + 4 + Math.random() * 2,
-          this.enemyShip.position.z + (Math.random() - 0.5) * 10
-        );
-        flame.userData = { vy: 2.5 + Math.random() * 2, life: 0, maxLife: 1.5 };
-        this.scene.add(flame);
-        this.enemyFireParticles.push(flame);
+        const flame = this._acquireFromPool(this._firePool);
+        if (flame) {
+          flame.visible = true;
+          flame.userData.active = true;
+          flame.scale.set(1, 1, 1);
+          flame.material.color.setHex(Math.random() > 0.5 ? 0xff3300 : 0x222222);
+          flame.material.opacity = 0.8;
+          flame.position.set(
+            this.enemyShip.position.x + (Math.random() - 0.5) * 4,
+            this.enemyShip.position.y + 4 + Math.random() * 2,
+            this.enemyShip.position.z + (Math.random() - 0.5) * 10
+          );
+          flame.userData.vy = 2.5 + Math.random() * 2;
+          flame.userData.life = 0;
+          flame.userData.maxLife = 1.5;
+          this.enemyFireParticles.push(flame);
+        }
       }
     }
 
-    // Update enemy burning fire particles
+    // Update enemy burning fire particles — pool-based
     for (let i = this.enemyFireParticles.length - 1; i >= 0; i--) {
       const p = this.enemyFireParticles[i];
       p.userData.life += dt;
       p.position.y += p.userData.vy * dt;
       p.scale.multiplyScalar(1.02);
-      p.material.opacity = (1.0 - p.userData.life / p.userData.maxLife) * 0.7;
+      p.material.opacity = Math.max(0, (1.0 - p.userData.life / p.userData.maxLife) * 0.7);
       if (p.userData.life >= p.userData.maxLife) {
-        this.scene.remove(p);
+        this._releaseToPool(p);
         this.enemyFireParticles.splice(i, 1);
       }
     }
 
-    // Update 3D In-flight Missiles
+    // Update 3D In-flight FPV Drones
     for (let i = this.activeMissiles.length - 1; i >= 0; i--) {
       const m = this.activeMissiles[i];
       m.progress += dt / m.duration;
 
-      // Parabolic flight arc
-      const p1 = m.startPos;
-      const p2 = m.targetPos;
-      const curX = THREE.MathUtils.lerp(p1.x, p2.x, m.progress);
-      const curZ = THREE.MathUtils.lerp(p1.z, p2.z, m.progress);
-      const arcHeight = Math.sin(m.progress * Math.PI) * 12.0;
-      const curY = THREE.MathUtils.lerp(p1.y, p2.y, m.progress) + arcHeight;
+      // Spin propellers
+      if (m.propellers) {
+        m.propellers.forEach((p, idx) => {
+          p.rotation.z += dt * 40 * (idx % 2 === 0 ? 1 : -1);
+        });
+      }
 
-      m.mesh.position.set(curX, curY, curZ);
+      // Thruster glow pulse
+      if (m.glowMesh) {
+        m.glowMesh.material.opacity = 0.4 + Math.sin(m.progress * 30) * 0.3;
+      }
 
-      // Look in direction of travel
-      const nextProgress = Math.min(1.0, m.progress + 0.05);
-      const nextX = THREE.MathUtils.lerp(p1.x, p2.x, nextProgress);
-      const nextZ = THREE.MathUtils.lerp(p1.z, p2.z, nextProgress);
-      const nextY = THREE.MathUtils.lerp(p1.y, p2.y, nextProgress) + Math.sin(nextProgress * Math.PI) * 12.0;
-      m.mesh.lookAt(nextX, nextY, nextZ);
+      const liftPhase = 0.12; // 12% of flight is liftoff
 
-      // Rocket smoke trail
-      if (Math.random() > 0.2) {
-        const smoke = new THREE.Mesh(
-          new THREE.SphereGeometry(0.15, 6, 6),
-          new THREE.MeshBasicMaterial({ color: 0xcccccc, transparent: true, opacity: 0.6 })
-        );
-        smoke.position.copy(m.mesh.position);
-        smoke.userData = { life: 0, maxLife: 0.6 };
-        this.scene.add(smoke);
-        this.explosionParticles.push(smoke);
+      if (m.progress < liftPhase) {
+        // Phase 1: Vertical lift-off
+        const liftT = m.progress / liftPhase;
+        const eased = liftT * liftT * (3 - 2 * liftT); // smoothstep
+        const curX = m.startPos.x + Math.sin(liftT * 8) * 0.05; // slight wobble
+        const curZ = m.startPos.z;
+        const curY = THREE.MathUtils.lerp(m.startPos.y, m.liftOffPos ? m.liftOffPos.y : m.startPos.y + 3, eased);
+        m.mesh.position.set(curX, curY, curZ);
+        // Level during liftoff
+        m.mesh.rotation.set(0, 0, Math.sin(liftT * 12) * 0.08);
+      } else {
+        // Phase 2: Forward cruise toward target
+        const cruiseT = (m.progress - liftPhase) / (1.0 - liftPhase);
+        const cruiseStart = m.liftOffPos || m.startPos;
+        const p2 = m.targetPos;
+        const curX = THREE.MathUtils.lerp(cruiseStart.x, p2.x, cruiseT);
+        const curZ = THREE.MathUtils.lerp(cruiseStart.z, p2.z, cruiseT);
+        const arcHeight = Math.sin(cruiseT * Math.PI) * 6.0; // gentler arc
+        const curY = THREE.MathUtils.lerp(cruiseStart.y, p2.y, cruiseT) + arcHeight;
+
+        m.mesh.position.set(curX, curY, curZ);
+
+        // Look in direction of travel
+        const nt = Math.min(1.0, cruiseT + 0.05);
+        const nextX = THREE.MathUtils.lerp(cruiseStart.x, p2.x, nt);
+        const nextZ = THREE.MathUtils.lerp(cruiseStart.z, p2.z, nt);
+        const nextY = THREE.MathUtils.lerp(cruiseStart.y, p2.y, nt) + Math.sin(nt * Math.PI) * 6.0;
+        m.mesh.lookAt(nextX, nextY, nextZ);
+
+        // Slight roll oscillation during cruise
+        m.mesh.rotation.z = Math.sin(cruiseT * 15) * 0.1;
+      }
+
+      // Smoke/rotor wash trail
+      if (Math.random() > 0.3) {
+        const smoke = this._acquireFromPool(this._smokePool);
+        if (smoke) {
+          smoke.visible = true;
+          smoke.userData.active = true;
+          smoke.scale.set(0.6, 0.6, 0.6);
+          smoke.material.opacity = 0.4;
+          smoke.material.color.setHex(m.progress < liftPhase ? 0xaaddff : 0x999999);
+          smoke.position.copy(m.mesh.position);
+          smoke.position.y -= 0.1;
+          smoke.userData.life = 0;
+          smoke.userData.maxLife = 0.5;
+          this.explosionParticles.push(smoke);
+        }
       }
 
       if (m.progress >= 1.0) {
@@ -1092,11 +1235,11 @@ class Barracuda3DEngine {
       }
     }
 
-    // Update explosion & smoke particles
+    // Update explosion & smoke particles — pool-based
     for (let i = this.explosionParticles.length - 1; i >= 0; i--) {
       const p = this.explosionParticles[i];
       p.userData.life += dt;
-      if (p.userData.vx !== undefined) {
+      if (p.userData.vx !== undefined && p.userData.vx !== 0) {
         p.position.x += p.userData.vx * dt;
         p.position.y += p.userData.vy * dt;
         p.position.z += p.userData.vz * dt;
@@ -1105,7 +1248,7 @@ class Barracuda3DEngine {
       p.scale.multiplyScalar(1.02);
       p.material.opacity = Math.max(0, 1.0 - p.userData.life / p.userData.maxLife);
       if (p.userData.life >= p.userData.maxLife) {
-        this.scene.remove(p);
+        this._releaseToPool(p);
         this.explosionParticles.splice(i, 1);
       }
     }
@@ -1157,10 +1300,19 @@ class Barracuda3DEngine {
         }
       });
 
-      // Emit waterjet foam wake if waterjets equipped
-      if (this.moduleObjects['waterjets'] && Math.random() > 0.4) {
+      // Emit waterjet foam wake if waterjets equipped — enhanced spray
+      if (this.moduleObjects['waterjets'] && Math.random() > 0.3) {
         this.emitWakeParticle(this.boatModel.position.x - 0.2, this.boatModel.position.z - 1.8);
         this.emitWakeParticle(this.boatModel.position.x + 0.2, this.boatModel.position.z - 1.8);
+        // Side spray particles
+        if (Math.random() > 0.6) {
+          this.emitWakeParticle(this.boatModel.position.x - 0.5, this.boatModel.position.z - 1.2, 1.3);
+          this.emitWakeParticle(this.boatModel.position.x + 0.5, this.boatModel.position.z - 1.2, 1.3);
+        }
+      }
+      // Bow spray at speed
+      if (Math.random() > 0.7) {
+        this.emitWakeParticle(this.boatModel.position.x + (Math.random() - 0.5) * 0.3, this.boatModel.position.z + 1.5, 0.5);
       }
 
       if (this.bounceImpulse > 0) {
