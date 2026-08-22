@@ -72,6 +72,10 @@
           <span class="help-pill-icon">❓</span>
           <span class="help-pill-text">СПРАВКА</span>
         </button>
+        <button class="btn-help-pill" id="btn-open-settings" title="Настройки">
+          <span class="help-pill-icon">⚙️</span>
+          <span class="help-pill-text">НАСТРОЙКИ</span>
+        </button>
       </div>
 
       <div class="top-right-telemetry">
@@ -101,7 +105,7 @@
       </div>
     </header>
 
-    <!-- QUICK COMBAT ACTIONS BAR (FLIR, SIGINT РЭБ, РАКЕТНЫЙ ЗАЛП) -->
+    <!-- QUICK COMBAT ACTIONS BAR (FLIR, SIGINT РЭБ, ПУСК FPV) -->
     <div class="quick-combat-actions-bar">
       <button class="combat-quick-btn flir-btn" id="btn-open-flir" title="Включить оптический тепловизор FLIR">
         <span class="cq-icon">🎯</span>
@@ -111,9 +115,9 @@
         <span class="cq-icon">📡</span>
         <span class="cq-text">ВЗЛОМ РЭБ</span>
       </button>
-      <button class="combat-quick-btn missile-btn" id="btn-direct-missile" title="Запуск крылатой ракеты в 3D">
-        <span class="cq-icon">🚀</span>
-        <span class="cq-text">ЗАЛП РАКЕТЫ</span>
+      <button class="combat-quick-btn missile-btn" id="btn-direct-missile" title="Пуск боевого FPV-дрона по судну">
+        <span class="cq-icon">🛸</span>
+        <span class="cq-text">ПУСК FPV</span>
       </button>
     </div>
 
@@ -155,6 +159,10 @@
         <button class="ring-action-btn" data-panel="panel-contracts">
           <div class="ring-circle-icon">📜</div>
           <span class="ring-label">КОНТРАКТЫ</span>
+        </button>
+        <button class="ring-action-btn" id="btn-open-techtree">
+          <div class="ring-circle-icon">🔬</div>
+          <span class="ring-label">ДЕРЕВО ТЕХНОЛОГИЙ</span>
         </button>
       </nav>
 
@@ -314,7 +322,7 @@
       <div class="telemetry-dual-gauges">
         <div class="gauge-group">
           <div class="gauge-header-label">
-            <span>БУФЕР ДАННЫХ:</span>
+            <span>ЗАРЯД FPV:</span>
             <span id="label-energy-percent" class="text-green">0%</span>
           </div>
           <div class="concept-bar-track">
@@ -323,16 +331,23 @@
         </div>
         <div class="gauge-group">
           <div class="gauge-header-label">
-            <span>СИГНАЛ / СТЕЛС:</span>
-            <span class="text-cyan">98%</span>
+            <span id="ship-hp-label" style="color:#ff4444;">ЦЕЛЬ [Ур.1]: 100 / 100 HP</span>
           </div>
           <div class="concept-bar-track">
-            <div class="concept-bar-fill signal"></div>
+            <div class="concept-bar-fill" id="ship-hp-fill" style="width:100%; background:#ff4444;"></div>
+          </div>
+        </div>
+        <div class="gauge-group">
+          <div class="gauge-header-label">
+            <span style="color:#ffcc00;">ПЕРЕЗАРЯДКА FPV:</span>
+          </div>
+          <div class="concept-bar-track" style="height:4px;">
+            <div class="concept-bar-fill" id="cooldown-fill" style="width:100%; background:#ffcc00;"></div>
           </div>
         </div>
       </div>
       <div class="bottom-mission-subrow">
-        <span class="mission-tag">СТЕХ-УДАР: FPV-ШТУРМ ВЫСОКОЙ ДАЛЬНОСТИ</span>
+        <span class="mission-tag">СТЕХ-УДАР: FPV-ДРОН ВЫСОКОЙ ДАЛЬНОСТИ</span>
         <button id="btn-assault" class="btn-concept-strike">ЗАПУСК FPV-ШТУРМА</button>
       </div>
     </footer>
@@ -437,6 +452,286 @@
   <div id="notification-container"></div>
 
   <!-- HELP / TUTORIAL MODAL -->
+  <!-- SETTINGS MODAL -->
+  <div id="settings-modal" class="help-modal-overlay">
+    <div class="help-modal-content" style="max-width:450px;">
+      <button class="help-close-btn" id="btn-close-settings">✕</button>
+      <h2 style="text-align:center; color:#00ff66; font-family:'Rajdhani',sans-serif; margin-bottom:20px;">⚙️ НАСТРОЙКИ</h2>
+      <div style="display:flex; flex-direction:column; gap:16px; padding:0 16px;">
+        <div class="settings-row">
+          <button id="setting-sound" class="btn-buy-action" style="width:100%; padding:12px; font-size:14px; cursor:pointer;">🔊 ЗВУК: ВКЛ</button>
+        </div>
+        <div class="settings-row">
+          <label style="color:#889999; font-size:12px; display:block; margin-bottom:6px;">ГРОМКОСТЬ</label>
+          <input id="setting-volume" type="range" min="0" max="100" value="70" style="width:100%; accent-color:#00ff66;">
+        </div>
+        <hr style="border:1px solid rgba(255,255,255,0.1); margin:8px 0;">
+        <div class="settings-row">
+          <button id="btn-new-game" class="btn-buy-action" style="width:100%; padding:12px; font-size:13px; cursor:pointer; background:rgba(255,42,42,0.15); border-color:#ff4444; color:#ff4444;">🗑️ НОВАЯ ИГРА (СБРОСИТЬ ПРОГРЕСС)</button>
+        </div>
+        <div style="text-align:center; color:#556666; font-size:10px; margin-top:8px;">
+          BARRACUDA v2.0 // ТАКТИЧЕСКАЯ ОПЕРАЦИЯ<br>
+          Сохранение: localStorage // Автосейв каждые 30с
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TECH TREE MODAL (TACTICAL R&D MATRIX) -->
+  <div id="techtree-modal" class="help-modal-overlay">
+    <div class="help-modal-content tt-modal-container">
+      <button class="help-close-btn" id="btn-close-techtree" title="Закрыть НИОКР">✕</button>
+      
+      <!-- Tech Tree Top Header -->
+      <div class="tt-top-header">
+        <div class="tt-header-badge">
+          <span class="tt-badge-pulse"></span>
+          <span>CYBERNETICS // R&D MATRIX v2.4</span>
+        </div>
+        <h2 class="tt-title">🧬 ДЕРЕВО ТЕХНОЛОГИЙ «БАРАКУДА»</h2>
+        <div class="tt-telemetry-row">
+          <div class="tt-telemetry-pill">
+            <span class="tt-telemetry-label">ДОСТУПНО ДАННЫХ:</span>
+            <span class="tt-telemetry-val text-green" id="tt-user-data">0.0 МБ</span>
+          </div>
+          <div class="tt-telemetry-pill">
+            <span class="tt-telemetry-label">ИЗУЧЕНО УЗЛОВ:</span>
+            <span class="tt-telemetry-val text-cyan" id="tt-global-progress">0 / 13 [0%]</span>
+          </div>
+        </div>
+
+        <!-- Filter Branch Tabs -->
+        <div class="tt-filter-tabs">
+          <button class="tt-tab-btn active" data-filter="all">ВСЕ ВЕТВИ (13)</button>
+          <button class="tt-tab-btn" data-filter="stealth">🕵️ СТЕЛС / РЭБ (4)</button>
+          <button class="tt-tab-btn" data-filter="firepower">🎯 ОГНЕВАЯ МОЩЬ (4)</button>
+          <button class="tt-tab-btn" data-filter="engineering">⚙️ ИНЖЕНЕРИЯ (5)</button>
+        </div>
+      </div>
+
+      <!-- Tech Tree Branches Grid -->
+      <div id="techtree-grid" class="tt-matrix-grid">
+        
+        <!-- Branch 1: СТЕЛС / РЭБ -->
+        <div class="tt-branch tt-branch-stealth" data-branch="stealth">
+          <div class="tt-branch-header">
+            <div class="tt-branch-icon">🕵️</div>
+            <div class="tt-branch-info">
+              <div class="tt-branch-title">СТЕЛС & КИБЕР-РЭБ</div>
+              <div class="tt-branch-sub">Маскировка, перехват и дешифровка</div>
+            </div>
+            <div class="tt-branch-counter" id="tt-count-stealth">0/4</div>
+          </div>
+
+          <div class="tt-node" data-tt="sniffer" data-tt-req="" data-tt-cost="500" data-tier="1">
+            <div class="tt-node-tier">T-1</div>
+            <div class="tt-node-icon-wrap"><span class="tt-node-icon">📡</span></div>
+            <div class="tt-node-body">
+              <div class="tt-node-name">СНИФФЕР ПАКЕТОВ</div>
+              <div class="tt-node-desc">+2.5 МБ/с пассивно</div>
+            </div>
+            <div class="tt-node-cost-badge">500 МБ</div>
+          </div>
+
+          <div class="tt-conduit"><div class="tt-conduit-pulse"></div></div>
+
+          <div class="tt-node" data-tt="quantum" data-tt-req="sniffer" data-tt-cost="5000" data-tier="2">
+            <div class="tt-node-tier">T-2</div>
+            <div class="tt-node-icon-wrap"><span class="tt-node-icon">🔮</span></div>
+            <div class="tt-node-body">
+              <div class="tt-node-name">КВАНТОВЫЙ ДЕШИФРАТОР</div>
+              <div class="tt-node-desc">+12% шанс крита (x5)</div>
+            </div>
+            <div class="tt-node-cost-badge">5,000 МБ</div>
+          </div>
+
+          <div class="tt-conduit"><div class="tt-conduit-pulse"></div></div>
+
+          <div class="tt-node" data-tt="ghost_protocol" data-tt-req="quantum" data-tt-cost="50000" data-tier="3">
+            <div class="tt-node-tier">T-3</div>
+            <div class="tt-node-icon-wrap"><span class="tt-node-icon">👻</span></div>
+            <div class="tt-node-body">
+              <div class="tt-node-name">ПРОТОКОЛ «ПРИЗРАК»</div>
+              <div class="tt-node-desc">-40% препятствий в FPV</div>
+            </div>
+            <div class="tt-node-cost-badge">50,000 МБ</div>
+          </div>
+
+          <div class="tt-conduit"><div class="tt-conduit-pulse"></div></div>
+
+          <div class="tt-node" data-tt="ecm_suite" data-tt-req="ghost_protocol" data-tt-cost="250000" data-tier="4">
+            <div class="tt-node-tier">T-4</div>
+            <div class="tt-node-icon-wrap"><span class="tt-node-icon">🛡️</span></div>
+            <div class="tt-node-body">
+              <div class="tt-node-name">РЭБ КОМПЛЕКС</div>
+              <div class="tt-node-desc">-50% кулдаун пуска FPV</div>
+            </div>
+            <div class="tt-node-cost-badge">250,000 МБ</div>
+          </div>
+        </div>
+
+        <!-- Branch 2: ОГНЕВАЯ МОЩЬ -->
+        <div class="tt-branch tt-branch-firepower" data-branch="firepower">
+          <div class="tt-branch-header">
+            <div class="tt-branch-icon">🎯</div>
+            <div class="tt-branch-info">
+              <div class="tt-branch-title">ОГНЕВАЯ МОЩЬ</div>
+              <div class="tt-branch-sub">Ударные комплексы и дроны-камикадзе</div>
+            </div>
+            <div class="tt-branch-counter" id="tt-count-firepower">0/4</div>
+          </div>
+
+          <div class="tt-node" data-tt="optics" data-tt-req="" data-tt-cost="800" data-tier="1">
+            <div class="tt-node-tier">T-1</div>
+            <div class="tt-node-icon-wrap"><span class="tt-node-icon">🔭</span></div>
+            <div class="tt-node-body">
+              <div class="tt-node-name">ОПТИКА FLIR</div>
+              <div class="tt-node-desc">+4.0 МБ/клик</div>
+            </div>
+            <div class="tt-node-cost-badge">800 МБ</div>
+          </div>
+
+          <div class="tt-conduit"><div class="tt-conduit-pulse"></div></div>
+
+          <div class="tt-node" data-tt="missiles" data-tt-req="optics" data-tt-cost="8000" data-tier="2">
+            <div class="tt-node-tier">T-2</div>
+            <div class="tt-node-icon-wrap"><span class="tt-node-icon">🚀</span></div>
+            <div class="tt-node-body">
+              <div class="tt-node-name">СТАПЕЛИ FPV-ДРОНОВ</div>
+              <div class="tt-node-desc">+50% сила удара дрона</div>
+            </div>
+            <div class="tt-node-cost-badge">8,000 МБ</div>
+          </div>
+
+          <div class="tt-conduit"><div class="tt-conduit-pulse"></div></div>
+
+          <div class="tt-node" data-tt="plasma_warhead" data-tt-req="missiles" data-tt-cost="80000" data-tier="3">
+            <div class="tt-node-tier">T-3</div>
+            <div class="tt-node-icon-wrap"><span class="tt-node-icon">💥</span></div>
+            <div class="tt-node-body">
+              <div class="tt-node-name">ПЛАЗМЕННАЯ БЧ</div>
+              <div class="tt-node-desc">+100% скорость заряда штурма</div>
+            </div>
+            <div class="tt-node-cost-badge">80,000 МБ</div>
+          </div>
+
+          <div class="tt-conduit"><div class="tt-conduit-pulse"></div></div>
+
+          <div class="tt-node" data-tt="swarm_ai" data-tt-req="plasma_warhead" data-tt-cost="500000" data-tier="4">
+            <div class="tt-node-tier">T-4</div>
+            <div class="tt-node-icon-wrap"><span class="tt-node-icon">🤖</span></div>
+            <div class="tt-node-body">
+              <div class="tt-node-name">РОЙ ИИ</div>
+              <div class="tt-node-desc">Рой эскорта + x2 урон флоту</div>
+            </div>
+            <div class="tt-node-cost-badge">500,000 МБ</div>
+          </div>
+        </div>
+
+        <!-- Branch 3: ИНЖЕНЕРИЯ -->
+        <div class="tt-branch tt-branch-engineering" data-branch="engineering">
+          <div class="tt-branch-header">
+            <div class="tt-branch-icon">⚙️</div>
+            <div class="tt-branch-info">
+              <div class="tt-branch-title">ИНЖЕНЕРИЯ & БАЗА</div>
+              <div class="tt-branch-sub">Энергетика, спутники и инфраструктура</div>
+            </div>
+            <div class="tt-branch-counter" id="tt-count-engineering">0/5</div>
+          </div>
+
+          <div class="tt-node" data-tt="satcom" data-tt-req="" data-tt-cost="300" data-tier="1">
+            <div class="tt-node-tier">T-1</div>
+            <div class="tt-node-icon-wrap"><span class="tt-node-icon">📡</span></div>
+            <div class="tt-node-body">
+              <div class="tt-node-name">АНТЕННА SATCOM</div>
+              <div class="tt-node-desc">+2.0 МБ/клик</div>
+            </div>
+            <div class="tt-node-cost-badge">300 МБ</div>
+          </div>
+
+          <div class="tt-conduit"><div class="tt-conduit-pulse"></div></div>
+
+          <div class="tt-node" data-tt="armor" data-tt-req="satcom" data-tt-cost="3000" data-tier="2">
+            <div class="tt-node-tier">T-2</div>
+            <div class="tt-node-icon-wrap"><span class="tt-node-icon">🛡️</span></div>
+            <div class="tt-node-body">
+              <div class="tt-node-name">БРОНЕПЛИТЫ КОРПУСА</div>
+              <div class="tt-node-desc">+1 жизнь в FPV, +1.5 МБ/с</div>
+            </div>
+            <div class="tt-node-cost-badge">3,000 МБ</div>
+          </div>
+
+          <div class="tt-conduit"><div class="tt-conduit-pulse"></div></div>
+
+          <div class="tt-node" data-tt="waterjets" data-tt-req="armor" data-tt-cost="15000" data-tier="3">
+            <div class="tt-node-tier">T-3</div>
+            <div class="tt-node-icon-wrap"><span class="tt-node-icon">💨</span></div>
+            <div class="tt-node-body">
+              <div class="tt-node-name">ВОДОМЁТНЫЕ ДВИГАТЕЛИ</div>
+              <div class="tt-node-desc">+3.0 МБ/с + кильватерный след</div>
+            </div>
+            <div class="tt-node-cost-badge">15,000 МБ</div>
+          </div>
+
+          <div class="tt-conduit"><div class="tt-conduit-pulse"></div></div>
+
+          <div class="tt-node" data-tt="autosiphon" data-tt-req="waterjets" data-tt-cost="75000" data-tier="4">
+            <div class="tt-node-tier">T-4</div>
+            <div class="tt-node-icon-wrap"><span class="tt-node-icon">💰</span></div>
+            <div class="tt-node-body">
+              <div class="tt-node-name">АВТО-СИФОН ДАННЫХ</div>
+              <div class="tt-node-desc">+$75/с пассивных кредитов</div>
+            </div>
+            <div class="tt-node-cost-badge">75,000 МБ</div>
+          </div>
+
+          <div class="tt-conduit"><div class="tt-conduit-pulse"></div></div>
+
+          <div class="tt-node" data-tt="data_nexus" data-tt-req="autosiphon" data-tt-cost="400000" data-tier="5">
+            <div class="tt-node-tier">T-5</div>
+            <div class="tt-node-icon-wrap"><span class="tt-node-icon">🌐</span></div>
+            <div class="tt-node-body">
+              <div class="tt-node-name">ДАТА-НЕКСУС</div>
+              <div class="tt-node-desc">x2 ко всему пассивному доходу</div>
+            </div>
+            <div class="tt-node-cost-badge">400,000 МБ</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Advanced Tactical Inspector Terminal -->
+      <div class="tt-inspector-terminal" id="tt-detail">
+        <div class="tt-inspector-left">
+          <div class="tt-inspector-blueprint">
+            <div class="tt-blueprint-reticle"></div>
+            <div class="tt-blueprint-icon" id="tt-detail-icon">🔬</div>
+            <div class="tt-blueprint-tier" id="tt-detail-tier">TIER 1</div>
+          </div>
+          <div class="tt-inspector-info">
+            <div class="tt-inspector-header">
+              <span class="tt-inspector-branch" id="tt-detail-branch">НИОКР КОРПУСА</span>
+              <h3 class="tt-inspector-name" id="tt-detail-name">ВЫБЕРИТЕ УЗЕЛ ТЕХНОЛОГИЙ</h3>
+            </div>
+            <p class="tt-inspector-desc" id="tt-detail-desc">Нажмите на любой модуль в матрице исследований выше, чтобы изучить подробные тактико-технические характеристики и активировать модернизацию.</p>
+            <div class="tt-inspector-metrics" id="tt-detail-stats"></div>
+          </div>
+        </div>
+
+        <div class="tt-inspector-right">
+          <div id="tt-detail-status-wrap">
+            <div class="tt-status-pill ready">◉ ВЫБЕРИТЕ ТЕХНОЛОГИЮ</div>
+          </div>
+          <button id="tt-btn-action-buy" class="tt-btn-action-research">ИЗУЧИТЬ МОДУЛЬ</button>
+          
+          <div class="tt-carousel-nav">
+            <button id="tt-nav-prev" title="Предыдущая технология">◄ ПРЕДЫДУЩАЯ</button>
+            <button id="tt-nav-next" title="Следующая технология">СЛЕДУЮЩАЯ ►</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div id="help-modal" class="help-modal-overlay">
     <div class="help-modal-content">
       <div class="help-modal-header">
@@ -547,7 +842,7 @@
             </div>
             <div class="help-item">
               <span class="help-icon">🌄</span>
-              <div><strong>Мариуполь</strong> — рассвет. Бонус: +25% ко всему.</div>
+              <div><strong>Керчь</strong> — рассвет. Бонус: +25% ко всему.</div>
             </div>
           </div>
         </div>

@@ -61,8 +61,42 @@ const ACHIEVEMENTS_DEF = [
   { id: 'overclock_5', name: 'ФОРСАЖ', desc: 'Используйте разгон 5 раз', icon: '⚡' },
   { id: 'survivor', name: 'ЖИВУЧИЙ', desc: 'Выживите 3 раза после потери жизни в FPV', icon: '🛡️' },
   { id: 'no_damage', name: 'ФАНТОМ', desc: 'Пройдите FPV-штурм без урона', icon: '👻' },
-  { id: 'speed_demon', name: 'ДЕМОН СКОРОСТИ', desc: 'Завершите штурм менее чем за 10 секунд', icon: '⏱️' }
+  { id: 'speed_demon', name: 'ДЕМОН СКОРОСТИ', desc: 'Завершите штурм менее чем за 10 секунд', icon: '⏱️' },
+  { id: 'boss_slayer', name: 'УБИЙЦА БОССОВ', desc: 'Уничтожьте первый босс-корабль', icon: '👑' },
+  { id: 'daily_complete', name: 'ДИСЦИПЛИНА', desc: 'Выполните все 3 ежедневных задания', icon: '📋' }
 ];
+
+// =========================================================================
+// BOSS SHIPS DEFINITION
+// =========================================================================
+const BOSS_SHIPS = [
+  { id: 'corvette', name: '🚢 КОРВЕТ «ГРОМ»', hpMult: 2.0, rewardMult: 3.0, evadeMult: 1.5, desc: 'Лёгкий корвет с усиленным ПВО' },
+  { id: 'frigate', name: '⚓ ФРЕГАТ «БУРЯ»', hpMult: 3.0, rewardMult: 5.0, evadeMult: 2.0, desc: 'Ракетный фрегат с активной защитой' },
+  { id: 'cruiser', name: '💀 КРЕЙСЕР «НЕМЕЗИС»', hpMult: 4.5, rewardMult: 8.0, evadeMult: 2.5, desc: 'Тяжёлый крейсер — высшая цель' }
+];
+
+// =========================================================================
+// DAILY QUESTS TEMPLATES
+// =========================================================================
+const DAILY_QUEST_TEMPLATES = [
+  { id: 'clicks', desc: 'Кликните {n} раз', icon: '👆', getN: (p) => 50 + p * 20, check: (g, n) => g.dailyClicks >= n },
+  { id: 'data', desc: 'Соберите {n} МБ данных', icon: '📊', getN: (p) => 100 + p * 50, check: (g, n) => g.dailyDataCollected >= n },
+  { id: 'credits', desc: 'Заработайте ${n} кредитов', icon: '💵', getN: (p) => 5000 + p * 2000, check: (g, n) => g.dailyCreditsEarned >= n },
+  { id: 'assault', desc: 'Завершите {n} FPV-штурм', icon: '🚀', getN: () => 1, check: (g, n) => g.dailyAssaults >= n },
+  { id: 'hack', desc: 'Взломайте {n} радиоканал', icon: '📡', getN: () => 1, check: (g, n) => g.dailyHacks >= n },
+  { id: 'crit', desc: 'Нанесите {n} критических ударов', icon: '🎯', getN: (p) => 10 + p * 5, check: (g, n) => g.dailyCrits >= n },
+  { id: 'overclock', desc: 'Используйте разгон {n} раз', icon: '⚡', getN: () => 2, check: (g, n) => g.dailyOverclocks >= n },
+];
+
+// Fisher-Yates shuffle utility
+function shuffleArray(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
 
 // =========================================================================
 // RANDOM EVENTS DEFINITION
@@ -171,6 +205,10 @@ class FPVMinigame {
     this.countermeasureTimer = 0;
     this.staticNoise = 0;
 
+    // Pre-generated noise canvas for static effect (avoids getImageData)
+    this._noiseCanvas = null;
+    this._noiseCtx = null;
+
     // Explosion phase
     this.explosionParticles = [];
     this.shockwaveRadius = 0;
@@ -185,27 +223,44 @@ class FPVMinigame {
     this.bgStars = [];
     this.bgClouds = [];
 
+    // Boss mode
+    this.isBoss = false;
+    this.bossData = null;
+
     // Difficulty multiplier (increases with prestige)
     this.difficultyMod = 1.0;
   }
 
-  setDifficulty(prestigeLevel, armorLevel) {
+  setDifficulty(prestigeLevel, armorLevel, ghostProtocol) {
     this.difficultyMod = 1.0 + prestigeLevel * 0.15;
+    if (ghostProtocol) this.difficultyMod *= 0.6; // -40% obstacle density
     this.maxLives = 1 + Math.min(2, Math.floor(armorLevel / 2));
     this.lives = this.maxLives;
     this.requiredPass = Math.min(8, 5 + Math.floor(prestigeLevel / 2));
+    if (ghostProtocol) this.requiredPass = Math.max(3, this.requiredPass - 2);
   }
 
   start(canvas) {
     this.canvas = canvas;
-    this.ctx = canvas.getContext('2d');
     this.active = true;
     this.phase = 'launch';
     this.phaseTimer = 0;
     this.totalTime = 0;
 
-    const W = canvas.width;
-    const H = canvas.height;
+    // Match canvas pixel buffer to CSS display size for crisp rendering
+    const rect = canvas.getBoundingClientRect();
+    const dpr = Math.min(window.devicePixelRatio || 1, 2); // cap at 2x for performance
+    canvas.width = Math.round(rect.width * dpr);
+    canvas.height = Math.round(rect.height * dpr);
+    this.ctx = canvas.getContext('2d');
+    this.ctx.scale(dpr, dpr);
+
+    // Use CSS pixel dimensions for all drawing calculations
+    this._drawW = rect.width;
+    this._drawH = rect.height;
+
+    const W = this._drawW;
+    const H = this._drawH;
 
     // Reset launch
     this.launchProgress = 0;
@@ -231,6 +286,9 @@ class FPVMinigame {
     this.lockTimer = 0;
     this.countermeasureTimer = 0;
     this.staticNoise = 0;
+
+    // Generate noise canvas once for static effect
+    this._generateNoiseCanvas(Math.round(rect.width * dpr), Math.round(rect.height * dpr));
 
     // Reset explosion
     this.explosionParticles = [];
@@ -273,8 +331,8 @@ class FPVMinigame {
         const rect = this.canvas.getBoundingClientRect();
         const clientX = e.touches ? e.touches[0].clientX : e.clientX;
         const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-        this.crosshair.x = (clientX - rect.left) * (this.canvas.width / rect.width);
-        this.crosshair.y = (clientY - rect.top) * (this.canvas.height / rect.height);
+        this.crosshair.x = (clientX - rect.left);
+        this.crosshair.y = (clientY - rect.top);
       }
     };
 
@@ -321,8 +379,8 @@ class FPVMinigame {
     this.totalTime += dt;
 
     // Update background
-    const W = this.canvas.width;
-    const H = this.canvas.height;
+    const W = this._drawW || this.canvas.width;
+    const H = this._drawH || this.canvas.height;
     this.bgStars.forEach(s => { s.x -= s.speed * dt; if (s.x < 0) { s.x = W; s.y = Math.random() * H; } });
     this.bgClouds.forEach(c => { c.x -= c.speed * dt; if (c.x + c.w < 0) { c.x = W + 50; c.y = 30 + Math.random() * (H - 60); } });
 
@@ -697,14 +755,28 @@ class FPVMinigame {
     else this.rating = 'C';
   }
 
+  _generateNoiseCanvas(w, h) {
+    this._noiseCanvas = document.createElement('canvas');
+    this._noiseCanvas.width = w;
+    this._noiseCanvas.height = h;
+    this._noiseCtx = this._noiseCanvas.getContext('2d');
+    const imageData = this._noiseCtx.createImageData(w, h);
+    const data = imageData.data;
+    for (let i = 0; i < data.length; i += 4) {
+      const v = Math.floor(Math.random() * 255);
+      data[i] = v; data[i+1] = v; data[i+2] = v; data[i+3] = 255;
+    }
+    this._noiseCtx.putImageData(imageData, 0, 0);
+  }
+
   // =========================================================================
   // DRAW — Cinematic Multi-Phase Rendering
   // =========================================================================
   draw() {
     if (!this.ctx || !this.canvas) return;
     const ctx = this.ctx;
-    const W = this.canvas.width;
-    const H = this.canvas.height;
+    const W = this._drawW || this.canvas.width;
+    const H = this._drawH || this.canvas.height;
 
     // Background
     ctx.fillStyle = '#060e0a';
@@ -987,17 +1059,18 @@ class FPVMinigame {
 
     // ======================== DRAW STRIKE ========================
     if (this.phase === 'strike') {
-      // Static noise overlay
-      if (this.staticNoise > 0) {
-        const imageData = ctx.getImageData(0, 0, W, H);
-        const data = imageData.data;
-        for (let i = 0; i < data.length; i += 16) {
-          const noise = (Math.random() - 0.5) * 100 * this.staticNoise;
-          data[i] = Math.min(255, Math.max(0, data[i] + noise));
-          data[i + 1] = Math.min(255, Math.max(0, data[i + 1] + noise));
-          data[i + 2] = Math.min(255, Math.max(0, data[i + 2] + noise));
-        }
-        ctx.putImageData(imageData, 0, 0);
+      // Static noise overlay — optimized (pre-generated noise canvas)
+      if (this.staticNoise > 0 && this._noiseCanvas) {
+        ctx.save();
+        ctx.globalAlpha = Math.min(0.6, this.staticNoise * 0.5);
+        ctx.globalCompositeOperation = 'overlay';
+        // Shift noise position each frame for variety
+        const ox = (Math.random() * 100 - 50) | 0;
+        const oy = (Math.random() * 100 - 50) | 0;
+        ctx.drawImage(this._noiseCanvas, ox, oy);
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.globalAlpha = 1;
+        ctx.restore();
       }
 
       // Target ship
@@ -1197,13 +1270,13 @@ class FPVMinigame {
 }
 
 // ==============================================
-// MAIN BARRACUDA GAME CLASS v7
+// MAIN BARRACUDA GAME CLASS v8
+// (Optimized + Boss Ships + Daily Quests + Offline Income)
 // ==============================================
 class BarracudaGame {
   constructor() {
     this.dataMB = 0.0;
     this.totalDataMB = 0.0;
-    this.maxCapacityMB = 100.0;
     this.creditsUSD = 500;
     this.blueprintsBP = 0;
     this.sunkenShips = 0;
@@ -1214,11 +1287,29 @@ class BarracudaGame {
     this.visitedSectors = new Set(['sector-1']);
     this.shieldSaves = 0;
 
+    // Assault charge — separate progressive counter
+    this.assaultCharge = 0;
+    this.assaultChargeMax = 100;
+
     this.currentSector = 'sector-1';
 
     this.hw = { satcom: 0, optics: 0, armor: 0, waterjets: 0, missiles: 0 };
     this.cyber = { sniffer: 0, quantum: 0, autosiphon: 0 };
     this.tech = { swarmAI: false };
+
+    // Ship HP system
+    this.shipHP = 100;
+    this.shipMaxHP = 100;
+    this.shipLevel = 1;
+
+    // Weapon cooldown
+    this.weaponCooldown = 0;
+    this.weaponCooldownMax = 1.5; // seconds
+
+    // Settings
+    this.soundEnabled = true;
+    this.musicVolume = 0.7;
+    this.sfxVolume = 1.0;
 
     this.isOverclocked = false;
     this.overclockTimer = 0;
@@ -1265,13 +1356,36 @@ class BarracudaGame {
     // Notification queue
     this.notifications = [];
 
+    // === PERFORMANCE: UI throttle timers ===
+    this._uiDirty = true;
+    this._uiThrottleAccum = 0;
+    this._achieveCheckAccum = 0;
+
+    // === BOSS SHIPS ===
+    this.bossActive = false;
+    this.currentBoss = null;
+    this.bossesDefeated = 0;
+
+    // === DAILY QUESTS ===
+    this.dailyQuests = [];
+    this.dailyQuestDate = '';
+    this.dailyClicks = 0;
+    this.dailyDataCollected = 0;
+    this.dailyCreditsEarned = 0;
+    this.dailyAssaults = 0;
+    this.dailyHacks = 0;
+    this.dailyCrits = 0;
+    this.dailyOverclocks = 0;
+
     this.loadGame();
+    this.processOfflineIncome();
+    this.initDailyQuests();
     this.init3D();
     this.initDOM();
     this.initEvents();
     this.startLoop();
     this.updateDossier(DOSSIER_LORE[0], false);
-    this.updateUI();
+    this._uiDirty = true;
 
     // Auto-show help for first-time players
     if (!localStorage.getItem('barracuda_help_seen')) {
@@ -1297,7 +1411,7 @@ class BarracudaGame {
 
     const scale = 1 + this.contractGenCounter * 0.3;
     const contracts = [];
-    const shuffled = templates.sort(() => Math.random() - 0.5).slice(0, 3);
+    const shuffled = shuffleArray(templates).slice(0, 3);
 
     shuffled.forEach((t, i) => {
       contracts.push({
@@ -1336,7 +1450,9 @@ class BarracudaGame {
       const data = {
         dataMB: this.dataMB,
         totalDataMB: this.totalDataMB,
-        maxCapacityMB: this.maxCapacityMB,
+        maxCapacityMB: this.assaultChargeMax,
+        assaultCharge: this.assaultCharge,
+        assaultChargeMax: this.assaultChargeMax,
         creditsUSD: this.creditsUSD,
         blueprintsBP: this.blueprintsBP,
         sunkenShips: this.sunkenShips,
@@ -1353,6 +1469,13 @@ class BarracudaGame {
         contractGenCounter: this.contractGenCounter,
         currentDossierStage: this.currentDossierStage,
         unlockedAchievements: [...this.unlockedAchievements],
+        bossesDefeated: this.bossesDefeated,
+        dailyQuestDate: this.dailyQuestDate,
+        dailyQuests: this.dailyQuests,
+        shipHP: this.shipHP,
+        shipMaxHP: this.shipMaxHP,
+        shipLevel: this.shipLevel,
+        soundEnabled: this.soundEnabled,
         savedAt: Date.now()
       };
       localStorage.setItem('barracuda_save', JSON.stringify(data));
@@ -1369,7 +1492,8 @@ class BarracudaGame {
 
       this.dataMB = data.dataMB || 0;
       this.totalDataMB = data.totalDataMB || 0;
-      this.maxCapacityMB = data.maxCapacityMB || 100;
+      this.assaultCharge = data.assaultCharge || 0;
+      this.assaultChargeMax = data.assaultChargeMax || data.maxCapacityMB || 100;
       this.creditsUSD = data.creditsUSD || 500;
       this.blueprintsBP = data.blueprintsBP || 0;
       this.sunkenShips = data.sunkenShips || 0;
@@ -1386,12 +1510,126 @@ class BarracudaGame {
       this.contractGenCounter = data.contractGenCounter || 0;
       this.currentDossierStage = data.currentDossierStage || 0;
       this.unlockedAchievements = new Set(data.unlockedAchievements || []);
+      this.bossesDefeated = data.bossesDefeated || 0;
+      this.dailyQuestDate = data.dailyQuestDate || '';
+      this.dailyQuests = data.dailyQuests || [];
+      this.shipHP = data.shipHP || 100;
+      this.shipMaxHP = data.shipMaxHP || 100;
+      this.shipLevel = data.shipLevel || 1;
+      this.soundEnabled = data.soundEnabled !== false;
+      this._savedAt = data.savedAt || 0;
 
       // Regenerate contracts for current tier
       this.activeContracts = this.generateContracts();
+
+      // Re-apply persistent tech effects
+      if (this.tech.ecm_suite) this.weaponCooldownMax = Math.max(0.5, 1.5 * 0.5);
+      if (this.tech.swarmAI && this.engine3D) this.engine3D.updateSwarmEscorts(true);
     } catch (e) {
       console.warn('Load failed:', e);
     }
+  }
+
+  // =========================================================================
+  // OFFLINE INCOME — award passive income for time away (capped at 4 hours)
+  // =========================================================================
+  processOfflineIncome() {
+    if (!this._savedAt) return;
+    const elapsed = (Date.now() - this._savedAt) / 1000;
+    if (elapsed < 30) return; // less than 30 seconds away — skip
+
+    const maxOffline = 4 * 3600; // 4 hours cap
+    const offlineSec = Math.min(elapsed, maxOffline);
+    const passiveMB = this.getPassiveRate();
+    const passiveUSD = this.getUSDPassiveRate();
+
+    // Apply at 50% efficiency (offline penalty)
+    const gainMB = passiveMB * offlineSec * 0.5;
+    const gainUSD = passiveUSD * offlineSec * 0.5;
+
+    if (gainMB > 0 || gainUSD > 0) {
+      this.dataMB += gainMB;
+      this.totalDataMB += gainMB;
+      this.creditsUSD += gainUSD;
+
+      const hours = Math.floor(elapsed / 3600);
+      const mins = Math.floor((elapsed % 3600) / 60);
+      const timeStr = hours > 0 ? `${hours}ч ${mins}м` : `${mins}м`;
+
+      setTimeout(() => {
+        this.addNotification('🌙 ОФЛАЙН ДОХОД', `За ${timeStr} отсутствия: +${Math.floor(gainMB)} МБ, +$${Math.floor(gainUSD).toLocaleString()}`);
+      }, 2000);
+    }
+  }
+
+  // =========================================================================
+  // DAILY QUESTS
+  // =========================================================================
+  initDailyQuests() {
+    const today = new Date().toISOString().slice(0, 10);
+    if (this.dailyQuestDate !== today) {
+      // New day — generate new quests, reset counters
+      this.dailyQuestDate = today;
+      this.dailyClicks = 0;
+      this.dailyDataCollected = 0;
+      this.dailyCreditsEarned = 0;
+      this.dailyAssaults = 0;
+      this.dailyHacks = 0;
+      this.dailyCrits = 0;
+      this.dailyOverclocks = 0;
+
+      const prestige = this.blueprintsBP;
+      const shuffled = shuffleArray(DAILY_QUEST_TEMPLATES).slice(0, 3);
+      this.dailyQuests = shuffled.map((tmpl, i) => {
+        const n = tmpl.getN(prestige);
+        return {
+          id: tmpl.id,
+          desc: tmpl.desc.replace('{n}', n),
+          icon: tmpl.icon,
+          target: n,
+          completed: false,
+          reward: { mb: 20 + prestige * 10, usd: 3000 + prestige * 1500 }
+        };
+      });
+      this.saveGame();
+    }
+  }
+
+  checkDailyQuests() {
+    if (!this.dailyQuests || this.dailyQuests.length === 0) return;
+
+    let allDone = true;
+    this.dailyQuests.forEach(q => {
+      if (q.completed) return;
+
+      const tmpl = DAILY_QUEST_TEMPLATES.find(t => t.id === q.id);
+      if (tmpl && tmpl.check(this, q.target)) {
+        q.completed = true;
+        this.dataMB += q.reward.mb;
+        this.totalDataMB += q.reward.mb;
+        this.creditsUSD += q.reward.usd;
+        this.addNotification(`${q.icon} КВЕСТ ВЫПОЛНЕН`, `${q.desc} — +${q.reward.mb} МБ, +$${q.reward.usd}`);
+        window.tacticalAudio.playContractSfx();
+      }
+
+      if (!q.completed) allDone = false;
+    });
+
+    if (allDone && this.dailyQuests.every(q => q.completed)) {
+      this.checkAchievement('daily_complete');
+    }
+  }
+
+  // =========================================================================
+  // BOSS SHIPS — triggered every 5 sunk ships
+  // =========================================================================
+  shouldTriggerBoss() {
+    return this.sunkenShips > 0 && this.sunkenShips % 5 === 0 && !this.bossActive;
+  }
+
+  getBossForLevel() {
+    const idx = Math.min(BOSS_SHIPS.length - 1, Math.floor(this.bossesDefeated / 2));
+    return BOSS_SHIPS[idx];
   }
 
   // =========================================================================
@@ -1418,6 +1656,7 @@ class BarracudaGame {
     if (this.visitedSectors.size >= 4) this.checkAchievement('all_sectors');
     if (this.overclockUses >= 5) this.checkAchievement('overclock_5');
     if (this.shieldSaves >= 3) this.checkAchievement('survivor');
+    if (this.bossesDefeated >= 1) this.checkAchievement('boss_slayer');
   }
 
   // =========================================================================
@@ -1635,14 +1874,14 @@ class BarracudaGame {
   }
 
   getHWCost(type) {
-    const bases = { satcom: 15, optics: 45, armor: 80, waterjets: 150, missiles: 300 };
-    const scales = { satcom: 1.45, optics: 1.5, armor: 1.55, waterjets: 1.6, missiles: 1.7 };
+    const bases = { satcom: 50, optics: 150, armor: 300, waterjets: 600, missiles: 1200 };
+    const scales = { satcom: 1.8, optics: 1.85, armor: 1.9, waterjets: 1.95, missiles: 2.0 };
     return Math.floor(bases[type] * Math.pow(scales[type], this.hw[type]));
   }
 
   getCyberCost(type) {
-    const bases = { sniffer: 30, quantum: 100, autosiphon: 200 };
-    const scales = { sniffer: 1.5, quantum: 1.65, autosiphon: 1.7 };
+    const bases = { sniffer: 100, quantum: 400, autosiphon: 800 };
+    const scales = { sniffer: 1.85, quantum: 2.0, autosiphon: 2.1 };
     return Math.floor(bases[type] * Math.pow(scales[type], this.cyber[type]));
   }
 
@@ -1891,6 +2130,7 @@ class BarracudaGame {
           this.creditsUSD += 2000 * mult;
           this.addData(50 * mult);
           this.totalHacks++;
+          this.dailyHacks++;
           this.cyberComboChannel++;
 
           if (this.cyberComboChannel < 3) {
@@ -1971,7 +2211,7 @@ class BarracudaGame {
     if (this.btnAssault) {
       this.btnAssault.addEventListener('click', (e) => {
         e.stopPropagation();
-        if (this.dataMB >= this.maxCapacityMB && !this.minigameActive) {
+        if (this.assaultCharge >= this.assaultChargeMax && !this.minigameActive) {
           this.startAssault();
         }
       });
@@ -2013,22 +2253,37 @@ class BarracudaGame {
     if (this.engine3D) {
       this.engine3D.setWeatherSector(sectorId);
     }
+    // Start ambient soundscape for new sector
+    window.tacticalAudio.startAmbient(sectorId);
     this.mapModal.classList.remove('active');
     this.checkAllAchievements();
-    this.updateUI();
+    this._uiDirty = true;
   }
 
   fireMissileSalvo(multiplier = 3) {
+    // Check FPV drone salvo cooldown
+    if (this.weaponCooldown > 0) {
+      this.addNotification('⏳ ПЕРЕЗАРЯДКА', `Дроны готовы через ${this.weaponCooldown.toFixed(1)}с`);
+      return;
+    }
+
+    // Start salvo cooldown
+    this.weaponCooldown = this.weaponCooldownMax;
+
     if (this.engine3D) {
       this.engine3D.launchMissileStrike(() => {
         const gainMB = this.getClickPower() * multiplier * 4.0;
         const gainUSD = this.getClickCashGain() * multiplier * 3;
         this.addData(gainMB);
         this.addCredits(gainUSD);
-        this.sunkenShips++;
         this.spawnFloatingGain(window.innerWidth / 2, window.innerHeight / 2, gainMB, gainUSD, true);
+
+        // Heavy damage to ship from salvo
+        const salvoDmg = gainMB * 2.0;
+        this.damageShip(salvoDmg);
+
         this.checkAllAchievements();
-        this.updateUI();
+        this._uiDirty = true;
       });
     }
   }
@@ -2115,6 +2370,7 @@ class BarracudaGame {
     let gainUSD = this.getClickCashGain();
     let isCrit = Math.random() < this.getCritChance();
     this.totalClicks++;
+    this.dailyClicks++;
 
     // Event click challenge
     if (this.activeEvent && this.activeEvent.type === 'click_challenge') {
@@ -2125,6 +2381,7 @@ class BarracudaGame {
       gainMB *= 5.0;
       gainUSD *= 5;
       this.totalCrits++;
+      this.dailyCrits++;
       window.tacticalAudio.playCritPing();
       this.spawnFloatingGain(x, y, gainMB, gainUSD, true);
     } else {
@@ -2135,7 +2392,35 @@ class BarracudaGame {
     this.addData(gainMB);
     this.addCredits(gainUSD);
     this.engine3D.triggerClickBounce();
-    this.checkAllAchievements();
+
+    // Damage the target ship
+    const dmg = gainMB * 0.5 * (isCrit ? 3 : 1);
+    this.damageShip(dmg);
+  }
+
+  damageShip(dmg) {
+    this.shipHP = Math.max(0, this.shipHP - dmg);
+    this._uiDirty = true;
+
+    if (this.shipHP <= 0) {
+      // Ship destroyed!
+      this.sunkenShips++;
+      this.shipLevel++;
+      const reward = Math.floor(500 * this.shipLevel * this.getGlobalMultiplier());
+      this.creditsUSD += reward;
+      this.addNotification('💥 КОРАБЛЬ УНИЧТОЖЕН', `+$${reward.toLocaleString()} // Уровень ${this.shipLevel}`);
+      window.tacticalAudio.playExplosion();
+
+      if (this.engine3D) {
+        this.engine3D.triggerShipExplosion();
+      }
+
+      // Spawn new ship with more HP
+      this.shipMaxHP = Math.floor(100 * Math.pow(1.6, this.shipLevel - 1));
+      this.shipHP = this.shipMaxHP;
+      this.checkAllAchievements();
+      this.saveGame();
+    }
   }
 
   spawnFloatingGain(x, y, gainMB, gainUSD, isCrit) {
@@ -2150,15 +2435,20 @@ class BarracudaGame {
   }
 
   addData(amount) {
-    this.dataMB = Math.min(this.dataMB + amount, this.maxCapacityMB);
+    this.dataMB += amount;
     this.totalDataMB += amount;
+    this.dailyDataCollected += amount;
+    // Also charge assault meter (proportional) — plasma_warhead doubles rate
+    const chargeRate = this.tech.plasma_warhead ? 1.6 : 0.8;
+    this.assaultCharge = Math.min(this.assaultCharge + amount * chargeRate, this.assaultChargeMax);
     this.checkDossierProgression();
-    this.updateUI();
+    this._uiDirty = true;
   }
 
   addCredits(amount) {
     this.creditsUSD += amount;
-    this.updateUI();
+    this.dailyCreditsEarned += amount;
+    this._uiDirty = true;
   }
 
   sellDataForCash() {
@@ -2217,14 +2507,14 @@ class BarracudaGame {
       this.overclockTimer = 10.0;
       this.overclockCooldown = 25.0;
       this.overclockUses++;
+      this.dailyOverclocks++;
       window.tacticalAudio.playCritPing();
-      this.checkAllAchievements();
-      this.updateUI();
+      this._uiDirty = true;
     }
   }
 
   checkDossierProgression() {
-    const percent = (this.dataMB / this.maxCapacityMB) * 100.0;
+    const percent = Math.min(100, (this.assaultCharge / this.assaultChargeMax) * 100.0);
     for (let i = 0; i < DOSSIER_LORE.length; i++) {
       if (percent >= DOSSIER_LORE[i].threshold && this.currentDossierStage <= i) {
         this.currentDossierStage = i + 1;
@@ -2263,10 +2553,24 @@ class BarracudaGame {
   startAssault() {
     this.minigameActive = true;
     this.assaultModal.classList.add('active');
-    this.fpvGame.setDifficulty(this.blueprintsBP, this.hw.armor);
+
+    // Check if this should be a boss fight
+    if (this.shouldTriggerBoss()) {
+      this.bossActive = true;
+      this.currentBoss = this.getBossForLevel();
+      this.fpvGame.isBoss = true;
+      this.fpvGame.bossData = this.currentBoss;
+      this.addNotification(this.currentBoss.name, `БОСС: ${this.currentBoss.desc}`);
+    } else {
+      this.fpvGame.isBoss = false;
+      this.fpvGame.bossData = null;
+    }
+
+    this.fpvGame.setDifficulty(this.blueprintsBP, this.hw.armor, this.tech.ghost_protocol);
     this.fpvGame.start(this.fpvCanvas);
     window.tacticalAudio.playAlarm();
     this.checkAchievement('first_assault');
+    this.dailyAssaults++;
   }
 
   updateMinigame(dt) {
@@ -2327,22 +2631,34 @@ class BarracudaGame {
     this.fpvGame.stop();
 
     if (success) {
-      this.lockStatusLabel.textContent = '💥 КИНЕТИЧЕСКИЙ УДАР ПОДТВЕРЖДЁН!';
+      this.lockStatusLabel.textContent = this.bossActive
+        ? '👑 БОСС-КОРАБЛЬ УНИЧТОЖЕН!'
+        : '💥 КИНЕТИЧЕСКИЙ УДАР ПОДТВЕРЖДЁН!';
       this.lockStatusLabel.style.color = '#ffcc00';
 
       this.screenFlash.style.opacity = '1';
       setTimeout(() => { this.screenFlash.style.opacity = '0'; }, 600);
 
-      // Rewards scaled by rating
+      // Rewards scaled by rating + boss multiplier
       const ratingMults = { S: 2.0, A: 1.5, B: 1.2, C: 1.0 };
       const rMult = ratingMults[this.lastAssaultRating] || 1.0;
+      const bossMult = this.bossActive && this.currentBoss ? this.currentBoss.rewardMult : 1.0;
 
       this.blueprintsBP++;
       this.sunkenShips++;
-      this.creditsUSD += Math.floor(15000 * rMult);
-      this.dataMB = 0;
-      this.maxCapacityMB = Math.floor(100.0 * (1.0 + this.blueprintsBP * 0.35));
+      this.creditsUSD += Math.floor(15000 * rMult * bossMult);
+      // Reset assault charge, increase requirement — data stays as currency
+      this.assaultCharge = 0;
+      this.assaultChargeMax = Math.floor(100.0 * (1.0 + this.blueprintsBP * 0.4));
       this.currentDossierStage = 0;
+
+      // Boss defeat tracking
+      if (this.bossActive) {
+        this.bossesDefeated++;
+        this.addNotification('👑 БОСС ПОВЕРЖЕН', `${this.currentBoss.name} — x${bossMult} награды!`);
+        this.bossActive = false;
+        this.currentBoss = null;
+      }
 
       // Bonus data from pickups
       if (this.fpvGame.collectedData > 0) {
@@ -2361,7 +2677,7 @@ class BarracudaGame {
         this.updateDossier(DOSSIER_LORE[0], false);
         this.checkAllAchievements();
         this.saveGame();
-        this.updateUI();
+        this._uiDirty = true;
       }, 3500);
     } else {
       this.lockStatusLabel.textContent = 'FPV-ДРОН УНИЧТОЖЕН // ШТУРМ ПРОВАЛЕН';
@@ -2424,18 +2740,41 @@ class BarracudaGame {
       // Overclock timers
       if (this.isOverclocked) {
         this.overclockTimer -= dt;
-        if (this.overclockTimer <= 0) this.isOverclocked = false;
+        if (this.overclockTimer <= 0) { this.isOverclocked = false; this._uiDirty = true; }
       }
       if (this.overclockCooldown > 0) this.overclockCooldown -= dt;
 
-      // Passive income
-      const passiveMB = this.getPassiveRate();
-      if (passiveMB > 0 && this.dataMB < this.maxCapacityMB && !this.minigameActive) {
-        this.addData(passiveMB * dt);
+      // Weapon cooldown
+      if (this.weaponCooldown > 0) {
+        this.weaponCooldown = Math.max(0, this.weaponCooldown - dt);
+        const cdFill = document.getElementById('cooldown-fill');
+        if (cdFill) cdFill.style.width = `${(1 - this.weaponCooldown / this.weaponCooldownMax) * 100}%`;
+      }
+
+      // Passive income — data is uncapped, also charges assault meter
+      if (!this.minigameActive) {
+        let passiveMB = this.getPassiveRate();
+        if (this.tech.data_nexus) passiveMB *= 2.0;
+        if (passiveMB > 0) {
+          this.dataMB += passiveMB * dt;
+          this.totalDataMB += passiveMB * dt;
+          this.dailyDataCollected += passiveMB * dt;
+          // Charge assault meter — plasma_warhead doubles rate
+          if (this.assaultCharge < this.assaultChargeMax) {
+            const chargeRate = this.tech.plasma_warhead ? 1.6 : 0.8;
+            this.assaultCharge = Math.min(this.assaultCharge + passiveMB * dt * chargeRate, this.assaultChargeMax);
+          }
+          this.checkDossierProgression();
+          this._uiDirty = true;
+        }
       }
 
       const passiveUSD = this.getUSDPassiveRate();
-      if (passiveUSD > 0) this.addCredits(passiveUSD * dt);
+      if (passiveUSD > 0) {
+        this.creditsUSD += passiveUSD * dt;
+        this.dailyCreditsEarned += passiveUSD * dt;
+        this._uiDirty = true;
+      }
 
       // Contracts
       this.activeContracts.forEach(c => {
@@ -2448,7 +2787,7 @@ class BarracudaGame {
             this.addData(c.rewardMB);
             window.tacticalAudio.playContractSfx();
             this.addNotification('✅ КОНТРАКТ ВЫПОЛНЕН', `${c.name} — +$${c.rewardUSD.toLocaleString()}`);
-            this.updateUI();
+            this._uiDirty = true;
           }
         }
       });
@@ -2471,17 +2810,34 @@ class BarracudaGame {
           window.tacticalAudio.playCyberInterference();
           setTimeout(() => { this.cyberInterferenceActive = false; }, 1500 + Math.random() * 1500);
         }
+
+        // Only draw cyber wave when modal is visible
+        this.drawCyberWave(now / 1000.0);
       }
 
       // Random events
       this.updateRandomEvents(dt);
-      this.updateEventBannerUI();
+      if (this.activeEvent) this.updateEventBannerUI();
 
       // Minigame
       this.updateMinigame(dt);
-      this.drawCyberWave(now / 1000.0);
-      this.updateUIElements();
-      this.checkAllAchievements();
+
+      // === THROTTLED UI UPDATES (max ~4/sec) ===
+      this._uiThrottleAccum += dt;
+      if (this._uiDirty && this._uiThrottleAccum >= 0.25) {
+        this._uiThrottleAccum = 0;
+        this._uiDirty = false;
+        this.updateUI();
+        this.updateUIElements();
+      }
+
+      // === THROTTLED ACHIEVEMENT CHECK (every 2 sec) ===
+      this._achieveCheckAccum += dt;
+      if (this._achieveCheckAccum >= 2.0) {
+        this._achieveCheckAccum = 0;
+        this.checkAllAchievements();
+        this.checkDailyQuests();
+      }
 
       requestAnimationFrame(loop);
     };
@@ -2492,12 +2848,12 @@ class BarracudaGame {
   // UI UPDATE
   // =========================================================================
   updateUI() {
-    const percent = (this.dataMB / this.maxCapacityMB) * 100.0;
+    const chargePercent = Math.min(100, (this.assaultCharge / this.assaultChargeMax) * 100.0);
 
-    if (this.lblBuffer) this.lblBuffer.textContent = `${this.dataMB.toFixed(1)} / ${this.maxCapacityMB.toFixed(0)} МБ`;
+    if (this.lblBuffer) this.lblBuffer.textContent = `${this.dataMB.toFixed(1)} МБ`;
     if (this.lblCredits) this.lblCredits.textContent = `$${Math.floor(this.creditsUSD).toLocaleString()}`;
-    if (this.lblEnergyPercent) this.lblEnergyPercent.textContent = `${percent.toFixed(0)}%`;
-    if (this.progressBarFill) this.progressBarFill.style.width = `${percent}%`;
+    if (this.lblEnergyPercent) this.lblEnergyPercent.textContent = `${chargePercent.toFixed(0)}%`;
+    if (this.progressBarFill) this.progressBarFill.style.width = `${chargePercent}%`;
 
     if (this.lblPassiveUSD) this.lblPassiveUSD.textContent = `+$${Math.floor(this.getUSDPassiveRate())}/с`;
     if (this.lblPassive) this.lblPassive.textContent = `+${this.getPassiveRate().toFixed(1)} МБ/с`;
@@ -2514,15 +2870,27 @@ class BarracudaGame {
       this.lblKillsStatus.textContent = `РАНГ: ${rank}`;
     }
 
-    const isReady = this.dataMB >= this.maxCapacityMB;
+    const isReady = this.assaultCharge >= this.assaultChargeMax;
     if (this.btnAssault) {
       if (isReady) {
         this.btnAssault.classList.add('ready');
-        this.btnAssault.textContent = '>>> ЗАПУСК FPV-ШТУРМА [ГОТОВ] <<<';
+        this.btnAssault.textContent = `>>> ЗАПУСК FPV-ШТУРМА [ГОТОВ] <<<`;
       } else {
         this.btnAssault.classList.remove('ready');
-        this.btnAssault.textContent = 'ЗАПУСК FPV-ШТУРМА';
+        this.btnAssault.textContent = `FPV-ШТУРМ [${chargePercent.toFixed(0)}%]`;
       }
+    }
+
+    // Ship HP bar
+    const hpFill = document.getElementById('ship-hp-fill');
+    const hpLabel = document.getElementById('ship-hp-label');
+    if (hpFill) {
+      const hpPct = Math.max(0, (this.shipHP / this.shipMaxHP) * 100);
+      hpFill.style.width = `${hpPct}%`;
+      hpFill.style.background = hpPct > 50 ? '#ff4444' : hpPct > 25 ? '#ff8800' : '#ff0000';
+    }
+    if (hpLabel) {
+      hpLabel.textContent = `ЦЕЛЬ [Ур.${this.shipLevel}]: ${Math.ceil(this.shipHP)} / ${this.shipMaxHP} HP`;
     }
   }
 
@@ -2589,8 +2957,482 @@ class BarracudaGame {
       if (empEl) empEl.style.display = 'none';
     }
   }
+
+  // =========================================================================
+  // TECH TREE (TACTICAL R&D MATRIX)
+  // =========================================================================
+  initTechTree() {
+    this.techTreeModal = document.getElementById('techtree-modal');
+    const openBtn = document.getElementById('btn-open-techtree');
+    const closeBtn = document.getElementById('btn-close-techtree');
+
+    if (openBtn) {
+      openBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.refreshTechTree();
+        if (this.techTreeModal) this.techTreeModal.classList.add('active');
+        if (this.allNodeIds && this.allNodeIds.length > 0) {
+          this.selectTechNode(this.allNodeIds[this.selectedNodeIndex || 0]);
+        }
+      });
+    }
+    if (closeBtn) {
+      closeBtn.addEventListener('click', () => {
+        if (this.techTreeModal) this.techTreeModal.classList.remove('active');
+      });
+    }
+
+    // Filter Branch Tabs
+    document.querySelectorAll('.tt-tab-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        document.querySelectorAll('.tt-tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const filter = btn.getAttribute('data-filter');
+        document.querySelectorAll('.tt-branch').forEach(branch => {
+          if (filter === 'all' || branch.getAttribute('data-branch') === filter) {
+            branch.style.display = 'flex';
+          } else {
+            branch.style.display = 'none';
+          }
+        });
+      });
+    });
+
+    // Tech node extended specifications & lore
+    this.techDescriptions = {
+      sniffer: {
+        icon: '📡',
+        tier: 'TIER 1',
+        branch: 'СТЕЛС & КИБЕР-РЭБ',
+        lore: 'Пассивный широкополосный анализатор радиочастот. Перехватывает пакеты телеметрии и навигации кораблей противника в скрытном режиме. Не демаскирует катер излучением.'
+      },
+      quantum: {
+        icon: '🔮',
+        tier: 'TIER 2',
+        branch: 'СТЕЛС & КИБЕР-РЭБ',
+        lore: 'Квантовый сопроцессор дешифровки протоколов военного стандарта. Мгновенно вычисляет уязвимости в шифровании бортовых систем врага, увеличивая шанс критического взлома.'
+      },
+      ghost_protocol: {
+        icon: '👻',
+        tier: 'TIER 3',
+        branch: 'СТЕЛС & КИБЕР-РЭБ',
+        lore: 'Электродинамический протокол поглощения радиоволн и тепловой сигнатуры. В режиме FPV-штурма подавляет сигналы ПВО противника, снижая количество препятствий на 40%.'
+      },
+      ecm_suite: {
+        icon: '🛡️',
+        tier: 'TIER 4',
+        branch: 'СТЕЛС & КИБЕР-РЭБ',
+        lore: 'Комплекс активного подавления радаров и каналов связи противника. Сокращает время перезарядки и подготовки к пуску боевых FPV-дронов в 2 раза.'
+      },
+      optics: {
+        icon: '🔭',
+        tier: 'TIER 1',
+        branch: 'ОГНЕВАЯ МОЩЬ',
+        lore: 'Многоспектральный гиростабилизированный оптико-электронный комплекс FLIR. Обеспечивает сопровождение теплоконтрастных целей в тумане, дыму и ночных условиях.'
+      },
+      missiles: {
+        icon: '🚀',
+        tier: 'TIER 2',
+        branch: 'ОГНЕВАЯ МОЩЬ',
+        lore: 'Складные стапели катапультного старта боевых FPV-дронов. Позволяют нести увеличенную кумулятивную боевую часть, повышая урон каждого удара на 50%.'
+      },
+      plasma_warhead: {
+        icon: '💥',
+        tier: 'TIER 3',
+        branch: 'ОГНЕВАЯ МОЩЬ',
+        lore: 'Высокотемпературная плазменная БЧ с кумулятивной струёй. Вызывает вторичные детонации боезапаса на вражеских судах и в 2 раза ускоряет накопление заряда штурма.'
+      },
+      swarm_ai: {
+        icon: '🤖',
+        tier: 'TIER 4',
+        branch: 'ОГНЕВАЯ МОЩЬ',
+        lore: 'Автономная нейросеть управления роем дронов. Поднимает в воздух звено эскортных БПА, синхронизируя перекрёстные удары и удваивая весь суммарный урон.'
+      },
+      satcom: {
+        icon: '📡',
+        tier: 'TIER 1',
+        branch: 'ИНЖЕНЕРИЯ & БАЗА',
+        lore: 'Высокоскоростной терминал спутниковой связи SATCOM с фазированной антенной решёткой. Обеспечивает стабильный восходящий поток разведданных в штаб.'
+      },
+      armor: {
+        icon: '🛡️',
+        tier: 'TIER 2',
+        branch: 'ИНЖЕНЕРИЯ & БАЗА',
+        lore: 'Многослойные бронепанели из карбида кремния и арамидных волокон. Защищают аккумуляторный отсек, давая дополнительную прочность в FPV-режиме и пассивный сбор данных.'
+      },
+      waterjets: {
+        icon: '💨',
+        tier: 'TIER 3',
+        branch: 'ИНЖЕНЕРИЯ & БАЗА',
+        lore: 'Высокоэффективные водомётные движители с регулируемым вектором тяги. Повышают манёвренность на волнении, формируют скрытный кильватер и увеличивают скорость сбора данных.'
+      },
+      autosiphon: {
+        icon: '💰',
+        tier: 'TIER 4',
+        branch: 'ИНЖЕНЕРИЯ & БАЗА',
+        lore: 'Автономный модуль перехвата и маршрутизации защищённых финансовых транзакций. Обеспечивает постоянный приток кредитов на счёт операции.'
+      },
+      data_nexus: {
+        icon: '🌐',
+        tier: 'TIER 5',
+        branch: 'ИНЖЕНЕРИЯ & БАЗА',
+        lore: 'Главный квантовый дата-центр «НЕКСУС». Синхронизирует все спутниковые каналы, РЭБ-станции и сенсоры, удваивая весь пассивный доход данных.'
+      }
+    };
+
+    this.allNodeIds = [...document.querySelectorAll('.tt-node[data-tt]')].map(n => n.getAttribute('data-tt'));
+    this.selectedNodeIndex = 0;
+
+    // Node click handlers
+    document.querySelectorAll('.tt-node[data-tt]').forEach(node => {
+      node.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const id = node.getAttribute('data-tt');
+        this.selectTechNode(id);
+        if (window.tacticalAudio) window.tacticalAudio.playPing();
+      });
+      // Double click or instant purchase
+      node.addEventListener('dblclick', (e) => {
+        e.stopPropagation();
+        const id = node.getAttribute('data-tt');
+        this.purchaseTechNode(id);
+      });
+    });
+
+    // Primary action button inside inspector
+    const buyBtn = document.getElementById('tt-btn-action-buy');
+    if (buyBtn) {
+      buyBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (this.allNodeIds && this.allNodeIds[this.selectedNodeIndex]) {
+          this.purchaseTechNode(this.allNodeIds[this.selectedNodeIndex]);
+        }
+      });
+    }
+
+    // Navigation buttons
+    const prevBtn = document.getElementById('tt-nav-prev');
+    const nextBtn = document.getElementById('tt-nav-next');
+    if (prevBtn) {
+      prevBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.selectedNodeIndex = (this.selectedNodeIndex - 1 + this.allNodeIds.length) % this.allNodeIds.length;
+        this.selectTechNode(this.allNodeIds[this.selectedNodeIndex]);
+        if (window.tacticalAudio) window.tacticalAudio.playPing();
+      });
+    }
+    if (nextBtn) {
+      nextBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.selectedNodeIndex = (this.selectedNodeIndex + 1) % this.allNodeIds.length;
+        this.selectTechNode(this.allNodeIds[this.selectedNodeIndex]);
+        if (window.tacticalAudio) window.tacticalAudio.playPing();
+      });
+    }
+  }
+
+  selectTechNode(id) {
+    if (!id) return;
+    this.selectedNodeIndex = this.allNodeIds.indexOf(id);
+    if (this.selectedNodeIndex < 0) this.selectedNodeIndex = 0;
+
+    const node = document.querySelector(`.tt-node[data-tt="${id}"]`);
+    if (!node) return;
+
+    // Highlight selected node
+    document.querySelectorAll('.tt-node').forEach(n => n.classList.remove('tt-selected'));
+    node.classList.add('tt-selected');
+
+    // Update inspector terminal
+    const info = this.techDescriptions[id] || {};
+    const nameEl = document.getElementById('tt-detail-name');
+    const iconEl = document.getElementById('tt-detail-icon');
+    const tierEl = document.getElementById('tt-detail-tier');
+    const branchEl = document.getElementById('tt-detail-branch');
+    const descEl = document.getElementById('tt-detail-desc');
+    const statsEl = document.getElementById('tt-detail-stats');
+    const statusWrap = document.getElementById('tt-detail-status-wrap');
+    const buyBtn = document.getElementById('tt-btn-action-buy');
+
+    if (nameEl) nameEl.textContent = node.querySelector('.tt-node-name')?.textContent || id;
+    if (iconEl) iconEl.textContent = info.icon || '🔬';
+    if (tierEl) tierEl.textContent = info.tier || `TIER ${node.getAttribute('data-tier') || '1'}`;
+    if (branchEl) branchEl.textContent = info.branch || 'НИОКР КОРПУСА';
+    if (descEl) descEl.textContent = info.lore || node.querySelector('.tt-node-desc')?.textContent || '';
+
+    const cost = parseInt(node.getAttribute('data-tt-cost')) || 0;
+    const req = node.getAttribute('data-tt-req');
+    const effect = node.querySelector('.tt-node-desc')?.textContent || '';
+
+    if (statsEl) {
+      statsEl.innerHTML = `СТОИМОСТЬ: <strong>${cost.toLocaleString()} МБ</strong> // ЭФФЕКТ: <strong>${effect}</strong>${req ? ` // ТРЕБУЕТСЯ: <strong>${req.toUpperCase()}</strong>` : ''}`;
+    }
+
+    const isUnlocked = this.isTechUnlocked(id);
+    const isReqMet = !req || this.isTechUnlocked(req);
+    const hasEnoughData = this.dataMB >= cost;
+
+    if (statusWrap) {
+      if (isUnlocked) {
+        statusWrap.innerHTML = `<div class="tt-status-pill unlocked">✓ МОДУЛЬ АКТИВИРОВАН</div>`;
+      } else if (isReqMet) {
+        if (hasEnoughData) {
+          statusWrap.innerHTML = `<div class="tt-status-pill available">◉ ГОТОВО К ИССЛЕДОВАНИЮ</div>`;
+        } else {
+          statusWrap.innerHTML = `<div class="tt-status-pill ready">⚠️ НЕДОСТАТОЧНО ДАННЫХ</div>`;
+        }
+      } else {
+        statusWrap.innerHTML = `<div class="tt-status-pill locked">🔒 ТРЕБУЕТСЯ ПРЕДШЕСТВЕННИК</div>`;
+      }
+    }
+
+    if (buyBtn) {
+      if (isUnlocked) {
+        buyBtn.disabled = true;
+        buyBtn.textContent = '✓ ИССЛЕДОВАНО';
+      } else if (!isReqMet) {
+        buyBtn.disabled = true;
+        buyBtn.textContent = `🔒 ТРЕБУЕТСЯ: ${req.toUpperCase()}`;
+      } else if (!hasEnoughData) {
+        buyBtn.disabled = true;
+        buyBtn.textContent = `НЕДОСТАТОЧНО (${cost.toLocaleString()} МБ)`;
+      } else {
+        buyBtn.disabled = false;
+        buyBtn.textContent = `⚡ ИЗУЧИТЬ // ${cost.toLocaleString()} МБ`;
+      }
+    }
+  }
+
+  isTechUnlocked(id) {
+    if (this.hw[id] !== undefined) return this.hw[id] > 0;
+    if (this.cyber[id] !== undefined) return this.cyber[id] > 0;
+    if (this.tech[id]) return true;
+    return false;
+  }
+
+  purchaseTechNode(id) {
+    const node = document.querySelector(`.tt-node[data-tt="${id}"]`);
+    if (!node) return;
+
+    if (this.isTechUnlocked(id)) return;
+
+    const req = node.getAttribute('data-tt-req');
+    if (req && !this.isTechUnlocked(req)) {
+      this.addNotification('🔒 ЗАБЛОКИРОВАНО', `Сначала исследуйте предшественник: ${req.toUpperCase()}`);
+      return;
+    }
+
+    const cost = parseInt(node.getAttribute('data-tt-cost')) || 0;
+    if (this.dataMB < cost) {
+      this.addNotification('❌ НЕ ХВАТАЕТ ДАННЫХ', `Нужно ${cost.toLocaleString()} МБ, у вас ${Math.floor(this.dataMB).toLocaleString()} МБ`);
+      return;
+    }
+
+    this.dataMB -= cost;
+
+    if (this.hw[id] !== undefined) {
+      this.hw[id]++;
+      if (this.engine3D) {
+        this.engine3D.addModule(id);
+        this.engine3D.updateUpgrades({ ...this.hw, ...this.cyber, prestige: this.blueprintsBP });
+      }
+    } else if (this.cyber[id] !== undefined) {
+      this.cyber[id]++;
+    } else {
+      this.tech[id] = true;
+    }
+
+    const effectDesc = this.applyTechEffect(id);
+    if (window.tacticalAudio) window.tacticalAudio.playMountingSfx();
+    this.addNotification('🔬 МОДУЛЬ ИССЛЕДОВАН', `${node.querySelector('.tt-node-name')?.textContent || id}\n${effectDesc}`);
+    
+    this.refreshTechTree();
+    this.selectTechNode(id);
+    this.updateUIElements();
+    this.saveGame();
+    this._uiDirty = true;
+  }
+
+  applyTechEffect(id) {
+    switch (id) {
+      case 'satcom':
+        return `+${(2.0 * this.hw.satcom).toFixed(1)} МБ/клик активно`;
+      case 'optics':
+        return `+${(4.0 * this.hw.optics).toFixed(1)} МБ/клик активно`;
+      case 'armor':
+        return `+1 жизнь в FPV, +${(1.5 * this.hw.armor).toFixed(1)} МБ/с`;
+      case 'waterjets':
+        return `+${(3.0 * this.hw.waterjets).toFixed(1)} МБ/с активно`;
+      case 'missiles':
+        return `FPV-дрон x${1 + this.hw.missiles * 0.5} к удару`;
+      case 'sniffer':
+        return `+${(2.5 * this.cyber.sniffer).toFixed(1)} МБ/с пассивно`;
+      case 'quantum':
+        return `+${(12 * this.cyber.quantum)}% крит шанс активен`;
+      case 'autosiphon':
+        return `+$${75 * this.cyber.autosiphon}/с пассивно`;
+
+      case 'ghost_protocol':
+        return '✓ FPV: -40% препятствий, -2 требуемых прохода';
+      case 'ecm_suite':
+        this.weaponCooldownMax = Math.max(0.5, this.weaponCooldownMax * 0.5);
+        return `✓ Кулдаун пуска FPV: ${this.weaponCooldownMax.toFixed(1)}с (было 1.5с)`;
+      case 'plasma_warhead':
+        return '✓ Скорость заряда штурма x2 активна';
+      case 'swarm_ai':
+        this.tech.swarmAI = true;
+        if (this.engine3D) this.engine3D.updateSwarmEscorts(true);
+        return '✓ Рой ИИ дронов-эскортов активирован';
+      case 'data_nexus':
+        return '✓ Пассивный доход x2 активен';
+      default:
+        return '';
+    }
+  }
+
+  refreshTechTree() {
+    let unlockedTotal = 0;
+    let stealthUnlocked = 0;
+    let firepowerUnlocked = 0;
+    let engineeringUnlocked = 0;
+
+    const stealthNodes = ['sniffer', 'quantum', 'ghost_protocol', 'ecm_suite'];
+    const firepowerNodes = ['optics', 'missiles', 'plasma_warhead', 'swarm_ai'];
+    const engineeringNodes = ['satcom', 'armor', 'waterjets', 'autosiphon', 'data_nexus'];
+
+    document.querySelectorAll('.tt-node[data-tt]').forEach(node => {
+      const id = node.getAttribute('data-tt');
+      const req = node.getAttribute('data-tt-req');
+      const cost = parseInt(node.getAttribute('data-tt-cost')) || 0;
+
+      node.classList.remove('tt-locked', 'tt-available', 'tt-unlocked');
+
+      const isUnlocked = this.isTechUnlocked(id);
+      const isReqMet = !req || this.isTechUnlocked(req);
+
+      if (isUnlocked) {
+        node.classList.add('tt-unlocked');
+        unlockedTotal++;
+        if (stealthNodes.includes(id)) stealthUnlocked++;
+        if (firepowerNodes.includes(id)) firepowerUnlocked++;
+        if (engineeringNodes.includes(id)) engineeringUnlocked++;
+      } else if (isReqMet) {
+        node.classList.add('tt-available');
+      } else {
+        node.classList.add('tt-locked');
+      }
+    });
+
+    // Telemetry updates
+    const userDataEl = document.getElementById('tt-user-data');
+    if (userDataEl) {
+      userDataEl.textContent = `${this.dataMB < 1000 ? this.dataMB.toFixed(1) : Math.floor(this.dataMB).toLocaleString()} МБ`;
+    }
+
+    const globalProgEl = document.getElementById('tt-global-progress');
+    if (globalProgEl) {
+      const percent = Math.round((unlockedTotal / 13) * 100);
+      globalProgEl.textContent = `${unlockedTotal} / 13 [${percent}%]`;
+    }
+
+    const countStealthEl = document.getElementById('tt-count-stealth');
+    if (countStealthEl) countStealthEl.textContent = `${stealthUnlocked}/4`;
+
+    const countFirepowerEl = document.getElementById('tt-count-firepower');
+    if (countFirepowerEl) countFirepowerEl.textContent = `${firepowerUnlocked}/4`;
+
+    const countEngEl = document.getElementById('tt-count-engineering');
+    if (countEngEl) countEngEl.textContent = `${engineeringUnlocked}/5`;
+  }
+
+  // Override passive rate to include tech tree bonuses
+  getPassiveRateWithTech() {
+    let rate = this.getPassiveRate();
+    if (this.tech.data_nexus) rate *= 2.0;
+    return rate;
+  }
+
+  // =========================================================================
+  // SETTINGS
+  // =========================================================================
+  initSettings() {
+    const settingsModal = document.getElementById('settings-modal');
+    const openBtn = document.getElementById('btn-open-settings');
+    const closeBtn = document.getElementById('btn-close-settings');
+
+    if (openBtn) {
+      openBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.refreshSettingsUI();
+        if (settingsModal) settingsModal.classList.add('active');
+      });
+    }
+    if (closeBtn) {
+      closeBtn.addEventListener('click', () => {
+        if (settingsModal) settingsModal.classList.remove('active');
+      });
+    }
+
+    // Sound toggle
+    const soundToggle = document.getElementById('setting-sound');
+    if (soundToggle) {
+      soundToggle.addEventListener('click', () => {
+        this.soundEnabled = !this.soundEnabled;
+        if (window.tacticalAudio) {
+          window.tacticalAudio.masterGain.gain.value = this.soundEnabled ? 1.0 : 0.0;
+        }
+        this.refreshSettingsUI();
+        this.saveGame();
+      });
+    }
+
+    // Volume slider
+    const volSlider = document.getElementById('setting-volume');
+    if (volSlider) {
+      volSlider.value = this.soundEnabled ? 70 : 0;
+      volSlider.addEventListener('input', () => {
+        const vol = parseInt(volSlider.value) / 100;
+        if (window.tacticalAudio && window.tacticalAudio.masterGain) {
+          window.tacticalAudio.masterGain.gain.value = vol;
+        }
+        this.soundEnabled = vol > 0;
+        this.refreshSettingsUI();
+      });
+    }
+
+    // New Game
+    const newGameBtn = document.getElementById('btn-new-game');
+    if (newGameBtn) {
+      newGameBtn.addEventListener('click', () => {
+        if (confirm('НОВАЯ ИГРА: Весь прогресс будет сброшен. Продолжить?')) {
+          localStorage.removeItem('barracuda_save');
+          location.reload();
+        }
+      });
+    }
+
+    // Apply saved sound setting
+    if (!this.soundEnabled && window.tacticalAudio && window.tacticalAudio.masterGain) {
+      window.tacticalAudio.masterGain.gain.value = 0;
+    }
+  }
+
+  refreshSettingsUI() {
+    const soundToggle = document.getElementById('setting-sound');
+    if (soundToggle) {
+      soundToggle.textContent = this.soundEnabled ? '🔊 ЗВУК: ВКЛ' : '🔇 ЗВУК: ВЫКЛ';
+      soundToggle.style.color = this.soundEnabled ? '#00ff66' : '#ff4444';
+    }
+    const volSlider = document.getElementById('setting-volume');
+    if (volSlider && window.tacticalAudio && window.tacticalAudio.masterGain) {
+      volSlider.value = Math.round(window.tacticalAudio.masterGain.gain.value * 100);
+    }
+  }
 }
 
 window.addEventListener('DOMContentLoaded', () => {
   window.barracudaGame = new BarracudaGame();
+  window.barracudaGame.initTechTree();
+  window.barracudaGame.initSettings();
 });
