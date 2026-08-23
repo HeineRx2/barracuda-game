@@ -541,6 +541,7 @@ body {
   pointer-events: auto;
   z-index: 25;
   align-items: center;
+  margin-left: auto;
 }
 
 .ring-action-btn {
