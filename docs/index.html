@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>BARRACUDA // Автономный Ударный Дрон</title>
   <meta name="description" content="Тактический симулятор боевого надводного дрона Барракуда с реалистичной 3D-моделью.">
-  <link rel="stylesheet" href="style.css?v=2.7.0_local">
+  <link rel="stylesheet" href="style.css?v=3.5.0_mobile_pro">
 
   <!-- Global Error Handler Overlay -->
   <script>
@@ -30,32 +30,28 @@
 </head>
 <body>
 
-  <!-- Fullscreen 3D Scene (Real GLB Drone Model + Ocean + Atmosphere + Warships) -->
+  <!-- 3D Drone & Ocean Viewport Container -->
   <div id="drone-3d-viewport"></div>
 
-  <!-- CRT Scanlines & Vignette -->
-  <div class="crt-overlay"></div>
-  <div class="vignette-overlay"></div>
+  <!-- Central Interaction Click Target Zone -->
+  <div class="center-interact-zone"></div>
 
-  <!-- Thermal FLIR Post-processing Overlay (When FLIR Active) -->
-  <div id="flir-thermal-overlay" class="flir-thermal-view">
-    <div class="flir-grid-scope"></div>
-    <div class="flir-crosshair-center">
-      <div class="flir-circle"></div>
-      <div class="flir-ticks-h"></div>
-      <div class="flir-ticks-v"></div>
+  <!-- FLIR Thermal Optics Fullscreen Overlay -->
+  <div id="flir-overlay">
+    <div class="flir-crosshair"></div>
+    <div class="flir-scan-line"></div>
+    <div class="flir-telemetry-box">
+      <div>РЕЖИМ: ТЕПЛОВИЗОР FLIR (LWIR)</div>
+      <div>СЕНСОР: КРИО-МАТРИЦА 640x512</div>
+      <div>СПЕКТР: 8-14 мкм // УСИЛЕНИЕ x4</div>
+      <div id="flir-target-status" style="color:#ffcc00; margin-top:4px;">ЦЕЛЬ: ВРАЖЕСКИЙ КОРАБЛЬ [ЗАХВАТ]</div>
     </div>
-    <div class="flir-telemetry-hud">
-      <div class="flir-tag">FLIR // ОПТИЧЕСКИЙ ТЕПЛОВИЗОР [WHITE-HOT]</div>
-      <div class="flir-target-readout">ДИСТАНЦИЯ: <span id="flir-dist-val">1,420 м</span> // ВРАЖЕСКИЙ КОРВЕТ «АДМИРАЛ»</div>
-    </div>
-    <!-- Interactive Target Lock Boxes on Enemy Warship -->
-    <div class="flir-interactive-targets">
-      <button class="flir-lock-point" data-target="ammo" title="Склад боекомплекта (Крит x8)">
-        <span class="lock-bracket">🎯 СКЛАД БОЕКОМПЛЕКТА [x8 КРИТ]</span>
+    <div class="flir-weakspots-container">
+      <button class="flir-lock-point" data-target="radar" title="Радарный комплекс (Крит x4)">
+        <span class="lock-bracket">🎯 РАДАРНЫЙ ПОСТ [x4 КРИТ]</span>
       </button>
-      <button class="flir-lock-point" data-target="bridge" title="Ходовой мостик (Крит x5)">
-        <span class="lock-bracket">🎯 ХОДОВОЙ МОСТИК [x5 КРИТ]</span>
+      <button class="flir-lock-point" data-target="missile" title="Ракетные шахты (Крит x4)">
+        <span class="lock-bracket">🎯 ПУСКОВЫЕ ШАХТЫ [x4 КРИТ]</span>
       </button>
       <button class="flir-lock-point" data-target="engine" title="Машинное отделение (Крит x4)">
         <span class="lock-bracket">🎯 МАШИННОЕ ОТДЕЛЕНИЕ [x4 КРИТ]</span>
@@ -72,17 +68,18 @@
 
     <!-- TOP BAR: Controls, Balances, Booster, Mini-Radar -->
     <header class="top-hud-bar">
-      <div class="top-left-controls">
+      <!-- Row 1: Nav Bar -->
+      <div class="top-nav-row">
         <button class="btn-tactical-pause" id="btn-toggle-tma" title="Скрыть/Показать HUD">👁️</button>
-        <button class="btn-dossier-pill" id="btn-open-campaign" title="Сюжетная кампания и боевые операции" style="border-color:rgba(0,255,136,0.6); background:rgba(0,255,136,0.15); color:#00ff88;">
+        <button class="btn-dossier-pill btn-nav-campaign" id="btn-open-campaign" title="Сюжетная кампания" style="border-color:rgba(0,255,136,0.6); background:rgba(0,255,136,0.15); color:#00ff88;">
           <span class="dossier-pill-icon">⚔️</span>
           <span class="dossier-pill-text">ОПЕРАЦИИ</span>
         </button>
-        <button class="btn-dossier-pill" id="btn-open-hangar" title="Ангар прототипов дронов и крафт" style="border-color:rgba(0,240,255,0.6); background:rgba(0,240,255,0.12); color:#00f0ff;">
+        <button class="btn-dossier-pill btn-nav-hangar" id="btn-open-hangar" title="Ангар и крафт" style="border-color:rgba(0,240,255,0.6); background:rgba(0,240,255,0.12); color:#00f0ff;">
           <span class="dossier-pill-icon">⚓</span>
           <span class="dossier-pill-text">АНГАР</span>
         </button>
-        <button class="btn-dossier-pill" id="btn-toggle-dossier" title="Открыть секретное досье">
+        <button class="btn-dossier-pill" id="btn-toggle-dossier" title="Секретное досье">
           <span class="dossier-pill-icon">📁</span>
           <span class="dossier-pill-text">ДОСЬЕ</span>
           <span class="dossier-unread-dot" id="dossier-unread-beacon"></span>
@@ -91,26 +88,26 @@
           <span class="sector-badge-icon">🗺️</span>
           <span id="label-current-sector" class="sector-badge-name">О. ЗМЕИНЫЙ</span>
         </button>
-        <button class="btn-help-pill" id="btn-open-help" title="Справка по игре">
+        <button class="btn-help-pill" id="btn-open-help" title="Справка">
           <span class="help-pill-icon">❓</span>
           <span class="help-pill-text">СПРАВКА</span>
         </button>
         <button class="btn-help-pill" id="btn-open-settings" title="Настройки">
           <span class="help-pill-icon">⚙️</span>
-          <span class="help-pill-text">НАСТРОЙКИ</span>
+          <span class="help-pill-text">ОПЦИИ</span>
         </button>
       </div>
 
-      <div class="top-right-telemetry">
+      <!-- Row 2: Telemetry Strip -->
+      <div class="top-stats-row">
         <div class="balance-pill credits-pill">
           <span class="pill-label">КРЕДИТЫ $</span>
           <span class="pill-value" id="val-credits">$500</span>
         </div>
         <div class="balance-pill buffer-pill">
           <span class="pill-label">БУФЕР</span>
-          <span class="pill-value" id="val-buffer">0.0 / 100 МБ</span>
+          <span class="pill-value" id="val-buffer">0.0 / 5.0 ГБ</span>
         </div>
-        <!-- Booster Integrated Widget -->
         <div id="booster-widget" class="booster-floating-widget" title="Тактический разгон мощности">
           <div class="booster-inner-btn" id="btn-overclock">
             <span class="booster-icon">⚡</span>
@@ -120,7 +117,6 @@
             </div>
           </div>
         </div>
-        <div class="emp-status-indicator" id="emp-status" style="display:none;"></div>
         <div class="mini-radar-box" id="mini-radar" title="Радарный сканер">
           <div class="radar-sweep-cone"></div>
           <div class="radar-drone-blip"></div>
@@ -1154,8 +1150,8 @@
   </div>
 
   <!-- Audio, 3D Engine & Game Logic -->
-  <script src="audio.js?v=2.7.0_local"></script>
-  <script src="drone3d.js?v=2.7.0_local"></script>
-  <script src="game.js?v=2.7.0_local"></script>
+  <script src="audio.js?v=3.5.0_mobile_pro"></script>
+  <script src="drone3d.js?v=3.5.0_mobile_pro"></script>
+  <script src="game.js?v=3.5.0_mobile_pro"></script>
 </body>
 </html>
