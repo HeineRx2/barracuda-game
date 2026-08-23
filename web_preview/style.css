@@ -1420,213 +1420,367 @@ body {
 }
 
 /* =========================================================================
-   RESPONSIVE LAYOUT & MOBILE ADAPTATION
+   RESPONSIVE LAYOUT & MOBILE ADAPTATION (PIXEL-PERFECT MOBILE FIRST)
    ========================================================================= */
-
-@media (max-width: 900px) {
-  #game-frame {
-    padding: 8px 12px;
-  }
-  .top-right-telemetry {
-    margin-right: 0;
-  }
-}
 
 @media (max-width: 768px) {
   #game-frame {
     padding: 6px 8px;
-    padding-top: max(6px, env(safe-area-inset-top));
-    padding-bottom: max(6px, env(safe-area-inset-bottom));
+    padding-top: max(8px, env(safe-area-inset-top));
+    padding-bottom: max(8px, env(safe-area-inset-bottom));
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    pointer-events: none;
   }
 
-  /* Top Bar */
+  /* ------------------- TOP HUD BAR ------------------- */
   .top-hud-bar {
-    gap: 6px;
-    flex-wrap: wrap;
-    align-items: center;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    width: 100%;
+    pointer-events: auto;
   }
 
   .top-left-controls {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
     gap: 4px;
     flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
   }
+  .top-left-controls::-webkit-scrollbar { display: none; }
 
   .btn-tactical-pause {
-    width: 32px;
-    height: 32px;
-    font-size: 12px;
+    width: 28px;
+    height: 28px;
+    font-size: 11px;
+    flex-shrink: 0;
   }
 
   .btn-dossier-pill,
   .btn-sector-pill,
   .btn-help-pill {
-    height: 32px;
-    padding: 0 8px;
+    height: 28px;
+    padding: 0 6px;
     font-size: 10px;
-    gap: 4px;
+    gap: 3px;
+    flex-shrink: 0;
+    border-radius: 6px;
   }
 
+  .dossier-pill-text,
+  .help-pill-text {
+    font-size: 9px;
+  }
+
+  .sector-badge-name {
+    max-width: 80px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 9px;
+  }
+
+  /* Top Telemetry Row */
   .top-right-telemetry {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
     gap: 4px;
     flex-wrap: nowrap;
   }
 
   .balance-pill {
-    padding: 2px 6px;
+    flex: 1;
+    min-width: 0;
+    padding: 2px 5px;
+    height: 28px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    border-radius: 6px;
   }
-  .pill-label { font-size: 7px; }
-  .pill-value { font-size: 11px; }
-
-  .mini-radar-box {
-    width: 32px;
-    height: 32px;
+  .pill-label {
+    font-size: 7px;
+    letter-spacing: 0.5px;
+    line-height: 1;
+    margin-bottom: 1px;
+  }
+  .pill-value {
+    font-size: 10px;
+    font-weight: 800;
+    line-height: 1.1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
   }
 
-  /* Booster Widget in flow */
+  .booster-floating-widget {
+    flex-shrink: 0;
+  }
   .booster-inner-btn {
-    padding: 3px 8px 3px 5px;
-    gap: 4px;
+    padding: 2px 6px;
+    gap: 3px;
+    height: 28px;
+    border-radius: 6px;
   }
   .booster-icon {
-    width: 20px;
-    height: 20px;
-    font-size: 11px;
+    width: 16px;
+    height: 16px;
+    font-size: 10px;
   }
   .booster-title {
-    font-size: 9px;
+    font-size: 8px;
+    font-weight: 800;
   }
   .booster-sub {
-    font-size: 7px;
+    font-size: 6.5px;
   }
 
-  /* Quick Combat Buttons */
+  .mini-radar-box {
+    width: 28px;
+    height: 28px;
+    flex-shrink: 0;
+    border-radius: 6px;
+  }
+
+  /* ------------------- QUICK COMBAT ACTIONS BAR ------------------- */
   .quick-combat-actions-bar {
-    margin-top: 6px;
-    gap: 4px;
-    flex-wrap: wrap;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+    width: 100%;
+    margin-top: 4px;
+    pointer-events: auto;
+    z-index: 15;
   }
 
   .combat-quick-btn {
-    padding: 4px 8px;
-    font-size: 10px;
-    gap: 4px;
+    flex: 1;
+    max-width: 120px;
+    padding: 4px 6px;
+    font-size: 9px;
+    height: 26px;
+    gap: 3px;
+    border-radius: 6px;
+    justify-content: center;
   }
+  .cq-icon { font-size: 11px; }
+  .cq-text { font-size: 8.5px; font-weight: 700; }
 
-  /* Middle Arena & Slide Panels */
+  /* ------------------- MIDDLE ARENA & NAVIGATION DOCK ------------------- */
   .middle-arena {
-    padding: 4px 0;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: center;
+    padding: 0;
+    position: relative;
+    pointer-events: none;
   }
 
   .concept-dossier-card {
-    width: 280px;
-    max-width: 80vw;
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 92vw;
+    max-width: 360px;
+    max-height: 45vh;
     padding: 8px 10px;
-  }
-  .dossier-terminal-text {
-    font-size: 10px;
-    min-height: 38px;
+    z-index: 50;
+    pointer-events: auto;
   }
 
-  /* Right Action Dock */
+  /* Bottom Navigation Dock: 5 Tabs */
   .concept-action-rings {
-    gap: 6px;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    align-items: center;
+    width: 100%;
+    max-width: 420px;
+    gap: 4px;
+    padding: 4px 0 6px 0;
+    pointer-events: auto;
+    z-index: 20;
+  }
+
+  .ring-action-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    background: transparent;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    flex: 1;
   }
 
   .ring-circle-icon {
     width: 36px;
     height: 36px;
-    font-size: 14px;
+    font-size: 15px;
+    border-radius: 50%;
+    background: rgba(10, 25, 32, 0.85);
+    border: 1px solid rgba(0, 240, 255, 0.4);
+    box-shadow: 0 0 10px rgba(0, 240, 255, 0.15);
   }
 
   .ring-label {
     font-size: 8px;
+    font-weight: 700;
+    letter-spacing: 0;
+    white-space: nowrap;
+    text-align: center;
+    color: #8da4af;
   }
 
-  /* Slide-out drawer: Centered bottom sheet on mobile */
+  /* Slide-out drawer bottom sheet */
   .concept-slide-panel {
-    right: 50% !important;
-    transform: translateX(50%) !important;
-    bottom: 80px;
-    width: 94vw;
-    max-width: 380px;
-    max-height: 60vh;
-    padding: 10px 12px;
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    transform: none !important;
+    width: 100vw !important;
+    max-width: 100vw !important;
+    max-height: 60vh !important;
+    border-radius: 16px 16px 0 0 !important;
+    background: rgba(6, 16, 22, 0.98) !important;
+    border: 1px solid rgba(0, 240, 255, 0.4) !important;
+    border-bottom: none !important;
+    padding: 12px 14px !important;
+    z-index: 200 !important;
+    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.9) !important;
+    pointer-events: auto;
   }
 
-  /* Bottom Telemetry Bar */
+  /* ------------------- BOTTOM CONCEPT BAR (COMBAT DOCK) ------------------- */
   .bottom-concept-bar {
-    padding: 6px 10px;
-    gap: 4px;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    gap: 6px;
+    padding: 8px 10px;
+    background: rgba(6, 16, 22, 0.92);
+    border: 1px solid rgba(0, 240, 255, 0.3);
+    border-radius: 10px;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+    pointer-events: auto;
+    z-index: 25;
   }
 
   .telemetry-dual-gauges {
-    gap: 8px;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    gap: 5px;
+  }
+
+  /* Target Ship HP Bar */
+  .gauge-group {
+    width: 100%;
   }
 
   .gauge-header-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     font-size: 10px;
+    font-weight: 700;
+    margin-bottom: 2px;
   }
 
   .concept-bar-track {
-    height: 7px;
+    width: 100%;
+    height: 6px;
+    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  .bottom-mission-subrow {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    gap: 4px;
+    margin-top: 2px;
   }
 
   .mission-tag {
-    font-size: 9px;
+    display: none; /* Clean uncluttered mobile view */
   }
 
   .btn-concept-strike {
-    padding: 4px 10px;
-    font-size: 11px;
+    width: 100%;
+    height: 36px;
+    font-size: 12px;
+    font-weight: 800;
+    border-radius: 8px;
+    letter-spacing: 0.8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, rgba(0, 240, 255, 0.25), rgba(0, 255, 136, 0.25));
+    border: 1px solid #00f0ff;
+    color: #00f0ff;
+    box-shadow: 0 0 15px rgba(0, 240, 255, 0.2);
   }
 }
 
 @media (max-width: 480px) {
-  /* Extra compact for portrait phones */
-  .dossier-pill-text,
-  .help-pill-text {
-    display: none; /* Show icon only */
-  }
-
-  .btn-dossier-pill,
-  .btn-help-pill {
-    padding: 0 8px;
-  }
-
-  .sector-badge-name {
-    max-width: 70px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .quick-combat-actions-bar {
-    margin-top: 4px;
+  .top-left-controls {
     gap: 3px;
   }
 
-  .combat-quick-btn {
-    padding: 3px 6px;
-    font-size: 9px;
-  }
-  .cq-text {
+  .btn-dossier-pill,
+  .btn-sector-pill,
+  .btn-help-pill {
+    padding: 0 5px;
+    height: 26px;
     font-size: 9px;
   }
 
+  .dossier-pill-text,
+  .help-pill-text {
+    display: none; /* Show icon only for ultra-compact clean header */
+  }
+
+  .sector-badge-name {
+    max-width: 65px;
+  }
+
+  .pill-value {
+    font-size: 9.5px;
+  }
+
   .ring-circle-icon {
-    width: 32px;
-    height: 32px;
-    font-size: 13px;
+    width: 34px;
+    height: 34px;
+    font-size: 14px;
   }
 
   .ring-label {
     font-size: 7.5px;
-    letter-spacing: 0.2px;
   }
 
-  .concept-slide-panel {
-    bottom: 74px;
-    max-height: 55vh;
+  .btn-concept-strike {
+    height: 34px;
+    font-size: 11px;
   }
 }
 
