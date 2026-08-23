@@ -4,8 +4,14 @@
 // =========================================================================
 
 class Barracuda3DEngine {
-  constructor(containerId, onClickCallback) {
-    this.container = document.getElementById(containerId);
+  constructor(containerOrId, onClickCallback) {
+    if (typeof containerOrId === 'string') {
+      this.container = document.getElementById(containerOrId);
+    } else if (containerOrId && containerOrId.nodeType) {
+      this.container = containerOrId;
+    } else {
+      this.container = document.getElementById('drone-3d-viewport') || document.body;
+    }
     this.onClickCallback = onClickCallback;
     this.scene = null;
     this.camera = null;
@@ -83,7 +89,8 @@ class Barracuda3DEngine {
     const H = this.container.clientHeight || window.innerHeight;
 
     this.scene = new THREE.Scene();
-    this.scene.fog = new THREE.FogExp2(0x112836, 0.0035);
+    this.scene.background = new THREE.Color(0x05131e);
+    this.scene.fog = new THREE.FogExp2(0x061826, 0.0018);
 
     this.camera = new THREE.PerspectiveCamera(34, W / H, 0.1, 20000);
     this.camera.position.set(7, 4.5, 10);
@@ -95,11 +102,17 @@ class Barracuda3DEngine {
       powerPreference: 'high-performance'
     });
     this.renderer.setSize(W, H);
+    this.renderer.setClearColor(0x05131e, 1.0);
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.75));
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.15;
+    this.renderer.domElement.style.position = 'absolute';
+    this.renderer.domElement.style.top = '0';
+    this.renderer.domElement.style.left = '0';
+    this.renderer.domElement.style.width = '100%';
+    this.renderer.domElement.style.height = '100%';
+    this.renderer.domElement.style.display = 'block';
     this.container.appendChild(this.renderer.domElement);
 
     this.createAtmosphericSky();
@@ -110,7 +123,7 @@ class Barracuda3DEngine {
     this.createLightningSystem();
     this.createRainSystem();
     this.createParticlePools();
-    this.loadGLBModel();
+    this.loadGLBModel();        // Loads real GLB boat model (falls back to procedural only if error)
     this.setupEvents();
     this.animate();
   }
@@ -119,33 +132,39 @@ class Barracuda3DEngine {
   // ATMOSPHERIC SKY & VOLUMETRIC CLOUDS
   // =========================================================================
   createAtmosphericSky() {
-    this.sky = new THREE.Sky();
-    this.sky.scale.setScalar(12000);
-    this.scene.add(this.sky);
-
-    const skyUniforms = this.sky.material.uniforms;
-    skyUniforms['turbidity'].value = 2.2;
-    skyUniforms['rayleigh'].value = 1.8;
-    skyUniforms['mieCoefficient'].value = 0.004;
-    skyUniforms['mieDirectionalG'].value = 0.82;
-
-    const elevation = 25;
-    const azimuth = 195;
+    const elevation = 16;
+    const azimuth = 205;
     const phi = THREE.MathUtils.degToRad(90 - elevation);
     const theta = THREE.MathUtils.degToRad(azimuth);
-
     this.sun = new THREE.Vector3();
     this.sun.setFromSphericalCoords(1, phi, theta);
-    skyUniforms['sunPosition'].value.copy(this.sun);
+
+    if (typeof THREE.Sky !== 'undefined') {
+      this.sky = new THREE.Sky();
+      this.sky.scale.setScalar(12000);
+      if (this.sky.material) {
+        this.sky.material.fog = false;
+      }
+      this.scene.add(this.sky);
+
+      const skyUniforms = this.sky.material.uniforms;
+      skyUniforms['turbidity'].value = 6.0;
+      skyUniforms['rayleigh'].value = 1.6;
+      skyUniforms['mieCoefficient'].value = 0.005;
+      skyUniforms['mieDirectionalG'].value = 0.85;
+      skyUniforms['sunPosition'].value.copy(this.sun);
+    } else {
+      this.scene.background = new THREE.Color(0x0a2234);
+    }
 
     // Procedural Clouds
     this.cloudsGroup = new THREE.Group();
     const cloudMat = new THREE.MeshStandardMaterial({
-      color: 0xc8dce8,
-      roughness: 0.95,
+      color: 0x90c0dd,
+      roughness: 0.9,
       metalness: 0.0,
       transparent: true,
-      opacity: 0.45,
+      opacity: 0.55,
       depthWrite: false
     });
 
@@ -347,22 +366,40 @@ class Barracuda3DEngine {
   createWater() {
     const waterGeometry = new THREE.PlaneGeometry(6000, 6000);
 
-    this.water = new THREE.Water(waterGeometry, {
-      textureWidth: 512,
-      textureHeight: 512,
-      waterNormals: new THREE.TextureLoader().load(
-        'assets/waternormals.jpg',
-        (texture) => {
-          texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
-        }
-      ),
-      sunDirection: this.sun.clone().normalize(),
-      sunColor: 0xfff0d0,
-      waterColor: 0x061824,
-      distortionScale: 3.2,
-      fog: true
-    });
+    if (typeof THREE.Water !== 'undefined') {
+      try {
+        this.water = new THREE.Water(waterGeometry, {
+          textureWidth: 512,
+          textureHeight: 512,
+          waterNormals: new THREE.TextureLoader().load(
+            'assets/waternormals.jpg',
+            (texture) => {
+              texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+            }
+          ),
+          sunDirection: this.sun ? this.sun.clone().normalize() : new THREE.Vector3(0, 1, 0),
+          sunColor: 0xfff0d0,
+          waterColor: 0x061824,
+          distortionScale: 3.2,
+          fog: true
+        });
 
+        this.water.rotation.x = -Math.PI / 2;
+        this.water.position.y = 0.0;
+        this.scene.add(this.water);
+        return;
+      } catch (e) {
+        console.warn('THREE.Water init failed, falling back to standard plane:', e);
+      }
+    }
+
+    // Fallback standard ocean surface
+    const oceanMat = new THREE.MeshStandardMaterial({
+      color: 0x071e2c,
+      roughness: 0.1,
+      metalness: 0.85
+    });
+    this.water = new THREE.Mesh(waterGeometry, oceanMat);
     this.water.rotation.x = -Math.PI / 2;
     this.water.position.y = 0.0;
     this.scene.add(this.water);
@@ -411,29 +448,29 @@ class Barracuda3DEngine {
   // LIGHTING
   // =========================================================================
   setupLighting() {
-    this.hemiLight = new THREE.HemisphereLight(0xbadcf2, 0x0a1e28, 1.1);
+    this.hemiLight = new THREE.HemisphereLight(0x70c0e8, 0x082030, 2.2);
     this.scene.add(this.hemiLight);
 
-    this.sunLight = new THREE.DirectionalLight(0xfffae8, 2.6);
-    this.sunLight.position.set(12, 18, 14);
+    this.sunLight = new THREE.DirectionalLight(0xfff8ee, 3.4);
+    this.sunLight.position.set(16, 24, 18);
     this.sunLight.castShadow = true;
     this.sunLight.shadow.mapSize.set(1024, 1024);
-    this.sunLight.shadow.camera.left = -6;
-    this.sunLight.shadow.camera.right = 6;
-    this.sunLight.shadow.camera.top = 6;
-    this.sunLight.shadow.camera.bottom = -6;
+    this.sunLight.shadow.camera.left = -8;
+    this.sunLight.shadow.camera.right = 8;
+    this.sunLight.shadow.camera.top = 8;
+    this.sunLight.shadow.camera.bottom = -8;
     this.sunLight.shadow.bias = -0.001;
     this.scene.add(this.sunLight);
 
-    this.fillLight = new THREE.DirectionalLight(0x4080a0, 0.9);
-    this.fillLight.position.set(-10, 8, -8);
+    this.fillLight = new THREE.DirectionalLight(0x3088b0, 1.4);
+    this.fillLight.position.set(-12, 10, -10);
     this.scene.add(this.fillLight);
 
-    this.greenGlow = new THREE.PointLight(0x00ff66, 1.2, 8, 1.8);
-    this.greenGlow.position.set(0, 0.6, 0);
+    this.greenGlow = new THREE.PointLight(0x00ff88, 2.8, 12, 1.5);
+    this.greenGlow.position.set(0, 0.4, 0);
     this.scene.add(this.greenGlow);
 
-    this.ambientLight = new THREE.AmbientLight(0x182c38, 0.7);
+    this.ambientLight = new THREE.AmbientLight(0x204860, 1.4);
     this.scene.add(this.ambientLight);
   }
 
@@ -739,11 +776,21 @@ class Barracuda3DEngine {
   // LOAD GLB MODEL & HARDPOINT SETUP
   // =========================================================================
   loadGLBModel() {
+    if (typeof THREE.GLTFLoader === 'undefined') {
+      console.warn('[BARRACUDA 3D] GLTFLoader undefined, creating procedural boat hull.');
+      this.createProceduralBoat();
+      return;
+    }
+
     const loader = new THREE.GLTFLoader();
     loader.load(
       'assets/barracuda.glb',
       (gltf) => {
         try {
+          if (this.boatModel) {
+            this.scene.remove(this.boatModel);
+            this.boatModel = null;
+          }
           this.boatModel = gltf.scene;
 
           const box = new THREE.Box3().setFromObject(this.boatModel);
@@ -797,11 +844,62 @@ class Barracuda3DEngine {
 
         } catch (e) {
           console.error('Error during 3D model initialization:', e);
+          this.createProceduralBoat();
         }
       },
       undefined,
-      (err) => console.error('Failed to load GLB:', err)
+      (err) => {
+        console.warn('Failed to load GLB, building procedural boat:', err);
+        this.createProceduralBoat();
+      }
     );
+  }
+
+  createProceduralBoat() {
+    if (this.boatModel) return;
+    this.boatModel = new THREE.Group();
+
+    const hullMat = new THREE.MeshStandardMaterial({ color: 0x222a30, roughness: 0.35, metalness: 0.8 });
+    const deckMat = new THREE.MeshStandardMaterial({ color: 0x141a20, roughness: 0.4, metalness: 0.7 });
+    const glowMat = new THREE.MeshBasicMaterial({ color: 0x00ff88 });
+    const opticMat = new THREE.MeshBasicMaterial({ color: 0x00f0ff });
+
+    // Main stealth hull
+    const hull = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.55, 4.4), hullMat);
+    hull.position.y = 0.28;
+    this.boatModel.add(hull);
+
+    // Bow pointed wedge
+    const bow = new THREE.Mesh(new THREE.ConeGeometry(0.8, 1.8, 4), hullMat);
+    bow.rotation.x = -Math.PI / 2;
+    bow.rotation.y = Math.PI / 4;
+    bow.position.set(0, 0.28, 3.1);
+    this.boatModel.add(bow);
+
+    // Stealth cockpit / payload deck
+    const cab = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.45, 1.8), deckMat);
+    cab.position.set(0, 0.75, -0.2);
+    this.boatModel.add(cab);
+
+    // Satcom Dome
+    const dome = new THREE.Mesh(new THREE.SphereGeometry(0.28, 16, 12), new THREE.MeshStandardMaterial({ color: 0x00e5ff, emissive: 0x004466, roughness: 0.1 }));
+    dome.position.set(0, 1.1, -0.2);
+    this.boatModel.add(dome);
+
+    // FLIR Sensor Turret
+    const flir = new THREE.Mesh(new THREE.SphereGeometry(0.12, 12, 8), opticMat);
+    flir.position.set(0, 0.85, 1.4);
+    this.boatModel.add(flir);
+
+    // Green Port/Starboard Navigation LED Strips
+    [-0.82, 0.82].forEach(x => {
+      const led = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.04, 2.8), glowMat);
+      led.position.set(x, 0.45, 0.2);
+      this.boatModel.add(led);
+    });
+
+    this.scene.add(this.boatModel);
+    this.boatBaseY = 0.0;
   }
 
   cleanTexture(meshChild) {
@@ -1334,8 +1432,131 @@ class Barracuda3DEngine {
       }
     }
 
+    // Floating Salvage Crates on water
+    if (this.floatingSalvage && this.floatingSalvage.length > 0) {
+      for (let i = this.floatingSalvage.length - 1; i >= 0; i--) {
+        const crate = this.floatingSalvage[i];
+        crate.userData.age += dt;
+        crate.position.y = Math.sin(t * 2.0 + crate.userData.seed) * 0.15 + 0.1;
+        crate.rotation.y += 0.4 * dt;
+        crate.rotation.x = Math.sin(t * 1.5 + crate.userData.seed) * 0.08;
+
+        // Blinking beacon
+        if (crate.userData.beaconLight) {
+          const blink = Math.sin(t * 6.0 + crate.userData.seed) > 0.2;
+          crate.userData.beaconLight.intensity = blink ? 2.5 : 0.2;
+        }
+
+        // Float towards player slightly or expire after 40s
+        if (crate.userData.age > 40) {
+          this.scene.remove(crate);
+          this.floatingSalvage.splice(i, 1);
+        }
+      }
+    }
+
     this.renderer.render(this.scene, this.camera);
+  }
+
+  // =========================================================================
+  // PROTOTYPE HULL STYLING (PHANTOM / STRIKE / AEGIS)
+  // =========================================================================
+  setDronePrototype(protoId) {
+    this.currentPrototype = protoId;
+    if (!this.boatModel) return;
+
+    let hullColor = 0x161a1e;
+    let glowColor = 0x00ff66;
+    let roughness = 0.25;
+    let metalness = 0.85;
+
+    if (protoId === 'phantom') {
+      hullColor = 0x0a0c0e; // Ultra matte stealth black
+      glowColor = 0x00ff88;
+      roughness = 0.55;
+      metalness = 0.4;
+    } else if (protoId === 'strike') {
+      hullColor = 0x242822; // Olive naval assault camo
+      glowColor = 0xff4400;
+      roughness = 0.2;
+      metalness = 0.9;
+    } else if (protoId === 'aegis') {
+      hullColor = 0x122030; // Deep cyber blue
+      glowColor = 0x00e5ff;
+      roughness = 0.15;
+      metalness = 0.95;
+    }
+
+    this.boatModel.traverse((child) => {
+      if (child.isMesh && child.material && child.material.color) {
+        child.material.color.setHex(hullColor);
+        child.material.roughness = roughness;
+        child.material.metalness = metalness;
+        child.material.needsUpdate = true;
+      }
+    });
+
+    if (this.greenGlow) {
+      this.greenGlow.color.setHex(glowColor);
+      this.greenGlow.intensity = protoId === 'aegis' ? 2.6 : 1.4;
+    }
+  }
+
+  // =========================================================================
+  // FLOATING SALVAGE / CARGO CRATES
+  // =========================================================================
+  spawnFloatingSalvage(lootList = []) {
+    if (!this.floatingSalvage) this.floatingSalvage = [];
+    const origin = this.enemyShip ? this.enemyShip.position.clone() : new THREE.Vector3(38, 0, -75);
+
+    const count = Math.min(4, Math.max(2, lootList.length || 2));
+    for (let i = 0; i < count; i++) {
+      const crateGroup = new THREE.Group();
+
+      // Carbon/Steel Crate
+      const crateMat = new THREE.MeshStandardMaterial({
+        color: i % 2 === 0 ? 0xffcc00 : 0x00e5ff,
+        metalness: 0.8,
+        roughness: 0.2
+      });
+      const box = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.8, 1.2), crateMat);
+      crateGroup.add(box);
+
+      // Flotation collars (orange buoys on sides)
+      const buoyMat = new THREE.MeshStandardMaterial({ color: 0xff4400, roughness: 0.3 });
+      const buoyL = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 1.3, 8), buoyMat);
+      buoyL.rotation.z = Math.PI / 2;
+      buoyL.position.set(0, -0.2, 0.7);
+      crateGroup.add(buoyL);
+      const buoyR = buoyL.clone();
+      buoyR.position.z = -0.7;
+      crateGroup.add(buoyR);
+
+      // Emergency Strobe Beacon
+      const beaconLight = new THREE.PointLight(i % 2 === 0 ? 0xffaa00 : 0x00ffff, 2.0, 15);
+      beaconLight.position.set(0, 0.6, 0);
+      crateGroup.add(beaconLight);
+
+      const offsetDist = 8 + Math.random() * 12;
+      const offsetAngle = Math.random() * Math.PI * 2;
+      crateGroup.position.set(
+        origin.x + Math.cos(offsetAngle) * offsetDist,
+        0.1,
+        origin.z + Math.sin(offsetAngle) * offsetDist
+      );
+
+      crateGroup.userData = {
+        seed: Math.random() * 10,
+        age: 0,
+        beaconLight: beaconLight,
+        loot: lootList[i] || 'Трофейный контейнер'
+      };
+
+      this.scene.add(crateGroup);
+      this.floatingSalvage.push(crateGroup);
+    }
   }
 }
 
 window.Barracuda3DEngine = Barracuda3DEngine;
+

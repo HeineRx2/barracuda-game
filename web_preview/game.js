@@ -63,7 +63,351 @@ const ACHIEVEMENTS_DEF = [
   { id: 'no_damage', name: 'ФАНТОМ', desc: 'Пройдите FPV-штурм без урона', icon: '👻' },
   { id: 'speed_demon', name: 'ДЕМОН СКОРОСТИ', desc: 'Завершите штурм менее чем за 10 секунд', icon: '⏱️' },
   { id: 'boss_slayer', name: 'УБИЙЦА БОССОВ', desc: 'Уничтожьте первый босс-корабль', icon: '👑' },
-  { id: 'daily_complete', name: 'ДИСЦИПЛИНА', desc: 'Выполните все 3 ежедневных задания', icon: '📋' }
+  { id: 'daily_complete', name: 'ДИСЦИПЛИНА', desc: 'Выполните все 3 ежедневных задания', icon: '📋' },
+  { id: 'campaign_act1', name: 'ТЕНЬ ЗМЕИНОГО', desc: 'Завершите Акт I кампании', icon: '🏝️' },
+  { id: 'campaign_act2', name: 'ПРОРЫВ БОНОВ', desc: 'Завершите Акт II кампании', icon: '⚓' },
+  { id: 'campaign_act3', name: 'ПРИЗРАЧНЫЙ ФЛОТ', desc: 'Завершите Акт III кампании', icon: '🚢' },
+  { id: 'campaign_act4', name: 'КОД: ЛЕВИАФАН', desc: 'Уничтожьте флагман Левиафан', icon: '💀' },
+  { id: 'salvage_master', name: 'ИНЖЕНЕР ФЛОТА', desc: 'Скрафтите модуль в Ангаре', icon: '💠' }
+];
+
+// =========================================================================
+// =========================================================================
+// NAVAL SHIP CLASSES & SCALING
+// =========================================================================
+const ENEMY_SHIP_CLASSES = [
+  { level: 1, name: 'Патрульный катер «Раптор»', hp: 3500, armor: 0.10, lootMult: 1.0, icon: '🚤' },
+  { level: 2, name: 'Сторожевой катер «Гриф»', hp: 8000, armor: 0.15, lootMult: 1.2, icon: '🚤' },
+  { level: 3, name: 'Бронекатер «Шмель»', hp: 18000, armor: 0.20, lootMult: 1.5, icon: '🚤' },
+  { level: 4, name: 'МРК «Буян-М» (Калибр)', hp: 45000, armor: 0.30, lootMult: 2.0, icon: '🚢' },
+  { level: 5, name: 'Ракетный корвет «Каракурт»', hp: 100000, armor: 0.40, lootMult: 3.5, icon: '🚢' },
+  { level: 6, name: 'Корвет ПВО «Стерегущий»', hp: 250000, armor: 0.45, lootMult: 5.0, icon: '🚢' },
+  { level: 7, name: 'СКР «Ладный»', hp: 550000, armor: 0.50, lootMult: 7.0, icon: '⚓' },
+  { level: 8, name: 'Фрегат УРО «Адмирал Эссен»', hp: 1200000, armor: 0.60, lootMult: 10.0, icon: '⚓' },
+  { level: 9, name: 'Фрегат ПВО «Адмирал Макаров»', hp: 2500000, armor: 0.65, lootMult: 15.0, icon: '⚓' },
+  { level: 10, name: 'РК «Москва» [ГВАРДЕЙСКИЙ ФЛАГМАН]', hp: 6000000, armor: 0.75, lootMult: 30.0, icon: '👑' }
+];
+
+function getEnemyShipData(level) {
+  if (level <= ENEMY_SHIP_CLASSES.length) {
+    return ENEMY_SHIP_CLASSES[level - 1];
+  }
+  const extra = level - ENEMY_SHIP_CLASSES.length;
+  return {
+    level,
+    name: `Флагманский крейсер Тип-УРО (Ранг ${extra})`,
+    hp: Math.floor(6000000 * Math.pow(1.65, extra)),
+    armor: Math.min(0.85, 0.75 + extra * 0.02),
+    lootMult: 30.0 + extra * 10.0,
+    icon: '👑'
+  };
+}
+
+// =========================================================================
+// DRONE PROTOTYPES DEFINITION
+// =========================================================================
+const DRONE_PROTOTYPES_DEF = {
+  phantom: {
+    id: 'phantom',
+    name: 'BARRACUDA «PHANTOM»',
+    role: 'Стелс-разведка и диверсии',
+    desc: 'Корпус с пониженным радарным сечением. Увеличивает генерацию данных, снижает плотность ПВО.',
+    badge: 'MK-1 // СТЕЛС',
+    clickMult: 1.25,
+    passiveMult: 1.0,
+    dataGainMult: 1.5,
+    fpvObstacleDensity: 0.6,
+    fpvDamageMult: 1.0,
+    fpvExtraLives: 0,
+    rebTimeBonus: 8,
+    costUSD: 0
+  },
+  strike: {
+    id: 'strike',
+    name: 'BARRACUDA «STRIKE»',
+    role: 'Тяжёлый ударный ракетоносец',
+    desc: 'Сдвоенные направляющие для FPV. Наносит сокрушительный урон кораблям и боссам.',
+    badge: 'MK-2 // ШТУРМОВИК',
+    clickMult: 1.6,
+    passiveMult: 0.9,
+    dataGainMult: 1.0,
+    fpvObstacleDensity: 1.0,
+    fpvDamageMult: 2.5,
+    fpvExtraLives: 0,
+    rebTimeBonus: 0,
+    reqShips: 5,
+    reqSalvage: { box: 2, chips: 2 },
+    costUSD: 45000
+  },
+  aegis: {
+    id: 'aegis',
+    name: 'BARRACUDA «AEGIS»',
+    role: 'Комплекс РЭБ и Роевой ИИ',
+    desc: 'Оснащён куполом радиоэлектронного подавления и ведомым роем дронов сопровождения.',
+    badge: 'MK-3 // ФЛАГМАН РЭБ',
+    clickMult: 1.2,
+    passiveMult: 2.2,
+    dataGainMult: 1.3,
+    fpvObstacleDensity: 0.85,
+    fpvDamageMult: 1.5,
+    fpvExtraLives: 2,
+    rebTimeBonus: 15,
+    reqShips: 12,
+    reqSalvage: { box: 4, titanium: 6, aicore: 1 },
+    costUSD: 180000
+  }
+};
+
+// =========================================================================
+// SALVAGE CRAFTING RECIPES
+// =========================================================================
+const SALVAGE_CRAFT_RECIPES = [
+  {
+    id: 'armor_titan',
+    name: 'БРОНЕПЛИТЫ «ТИТАН-М»',
+    desc: '+50% к прочности корпуса и +2 дополнительные жизни во всех FPV-штурмах.',
+    cost: { titanium: 4, box: 2 },
+    tier: 1,
+    unlocked: false
+  },
+  {
+    id: 'quantum_booster',
+    name: 'КВАНТОВЫЙ ДЕШИФРАТОР РЭБ',
+    desc: '+12 секунд ко времени взлома частот и +25% к шансу критического сбора.',
+    cost: { chips: 5, box: 2 },
+    tier: 1,
+    unlocked: false
+  },
+  {
+    id: 'plasma_warhead',
+    name: 'ПЛАЗМЕННАЯ БОЕГОЛОВКА «X-9»',
+    desc: '+150% к урону штурмовых FPV-дронов и x2.5 к наградам за потопление боссов.',
+    cost: { titanium: 6, chips: 4, aicore: 2 },
+    tier: 2,
+    unlocked: false
+  },
+  {
+    id: 'escort_wingman',
+    name: 'АВТОНОМНЫЙ ВЕДОМЫЙ ДРОН',
+    desc: 'Постоянный рой эскорта в 3D: удваивает весь пассивный доход $ и МБ.',
+    cost: { aicore: 3, chips: 6, titanium: 8 },
+    tier: 3,
+    unlocked: false
+  }
+];
+
+// =========================================================================
+// CAMPAIGN ACTS & STORY MISSIONS DEFINITIONS
+// =========================================================================
+const CAMPAIGN_ACTS_DEF = [
+  {
+    act: 1,
+    title: '🏝️ ТЕНЬ НАД ЗМЕИНЫМ',
+    sector: 'sector-1',
+    desc: 'Вскрытие эшелона наблюдения противника в районе острова Змеиный.',
+    missions: [
+      {
+        id: 'm1_1',
+        code: 'OP-101 // ЗОВ ГОРИЗОНТА',
+        title: 'Первичный радиоперехват',
+        desc: 'Проникните в зону действия берегового поста РЛС и дешифруйте несущую частоту 142.5 МГц.',
+        reqData: 40,
+        phases: ['Сканирование', 'Взлом РЭБ', 'FPV-Удар', 'Сбор данных'],
+        reward: { usd: 3500, mb: 100, bp: 0, salvage: { box: 1, chips: 1 } },
+        targetName: 'Патрульный катер «Раптор»',
+        commsIntro: {
+          speaker: 'ШТАБ [МАЯК]', role: 'HQ',
+          text: 'Барракуда, говорит «Маяк». В квадрате 4 зафиксирована аномальная активность РЛС. Перехватите сигнал и вскройте фарватер.'
+        }
+      },
+      {
+        id: 'm1_2',
+        code: 'OP-102 // СЛЕПОЕ ПЯТНО',
+        title: 'Ослепление РЛС-купола',
+        desc: 'Подавите береговой ретранслятор и уничтожьте эскортный тральщик до передачи тревоги.',
+        reqData: 100,
+        phases: ['Радиомаскировка', 'Саботаж частот', 'FPV-Прорыв', 'Эвакуация'],
+        reward: { usd: 7000, mb: 250, bp: 1, salvage: { box: 1, titanium: 2 } },
+        targetName: 'Тральщик дивизиона',
+        commsIntro: {
+          speaker: 'ЛЕЙТЕНАНТ [ВЕКТОР]', role: 'EW',
+          text: 'Вижу частотную модуляцию радара. Если заглушим несущую волну за 25 секунд — они ослепнут!'
+        }
+      },
+      {
+        id: 'm1_3',
+        code: 'OP-103 // ОХОТА НА «ГРОМ» [БОСС]',
+        title: 'Ликвидация корвета «Гром»',
+        desc: 'Финальный удар по флагману патрульного дивизиона. Нанесите точечный кинетический удар в склад боекомплекта.',
+        reqData: 200,
+        isBoss: true,
+        bossId: 'corvette',
+        phases: ['Вскрытие ордера', 'РЭБ-прорыв', 'Штурм FLIR', 'Подъем ящика'],
+        reward: { usd: 18000, mb: 600, bp: 2, salvage: { box: 2, titanium: 3, chips: 2 } },
+        targetName: 'Корвет «Гром»',
+        commsIntro: {
+          speaker: 'АДМИРАЛ ВОРОНОВ', role: 'ENEMY',
+          text: 'Внимание всем бортам! В секторе неопознанный надводный дрон! Артиллерии открыть заградительный огонь!'
+        }
+      }
+    ]
+  },
+  {
+    act: 2,
+    title: '⚓ СЕВАСТОПОЛЬСКИЙ ПРОРЫВ',
+    sector: 'sector-2',
+    desc: 'Ночной рейд сквозь боновые заграждения и береговую систему ПВО Севастополя.',
+    missions: [
+      {
+        id: 'm2_1',
+        code: 'OP-201 // НОЧНОЙ КИЛЬВАТЕР',
+        title: 'Прорыв подводных гидрофонов',
+        desc: 'Обойдите рубеж гидроакустических буев на сверхмалой скорости под покровом ночи.',
+        reqData: 350,
+        phases: ['Стелс-маневр', 'Взлом буев', 'FPV-атака', 'Сбор трофеев'],
+        reward: { usd: 15000, mb: 500, bp: 1, salvage: { box: 1, chips: 3 } },
+        targetName: 'Сторожевой катер охраны водного района',
+        commsIntro: {
+          speaker: 'ШТАБ [МАЯК]', role: 'HQ',
+          text: 'Вход в бухту заминирован и перекрыт бонами. Действуйте в режиме полного радиомолчания.'
+        }
+      },
+      {
+        id: 'm2_2',
+        code: 'OP-202 // СИСТЕМА «БАЛ»',
+        title: 'Саботаж берегового комплекса',
+        desc: 'Перехватите телеметрию наведения берегового ракетного дивизиона и сорвите пуск.',
+        reqData: 600,
+        phases: ['Спутниковый перехват', 'Дешифровка ключа', 'Точечный удар', 'Эвакуация данных'],
+        reward: { usd: 28000, mb: 900, bp: 2, salvage: { box: 2, titanium: 4 } },
+        targetName: 'Командный пункт наведения',
+        commsIntro: {
+          speaker: 'ЛЕЙТЕНАНТ [ВЕКТОР]', role: 'EW',
+          text: 'Перехватываю телекодовую связь батареи «Бал». Внедрим троян в их систему наведения!'
+        }
+      },
+      {
+        id: 'm2_3',
+        code: 'OP-203 // ФРЕГАТ «БУРЯ» [БОСС]',
+        title: 'Потопление ракетного фрегата',
+        desc: 'Удар по тяжелому ракетоносцу с активной защитой. Пробейте ходовой мостик.',
+        reqData: 1000,
+        isBoss: true,
+        bossId: 'frigate',
+        phases: ['Преодоление ПВО', 'РЭБ-подавление', 'Удар в мостик', 'Захват ящика'],
+        reward: { usd: 45000, mb: 1500, bp: 3, salvage: { box: 3, chips: 4, titanium: 4, aicore: 1 } },
+        targetName: 'Фрегат «Буря»',
+        commsIntro: {
+          speaker: 'АДМИРАЛ ВОРОНОВ', role: 'ENEMY',
+          text: '«Буря», активировать комплекс активной защиты! Сбить дрон любыми средствами!'
+        }
+      }
+    ]
+  },
+  {
+    act: 3,
+    title: '🚢 ПРИЗРАЧНЫЙ КОНВОЙ',
+    sector: 'sector-3',
+    desc: 'Охота на конвой снабжения, перевозящий квантовые вычислители проекта «Левиафан».',
+    missions: [
+      {
+        id: 'm3_1',
+        code: 'OP-301 // ТЕНЬ В ТЕРМИНАЛЕ',
+        title: 'Удар по танкеру снабжения',
+        desc: 'Отрежьте эскадру противника от поставок топлива в акватории терминала.',
+        reqData: 1500,
+        phases: ['Разведка ордера', 'Взлом шифра', 'Удар в машинное', 'Сбор трофеев'],
+        reward: { usd: 55000, mb: 2000, bp: 2, salvage: { box: 2, titanium: 6 } },
+        targetName: 'Танкер флота',
+        commsIntro: {
+          speaker: 'ШТАБ [МАЯК]', role: 'HQ',
+          text: 'Конвой вошел в зону поражения. Без топлива их корабли станут легкой мишенью.'
+        }
+      },
+      {
+        id: 'm3_2',
+        code: 'OP-302 // КВАНТОВЫЙ КЛЮЧ',
+        title: 'Перехват глубоководного ретранслятора',
+        desc: 'Подключитесь к оптоволоконной магистрали и скачайте исходные коды системы «Омега».',
+        reqData: 2500,
+        phases: ['Глубоководный поиск', 'Взлом 3 каналов', 'FPV-эскорт', 'Сбор ИИ-ядра'],
+        reward: { usd: 90000, mb: 3500, bp: 3, salvage: { box: 3, chips: 6, aicore: 1 } },
+        targetName: 'Эскортный корвет «Штиль»',
+        commsIntro: {
+          speaker: 'ЛЕЙТЕНАНТ [ВЕКТОР]', role: 'EW',
+          text: 'Невероятно... В подводном кабеле передаются терабайты данных ИИ-нейросети!'
+        }
+      },
+      {
+        id: 'm3_3',
+        code: 'OP-303 // КРЕЙСЕР «НЕМЕЗИС» [БОСС]',
+        title: 'Уничтожение флагманского крейсера',
+        desc: 'Тяжелый ракетный крейсер — опора обороны сектора. Нанесите скоординированный FPV-удар.',
+        reqData: 4500,
+        isBoss: true,
+        bossId: 'cruiser',
+        phases: ['Прорыв эскорта', 'Тотальный РЭБ', 'FLIR-удар в погреб', 'Подъем архивов'],
+        reward: { usd: 150000, mb: 6000, bp: 5, salvage: { box: 4, chips: 8, titanium: 8, aicore: 2 } },
+        targetName: 'Крейсер «Немезис»',
+        commsIntro: {
+          speaker: 'АДМИРАЛ ВОРОНОВ', role: 'ENEMY',
+          text: 'Как этот дрон проник сквозь внешнее кольцо?! Всем боевым постам — тревога нулевого уровня!'
+        }
+      }
+    ]
+  },
+  {
+    act: 4,
+    title: '💀 КОД: ЛЕВИАФАН [ФИНАЛ]',
+    sector: 'sector-4',
+    desc: 'Штурм автономного плавучего командного центра «Левиафан-01» в Керченском проливе.',
+    missions: [
+      {
+        id: 'm4_1',
+        code: 'OP-401 // СИГНАЛ ИЗ БЕЗДНЫ',
+        title: 'Триангуляция ИИ-хаба',
+        desc: 'Определите точные координаты автономного флагмана сквозь плотную стену помех.',
+        reqData: 7000,
+        phases: ['Поиск несущей', 'Взлом квантового шифра', 'Удар по ретрансляторам', 'Анализ'],
+        reward: { usd: 200000, mb: 10000, bp: 4, salvage: { box: 4, chips: 10, aicore: 2 } },
+        targetName: 'Авангардный дрон-страж',
+        commsIntro: {
+          speaker: 'ИИ [БАРРАКУДА]', role: 'AI',
+          text: 'ВНИМАНИЕ. Обнаружен встречный машинный сигнал ИИ «Левиафан». Инициализация боевых протоколов.'
+        }
+      },
+      {
+        id: 'm4_2',
+        code: 'OP-402 // ОМЕГА-СЕТЬ',
+        title: 'Коллапс защитного периметра',
+        desc: 'Перегрузите генераторы помех и откройте коридор для генерального штурма.',
+        reqData: 12000,
+        phases: ['Саботаж генераторов', 'Кибер-удар', 'Уничтожение стражей', 'Подготовка прорыва'],
+        reward: { usd: 350000, mb: 18000, bp: 6, salvage: { box: 5, chips: 12, titanium: 10, aicore: 3 } },
+        targetName: 'Энергетический барбет',
+        commsIntro: {
+          speaker: 'ЛЕЙТЕНАНТ [ВЕКТОР]', role: 'EW',
+          text: 'Их защита трещит по швам! Еще один синхронный импульс — и ядро Левиафана будет открыто!'
+        }
+      },
+      {
+        id: 'm4_3',
+        code: 'OP-403 // БИТВА ЗА ЧЁРНОЕ МОРЕ [СУПЕР-БОСС]',
+        title: 'Ликвидация Дредноута «Левиафан-01»',
+        desc: 'Генеральное сражение с автономным дредноутом. Уничтожьте все 3 контура ИИ-серверов!',
+        reqData: 25000,
+        isBoss: true,
+        bossId: 'cruiser',
+        phases: ['Прорыв импульсного щита', 'Квантовый взлом ядра', 'Кинетический гипер-удар', 'Захват протокола'],
+        reward: { usd: 1000000, mb: 50000, bp: 15, salvage: { box: 10, chips: 25, titanium: 25, aicore: 10 } },
+        targetName: 'Автономный Дредноут «Левиафан-01»',
+        commsIntro: {
+          speaker: 'ШТАБ [МАЯК]', role: 'HQ',
+          text: 'Оператор! Судьба всего морского театра в ваших руках! Нанесите решающий удар!'
+        }
+      }
+    ]
+  }
 ];
 
 // =========================================================================
@@ -75,19 +419,6 @@ const BOSS_SHIPS = [
   { id: 'cruiser', name: '💀 КРЕЙСЕР «НЕМЕЗИС»', hpMult: 4.5, rewardMult: 8.0, evadeMult: 2.5, desc: 'Тяжёлый крейсер — высшая цель' }
 ];
 
-// =========================================================================
-// DAILY QUESTS TEMPLATES
-// =========================================================================
-const DAILY_QUEST_TEMPLATES = [
-  { id: 'clicks', desc: 'Кликните {n} раз', icon: '👆', getN: (p) => 50 + p * 20, check: (g, n) => g.dailyClicks >= n },
-  { id: 'data', desc: 'Соберите {n} МБ данных', icon: '📊', getN: (p) => 100 + p * 50, check: (g, n) => g.dailyDataCollected >= n },
-  { id: 'credits', desc: 'Заработайте ${n} кредитов', icon: '💵', getN: (p) => 5000 + p * 2000, check: (g, n) => g.dailyCreditsEarned >= n },
-  { id: 'assault', desc: 'Завершите {n} FPV-штурм', icon: '🚀', getN: () => 1, check: (g, n) => g.dailyAssaults >= n },
-  { id: 'hack', desc: 'Взломайте {n} радиоканал', icon: '📡', getN: () => 1, check: (g, n) => g.dailyHacks >= n },
-  { id: 'crit', desc: 'Нанесите {n} критических ударов', icon: '🎯', getN: (p) => 10 + p * 5, check: (g, n) => g.dailyCrits >= n },
-  { id: 'overclock', desc: 'Используйте разгон {n} раз', icon: '⚡', getN: () => 2, check: (g, n) => g.dailyOverclocks >= n },
-];
-
 // Fisher-Yates shuffle utility
 function shuffleArray(arr) {
   const a = [...arr];
@@ -97,6 +428,7 @@ function shuffleArray(arr) {
   }
   return a;
 }
+
 
 // =========================================================================
 // RANDOM EVENTS DEFINITION
@@ -1269,9 +1601,57 @@ class FPVMinigame {
   }
 }
 
+// =========================================================================
+// DAILY QUEST TEMPLATES
+// =========================================================================
+const DAILY_QUEST_TEMPLATES = [
+  {
+    id: 'clicks',
+    desc: 'Произвести {n} тактических кликов/разведок',
+    icon: '🎯',
+    getN: (p) => 50 + p * 25,
+    check: (g, target) => (g.dailyClicks || 0) >= target
+  },
+  {
+    id: 'data',
+    desc: 'Собрать {n} МБ разведывательных данных',
+    icon: '📡',
+    getN: (p) => 200 + p * 150,
+    check: (g, target) => (g.dailyDataCollected || 0) >= target
+  },
+  {
+    id: 'credits',
+    desc: 'Заработать ${n} на контрактах и потоках',
+    icon: '💰',
+    getN: (p) => 5000 + p * 5000,
+    check: (g, target) => (g.dailyCreditsEarned || 0) >= target
+  },
+  {
+    id: 'crits',
+    desc: 'Выполнить {n} критических перехватов данных',
+    icon: '⚡',
+    getN: (p) => 10 + p * 5,
+    check: (g, target) => (g.dailyCrits || 0) >= target
+  },
+  {
+    id: 'hacks',
+    desc: 'Успешно завершить {n} взломов РЭБ врага',
+    icon: '📻',
+    getN: (p) => 2 + p,
+    check: (g, target) => (g.dailyHacks || 0) >= target
+  },
+  {
+    id: 'overclock',
+    desc: 'Использовать боевой разгон {n} раз(а)',
+    icon: '🚀',
+    getN: (p) => 3 + p,
+    check: (g, target) => (g.dailyOverclocks || 0) >= target
+  }
+];
+
 // ==============================================
 // MAIN BARRACUDA GAME CLASS v8
-// (Optimized + Boss Ships + Daily Quests + Offline Income)
+// (Optimized + Boss Ships + Daily Quests + Offline Income + Campaign + Hangar)
 // ==============================================
 class BarracudaGame {
   constructor() {
@@ -1287,9 +1667,26 @@ class BarracudaGame {
     this.visitedSectors = new Set(['sector-1']);
     this.shieldSaves = 0;
 
+    // Drone Prototype & Hangar
+    this.selectedPrototype = 'phantom';
+    this.unlockedPrototypes = new Set(['phantom']);
+    this.salvage = { box: 0, chips: 0, titanium: 0, aicore: 0 };
+    this.craftedModules = new Set();
+
+    // Story Campaign & Mission System
+    this.campaignAct = 1;
+    this.completedMissions = new Set();
+    this.activeMission = null;
+    this.missionPhase = 0; // 0: Idle, 1: SIGINT Scan, 2: EW Jam, 3: FPV Strike, 4: Extraction
+
+    // Tactical Radio Comms Terminal
+    this.commsActive = false;
+    this.commsQueue = [];
+    this.commsTypewriterInterval = null;
+
     // Assault charge — separate progressive counter
     this.assaultCharge = 0;
-    this.assaultChargeMax = 100;
+    this.assaultChargeMax = 500;
 
     this.currentSector = 'sector-1';
 
@@ -1382,17 +1779,26 @@ class BarracudaGame {
     this.initDailyQuests();
     this.init3D();
     this.initDOM();
+    this.initCampaignAndHangar();
     this.initEvents();
     this.startLoop();
     this.updateDossier(DOSSIER_LORE[0], false);
     this._uiDirty = true;
 
-    // Auto-show help for first-time players
-    if (!localStorage.getItem('barracuda_help_seen')) {
+    // Auto-show help or initial Comms transmission for new players
+    if (!localStorage.getItem('barracuda_intro_seen')) {
       setTimeout(() => {
-        if (this.helpModal) this.helpModal.classList.add('active');
-        localStorage.setItem('barracuda_help_seen', '1');
-      }, 1500);
+        this.showCommsTransmission({
+          speaker: 'ШТАБ [МАЯК]',
+          role: 'HQ',
+          text: 'Оператор! Вас приветствует Центр Морских Спецопераций. Автономный дрон «Барракуда» спущен на воду в квадрате 4. Ваша первоочередная задача — начать перехват данных РЛС противника и провести первую разведку в меню ОПЕРАЦИИ.',
+          choices: [
+            { text: '«Вас понял, штаб. Начинаю операцию.»', action: () => { this.addNotification('📡 СВЯЗЬ УСТАНОВЛЕНА', 'Штаб подтвердил радиоканал.'); } },
+            { text: '«Запросить тактическую справку.»', action: () => { const h = document.getElementById('help-modal'); if (h) h.classList.add('active'); } }
+          ]
+        });
+        localStorage.setItem('barracuda_intro_seen', '1');
+      }, 1200);
     }
   }
 
@@ -1463,6 +1869,12 @@ class BarracudaGame {
         visitedSectors: [...this.visitedSectors],
         shieldSaves: this.shieldSaves,
         currentSector: this.currentSector,
+        selectedPrototype: this.selectedPrototype,
+        unlockedPrototypes: [...this.unlockedPrototypes],
+        salvage: this.salvage,
+        craftedModules: [...this.craftedModules],
+        campaignAct: this.campaignAct,
+        completedMissions: [...this.completedMissions],
         hw: this.hw,
         cyber: this.cyber,
         tech: this.tech,
@@ -1493,7 +1905,7 @@ class BarracudaGame {
       this.dataMB = data.dataMB || 0;
       this.totalDataMB = data.totalDataMB || 0;
       this.assaultCharge = data.assaultCharge || 0;
-      this.assaultChargeMax = data.assaultChargeMax || data.maxCapacityMB || 100;
+      this.assaultChargeMax = Math.max(500, Math.floor(500 * (1.0 + (data.blueprintsBP || 0) * 0.4)));
       this.creditsUSD = data.creditsUSD || 500;
       this.blueprintsBP = data.blueprintsBP || 0;
       this.sunkenShips = data.sunkenShips || 0;
@@ -1504,6 +1916,14 @@ class BarracudaGame {
       this.visitedSectors = new Set(data.visitedSectors || ['sector-1']);
       this.shieldSaves = data.shieldSaves || 0;
       this.currentSector = data.currentSector || 'sector-1';
+
+      this.selectedPrototype = data.selectedPrototype || 'phantom';
+      this.unlockedPrototypes = new Set(data.unlockedPrototypes || ['phantom']);
+      this.salvage = Object.assign({ box: 0, chips: 0, titanium: 0, aicore: 0 }, data.salvage || {});
+      this.craftedModules = new Set(data.craftedModules || []);
+      this.campaignAct = data.campaignAct || 1;
+      this.completedMissions = new Set(data.completedMissions || []);
+
       this.hw = data.hw || this.hw;
       this.cyber = data.cyber || this.cyber;
       this.tech = data.tech || this.tech;
@@ -1525,6 +1945,7 @@ class BarracudaGame {
       // Re-apply persistent tech effects
       if (this.tech.ecm_suite) this.weaponCooldownMax = Math.max(0.5, 1.5 * 0.5);
       if (this.tech.swarmAI && this.engine3D) this.engine3D.updateSwarmEscorts(true);
+      if (this.engine3D) this.engine3D.setDronePrototype(this.selectedPrototype);
     } catch (e) {
       console.warn('Load failed:', e);
     }
@@ -1828,9 +2249,23 @@ class BarracudaGame {
   // ENGINE INIT & MULTIPLIERS
   // =========================================================================
   init3D() {
-    this.engine3D = new Barracuda3DEngine('drone-3d-viewport', (x, y) => {
-      this.handleClick(x, y);
-    });
+    try {
+      this.engine3D = new Barracuda3DEngine('drone-3d-viewport', (x, y) => {
+        this.handleClick(x, y);
+      });
+    } catch (e) {
+      console.error('[BARRACUDA 3D] Engine initialization error:', e);
+    }
+  }
+
+  getMaxBufferMB() {
+    if (this.tech && this.tech.data_nexus) return Infinity;
+    const base = 5000; // 5.0 GB default capacity
+    const satcomBonus = (this.hw.satcom || 0) * 2500;
+    const snifferBonus = (this.cyber.sniffer || 0) * 5000;
+    const quantumBonus = (this.craftedModules && this.craftedModules.has('quantum_booster') ? 25000 : 0);
+    const prestigeBonus = (this.blueprintsBP || 0) * 10000;
+    return base + satcomBonus + snifferBonus + quantumBonus + prestigeBonus;
   }
 
   getGlobalMultiplier() {
@@ -1839,21 +2274,31 @@ class BarracudaGame {
   }
 
   getClickPower() {
-    let base = 1.0 + (this.hw.satcom * 2.0) + (this.hw.optics * 4.0);
+    let base = 4.0 + (this.hw.satcom * 6.0) + (this.hw.optics * 12.0);
     if (this.isOverclocked) base *= 3.0;
+    const proto = DRONE_PROTOTYPES_DEF[this.selectedPrototype] || DRONE_PROTOTYPES_DEF.phantom;
+    base *= (proto.clickMult || 1.0);
     return base * this.getGlobalMultiplier();
   }
 
   getClickCashGain() {
-    return Math.floor((10 + this.hw.optics * 25 + this.cyber.autosiphon * 50) * this.getGlobalMultiplier());
+    let base = 25 + this.hw.optics * 50 + this.cyber.autosiphon * 100;
+    const proto = DRONE_PROTOTYPES_DEF[this.selectedPrototype] || DRONE_PROTOTYPES_DEF.phantom;
+    base *= (proto.clickMult || 1.0);
+    return Math.floor(base * this.getGlobalMultiplier());
   }
 
   getCritChance() {
-    return Math.min(0.75, 0.05 + this.hw.optics * 0.08 + this.cyber.quantum * 0.12);
+    let base = 0.05 + this.hw.optics * 0.08 + this.cyber.quantum * 0.12;
+    if (this.craftedModules && this.craftedModules.has('quantum_booster')) base += 0.20;
+    return Math.min(0.85, base);
   }
 
   getPassiveRate() {
-    let rate = (this.hw.armor * 1.5) + (this.hw.waterjets * 3.0) + (this.cyber.sniffer * 2.5);
+    let rate = (this.hw.armor * 3.0) + (this.hw.waterjets * 8.0) + (this.cyber.sniffer * 10.0);
+    const proto = DRONE_PROTOTYPES_DEF[this.selectedPrototype] || DRONE_PROTOTYPES_DEF.phantom;
+    rate *= (proto.passiveMult || 1.0);
+    if (this.craftedModules && this.craftedModules.has('escort_wingman')) rate *= 2.0;
     if (this.tech.swarmAI) rate *= 2.0;
     if (this.isOverclocked) rate *= 2.0;
 
@@ -1867,23 +2312,568 @@ class BarracudaGame {
   }
 
   getUSDPassiveRate() {
-    let rate = (25 + this.cyber.autosiphon * 75) * this.getGlobalMultiplier();
+    let rate = 50 + this.cyber.autosiphon * 150;
+    const proto = DRONE_PROTOTYPES_DEF[this.selectedPrototype] || DRONE_PROTOTYPES_DEF.phantom;
+    rate *= (proto.passiveMult || 1.0);
+    if (this.craftedModules && this.craftedModules.has('escort_wingman')) rate *= 2.0;
+    rate *= this.getGlobalMultiplier();
     if (this.empState && this.empState.phase === 'down') return 0;
     if (this.empState && this.empState.phase === 'boost') rate *= 3.0;
     return rate;
   }
 
   getHWCost(type) {
-    const bases = { satcom: 50, optics: 150, armor: 300, waterjets: 600, missiles: 1200 };
-    const scales = { satcom: 1.8, optics: 1.85, armor: 1.9, waterjets: 1.95, missiles: 2.0 };
-    return Math.floor(bases[type] * Math.pow(scales[type], this.hw[type]));
+    const basesMB = { satcom: 100, optics: 250, armor: 500, waterjets: 1000, missiles: 2500 };
+    const basesUSD = { satcom: 250, optics: 600, armor: 1200, waterjets: 2500, missiles: 6000 };
+    const scales = { satcom: 2.1, optics: 2.15, armor: 2.2, waterjets: 2.25, missiles: 2.3 };
+    const lvl = this.hw[type] || 0;
+    return {
+      mb: Math.floor(basesMB[type] * Math.pow(scales[type], lvl)),
+      usd: Math.floor(basesUSD[type] * Math.pow(scales[type], lvl)),
+      isMax: lvl >= 10
+    };
   }
 
   getCyberCost(type) {
-    const bases = { sniffer: 100, quantum: 400, autosiphon: 800 };
-    const scales = { sniffer: 1.85, quantum: 2.0, autosiphon: 2.1 };
-    return Math.floor(bases[type] * Math.pow(scales[type], this.cyber[type]));
+    const basesMB = { sniffer: 300, quantum: 1200, autosiphon: 2500 };
+    const basesUSD = { sniffer: 500, quantum: 3000, autosiphon: 7500 };
+    const scales = { sniffer: 2.15, quantum: 2.25, autosiphon: 2.35 };
+    const lvl = this.cyber[type] || 0;
+    return {
+      mb: Math.floor(basesMB[type] * Math.pow(scales[type], lvl)),
+      usd: Math.floor(basesUSD[type] * Math.pow(scales[type], lvl)),
+      isMax: lvl >= 10
+    };
   }
+
+  // =========================================================================
+  // TACTICAL RADIO COMMS TERMINAL
+  // =========================================================================
+  showCommsTransmission({ speaker = 'ШТАБ [МАЯК]', role = 'HQ', text = '', choices = [] }) {
+    this.commsActive = true;
+    const modal = document.getElementById('comms-terminal-modal');
+    if (!modal) return;
+
+    modal.style.display = 'flex';
+    const speakerEl = document.getElementById('comms-speaker-title');
+    const subEl = document.getElementById('comms-speaker-sub');
+    const bodyEl = document.getElementById('comms-dialogue-text');
+    const choicesEl = document.getElementById('comms-choices-container');
+    const avatarEl = document.getElementById('comms-avatar-icon');
+
+    if (speakerEl) speakerEl.textContent = speaker;
+
+    let avatarIcon = '📡';
+    let subTitle = 'ГЕНЕРАЛЬНЫЙ ОПЕРАТИВНЫЙ ЦЕНТР';
+    if (role === 'HQ') { avatarIcon = '📡'; subTitle = 'КОМАНДОВАНИЕ ОПЕРАЦИИ'; }
+    else if (role === 'EW') { avatarIcon = '💻'; subTitle = 'ОФИЦЕР КИБЕРРАЗВЕДКИ И РЭБ'; }
+    else if (role === 'ENEMY') { avatarIcon = '💀'; subTitle = 'ЭШЕЛОН ОБОРОНЫ ПРОТИВНИКА'; }
+    else if (role === 'AI') { avatarIcon = '🤖'; subTitle = 'БОРТОВОЙ ИИ «БАРРАКУДА»'; }
+
+    if (avatarEl) avatarEl.innerHTML = `${avatarIcon}<span class="comms-avatar-badge" id="comms-speaker-role">${role}</span>`;
+    if (subEl) subEl.textContent = subTitle;
+
+    if (window.tacticalAudio) {
+      window.tacticalAudio.playRadioStatic(0.18);
+      setTimeout(() => window.tacticalAudio.playCommsChirp(), 150);
+    }
+
+    if (this.commsTypewriterInterval) clearInterval(this.commsTypewriterInterval);
+    if (bodyEl) {
+      bodyEl.textContent = '';
+      let i = 0;
+      this.commsTypewriterInterval = setInterval(() => {
+        i++;
+        bodyEl.textContent = text.slice(0, i) + '█';
+        if (Math.random() > 0.4 && window.tacticalAudio) window.tacticalAudio.playTeletypeChar();
+        if (i >= text.length) {
+          bodyEl.textContent = text;
+          clearInterval(this.commsTypewriterInterval);
+        }
+      }, 18);
+    }
+
+    if (choicesEl) {
+      choicesEl.innerHTML = '';
+      if (!choices || choices.length === 0) {
+        choices = [{ text: '«Принято. Продолжаю выполнение.»', action: () => this.closeCommsTransmission() }];
+      }
+
+      choices.forEach(ch => {
+        const btn = document.createElement('button');
+        btn.className = 'comms-choice-btn';
+        btn.innerHTML = `<span class="comms-choice-tag">ОТВЕТ</span><span>${ch.text}</span>`;
+        btn.addEventListener('click', () => {
+          if (window.tacticalAudio) window.tacticalAudio.playPing();
+          if (ch.action) ch.action();
+          this.closeCommsTransmission();
+        });
+        choicesEl.appendChild(btn);
+      });
+    }
+  }
+
+  closeCommsTransmission() {
+    this.commsActive = false;
+    if (this.commsTypewriterInterval) clearInterval(this.commsTypewriterInterval);
+    const modal = document.getElementById('comms-terminal-modal');
+    if (modal) modal.style.display = 'none';
+  }
+
+  // =========================================================================
+  // STORY CAMPAIGN & MISSIONS SYSTEM
+  // =========================================================================
+  initCampaignAndHangar() {
+    const btnOpenCampaign = document.getElementById('btn-open-campaign');
+    const btnCloseCampaign = document.getElementById('btn-close-campaign');
+    const campaignModal = document.getElementById('campaign-modal');
+
+    if (btnOpenCampaign) {
+      btnOpenCampaign.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.renderCampaignDOM();
+        if (campaignModal) campaignModal.classList.add('active');
+      });
+    }
+    if (btnCloseCampaign) {
+      btnCloseCampaign.addEventListener('click', () => {
+        if (campaignModal) campaignModal.classList.remove('active');
+      });
+    }
+
+    document.querySelectorAll('.campaign-act-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        const act = parseInt(tab.getAttribute('data-act'), 10);
+        this.selectCampaignAct(act);
+      });
+    });
+
+    const btnOpenHangar = document.getElementById('btn-open-hangar');
+    const btnCloseHangar = document.getElementById('btn-close-hangar');
+    const hangarModal = document.getElementById('hangar-modal');
+
+    if (btnOpenHangar) {
+      btnOpenHangar.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.renderHangarDOM();
+        if (hangarModal) hangarModal.classList.add('active');
+      });
+    }
+    if (btnCloseHangar) {
+      btnCloseHangar.addEventListener('click', () => {
+        if (hangarModal) hangarModal.classList.remove('active');
+      });
+    }
+
+    const btnCloseComms = document.getElementById('btn-close-comms');
+    if (btnCloseComms) {
+      btnCloseComms.addEventListener('click', () => this.closeCommsTransmission());
+    }
+
+    this.renderCampaignDOM();
+    this.renderHangarDOM();
+  }
+
+  selectCampaignAct(actNum) {
+    this.campaignAct = actNum;
+    document.querySelectorAll('.campaign-act-tab').forEach(t => {
+      const a = parseInt(t.getAttribute('data-act'), 10);
+      t.classList.toggle('active', a === actNum);
+    });
+    this.renderCampaignDOM();
+    if (window.tacticalAudio) window.tacticalAudio.playPing();
+  }
+
+  renderCampaignDOM() {
+    const list = document.getElementById('campaign-missions-list');
+    if (!list) return;
+
+    const actData = CAMPAIGN_ACTS_DEF.find(a => a.act === this.campaignAct) || CAMPAIGN_ACTS_DEF[0];
+    list.innerHTML = '';
+
+    actData.missions.forEach((m, idx) => {
+      const isCompleted = this.completedMissions.has(m.id);
+      const isActive = this.activeMission && this.activeMission.id === m.id;
+      const isUnlocked = idx === 0 || this.completedMissions.has(actData.missions[idx - 1].id) || isCompleted;
+
+      const card = document.createElement('div');
+      card.className = `campaign-mission-card ${isActive ? 'active' : ''} ${isCompleted ? 'completed' : ''}`;
+
+      let statusPill = isCompleted
+        ? '<span class="mission-status-pill done">✓ ВЫПОЛНЕНО</span>'
+        : (isActive
+            ? '<span class="mission-status-pill ready">▶ В ПРОЦЕССЕ</span>'
+            : (isUnlocked ? '<span class="mission-status-pill ready">ГОТОВО К ПУСКУ</span>' : '<span class="mission-status-pill locked">🔒 ЗАБЛОКИРОВАНО</span>'));
+
+      let phaseTrack = '';
+      if (m.phases) {
+        phaseTrack = `<div class="mission-phases-track">` + m.phases.map((p, pIdx) => {
+          let stepClass = '';
+          if (isCompleted) stepClass = 'done';
+          else if (isActive) {
+            if (this.missionPhase > pIdx + 1) stepClass = 'done';
+            else if (this.missionPhase === pIdx + 1) stepClass = 'active';
+          }
+          return `<div class="mission-phase-step ${stepClass}"><span>${pIdx + 1}</span><span>${p}</span></div>`;
+        }).join('') + `</div>`;
+      }
+
+      let salvageText = '';
+      if (m.reward.salvage) {
+        const parts = [];
+        if (m.reward.salvage.box) parts.push(`📦 x${m.reward.salvage.box}`);
+        if (m.reward.salvage.chips) parts.push(`💎 x${m.reward.salvage.chips}`);
+        if (m.reward.salvage.titanium) parts.push(`🛡️ x${m.reward.salvage.titanium}`);
+        if (m.reward.salvage.aicore) parts.push(`🔮 x${m.reward.salvage.aicore}`);
+        salvageText = parts.join(' ');
+      }
+
+      card.innerHTML = `
+        <div>
+          <div class="mission-header-row">
+            <span class="mission-code-badge">${m.code}</span>
+            ${statusPill}
+          </div>
+          <div class="mission-title-text">${m.title}</div>
+          <div class="mission-desc-text">${m.desc}</div>
+          ${phaseTrack}
+          <div class="mission-rewards-row">
+            <span>НАГРАДЫ: <strong>+$${m.reward.usd.toLocaleString()}</strong></span>
+            <span><strong>+${m.reward.mb} МБ</strong></span>
+            ${m.reward.bp > 0 ? `<span>+${m.reward.bp} ЧЖ</span>` : ''}
+            ${salvageText ? `<span style="color:#00f0ff;">${salvageText}</span>` : ''}
+          </div>
+        </div>
+        <button class="btn-launch-mission" data-mission-id="${m.id}" ${!isUnlocked ? 'disabled' : ''}>
+          ${isCompleted ? 'ПОВТОРИТЬ ОПЕРАЦИЮ' : (isActive ? 'ПРОДОЛЖИТЬ ШТУРМ' : 'НАЧАТЬ ОПЕРАЦИЮ')}
+        </button>
+      `;
+
+      card.querySelector('[data-mission-id]').addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.startCampaignMission(m.id);
+      });
+
+      list.appendChild(card);
+    });
+  }
+
+  startCampaignMission(missionId) {
+    let found = null;
+    let foundAct = null;
+    for (const act of CAMPAIGN_ACTS_DEF) {
+      const m = act.missions.find(item => item.id === missionId);
+      if (m) { found = m; foundAct = act; break; }
+    }
+    if (!found) return;
+
+    this.activeMission = found;
+    this.missionPhase = 1;
+
+    if (foundAct.sector && this.currentSector !== foundAct.sector) {
+      this.changeSector(foundAct.sector);
+    }
+
+    const campaignModal = document.getElementById('campaign-modal');
+    if (campaignModal) campaignModal.classList.remove('active');
+
+    if (found.commsIntro) {
+      this.showCommsTransmission({
+        speaker: found.commsIntro.speaker,
+        role: found.commsIntro.role,
+        text: found.commsIntro.text,
+        choices: [
+          {
+            text: '«Тактику понял. Перехожу к Фазе 1: Сканирование и Взлом РЭБ!»',
+            action: () => {
+              this.addNotification('🎯 МИССИЯ АКТИВИРОВАНА', `${found.title} — Фаза 1: Взлом РЭБ`);
+              if (this.btnOpenCyber) this.btnOpenCyber.click();
+            }
+          },
+          {
+            text: '«Подготовить ударные FPV-комплексы!»',
+            action: () => {
+              this.addNotification('🛸 ОРУЖИЕ НАИЗГОТОВКУ', 'Приготовьтесь к прорыву эшелона.');
+            }
+          }
+        ]
+      });
+    } else {
+      this.addNotification('🎯 МИССИЯ АКТИВИРОВАНА', `${found.title} — Фаза 1`);
+    }
+
+    this.renderCampaignDOM();
+  }
+
+  advanceMissionPhase() {
+    if (!this.activeMission) return;
+    this.missionPhase++;
+
+    if (this.missionPhase === 2) {
+      this.addNotification('⚡ ФАЗА 2: САБОТАЖ ПВО', 'Радиоканал взломан! ПВО подавлено на 40%!');
+      this.showCommsTransmission({
+        speaker: 'ЛЕЙТЕНАНТ [ВЕКТОР]',
+        role: 'EW',
+        text: 'Отличная работа! Частоты перехвачены. Запускайте FPV-штурмовик для прорыва к кораблю!',
+        choices: [{ text: '«Запуск FPV!»', action: () => { this.startAssault(); } }]
+      });
+    } else if (this.missionPhase === 3) {
+      this.addNotification('🚀 ФАЗА 3: ТОЧЕЧНЫЙ УДАР', 'Зафиксируйте прицел FLIR на уязвимом отсеке судна!');
+    } else if (this.missionPhase >= 4) {
+      this.completeCampaignMission();
+    }
+
+    this.renderCampaignDOM();
+  }
+
+  completeCampaignMission() {
+    if (!this.activeMission) return;
+    const m = this.activeMission;
+    this.completedMissions.add(m.id);
+
+    this.creditsUSD += m.reward.usd;
+    this.addData(m.reward.mb);
+    if (m.reward.bp > 0) this.blueprintsBP += m.reward.bp;
+
+    if (m.reward.salvage) {
+      this.awardSalvage(m.reward.salvage);
+    }
+
+    if (window.tacticalAudio) window.tacticalAudio.playMissionVictory();
+
+    if (this.completedMissions.has('m1_3')) this.checkAchievement('campaign_act1');
+    if (this.completedMissions.has('m2_3')) this.checkAchievement('campaign_act2');
+    if (this.completedMissions.has('m3_3')) this.checkAchievement('campaign_act3');
+    if (this.completedMissions.has('m4_3')) this.checkAchievement('campaign_act4');
+
+    this.addNotification('🏆 ОПЕРАЦИЯ ЗАВЕРШЕНА', `${m.title} — УСПЕХ! +$${m.reward.usd.toLocaleString()}`);
+
+    setTimeout(() => {
+      this.showCommsTransmission({
+        speaker: 'ШТАБ [МАЯК]',
+        role: 'HQ',
+        text: `Отличная работа, оператор! Операция «${m.title}» успешно завершена. Трофеи подняты на борт и доставлены в Ангар для крафта.`,
+        choices: [
+          { text: '«Открыть Ангар и изучить трофеи.»', action: () => { const h = document.getElementById('hangar-modal'); if (h) h.classList.add('active'); this.renderHangarDOM(); } },
+          { text: '«Продолжить патрулирование сектора.»', action: () => {} }
+        ]
+      });
+    }, 1500);
+
+    this.activeMission = null;
+    this.missionPhase = 0;
+    this.renderCampaignDOM();
+    this.renderHangarDOM();
+    this.saveGame();
+    this._uiDirty = true;
+  }
+
+  // =========================================================================
+  // DRONE HANGAR & SALVAGE FORGE
+  // =========================================================================
+  renderHangarDOM() {
+    const boxEl = document.getElementById('val-salvage-box');
+    const chipsEl = document.getElementById('val-salvage-chips');
+    const titEl = document.getElementById('val-salvage-titanium');
+    const aiEl = document.getElementById('val-salvage-aicore');
+
+    if (boxEl) boxEl.textContent = `${this.salvage.box || 0} шт`;
+    if (chipsEl) chipsEl.textContent = `${this.salvage.chips || 0} шт`;
+    if (titEl) titEl.textContent = `${this.salvage.titanium || 0} шт`;
+    if (aiEl) aiEl.textContent = `${this.salvage.aicore || 0} шт`;
+
+    document.querySelectorAll('.proto-card').forEach(card => {
+      const pid = card.getAttribute('data-proto');
+      const isSelected = this.selectedPrototype === pid;
+      const isUnlocked = this.unlockedPrototypes.has(pid);
+      const proto = DRONE_PROTOTYPES_DEF[pid];
+
+      card.classList.toggle('selected', isSelected);
+      const selectBtn = card.querySelector('.btn-proto-select');
+      if (selectBtn) {
+        if (isSelected) {
+          selectBtn.textContent = '✓ ВЫБРАН КОРПУС';
+          selectBtn.style.background = '#00ff88';
+          selectBtn.style.color = '#000';
+          selectBtn.disabled = true;
+        } else if (isUnlocked) {
+          selectBtn.textContent = 'АКТИВИРОВАТЬ';
+          selectBtn.style.background = 'rgba(0, 240, 255, 0.2)';
+          selectBtn.style.color = '#00f0ff';
+          selectBtn.disabled = false;
+        } else {
+          let reqParts = [`$${proto.costUSD.toLocaleString()}`];
+          if (proto.reqShips) reqParts.push(`${proto.reqShips} Вымпелов`);
+          if (proto.reqSalvage) {
+            for (const [res, amt] of Object.entries(proto.reqSalvage)) {
+              reqParts.push(`${amt} ${res}`);
+            }
+          }
+          selectBtn.textContent = `РАЗБЛОКИРОВАТЬ (${reqParts.join(' | ')})`;
+          
+          let canUnlock = this.creditsUSD >= proto.costUSD && (!proto.reqShips || this.sunkenShips >= proto.reqShips);
+          if (proto.reqSalvage) {
+            for (const [res, amt] of Object.entries(proto.reqSalvage)) {
+              if ((this.salvage[res] || 0) < amt) canUnlock = false;
+            }
+          }
+          selectBtn.style.background = canUnlock ? 'rgba(255, 204, 0, 0.2)' : 'rgba(255, 255, 255, 0.05)';
+          selectBtn.style.color = canUnlock ? '#ffcc00' : '#8da4af';
+          selectBtn.disabled = !canUnlock;
+        }
+
+        selectBtn.onclick = (e) => {
+          e.stopPropagation();
+          this.selectDronePrototype(pid);
+        };
+      }
+    });
+
+    const craftGrid = document.getElementById('crafting-recipes-grid');
+    if (craftGrid) {
+      craftGrid.innerHTML = '';
+      SALVAGE_CRAFT_RECIPES.forEach(r => {
+        const isCrafted = this.craftedModules.has(r.id);
+        const card = document.createElement('div');
+        card.className = 'craft-card';
+
+        let costParts = [];
+        let canAfford = true;
+        if (r.cost.box) {
+          costParts.push(`📦 ${r.cost.box} ящ`);
+          if ((this.salvage.box || 0) < r.cost.box) canAfford = false;
+        }
+        if (r.cost.chips) {
+          costParts.push(`💎 ${r.cost.chips} чип`);
+          if ((this.salvage.chips || 0) < r.cost.chips) canAfford = false;
+        }
+        if (r.cost.titanium) {
+          costParts.push(`🛡️ ${r.cost.titanium} титан`);
+          if ((this.salvage.titanium || 0) < r.cost.titanium) canAfford = false;
+        }
+        if (r.cost.aicore) {
+          costParts.push(`🔮 ${r.cost.aicore} ядро`);
+          if ((this.salvage.aicore || 0) < r.cost.aicore) canAfford = false;
+        }
+
+        card.innerHTML = `
+          <div>
+            <div class="craft-card-header">
+              <span class="craft-card-title">${r.name}</span>
+              <span class="craft-card-cost">${costParts.join(' // ')}</span>
+            </div>
+            <div class="craft-card-effect">${r.desc}</div>
+          </div>
+          <button class="btn-craft-action" ${isCrafted ? 'disabled' : (!canAfford ? 'disabled' : '')}>
+            ${isCrafted ? '✓ СКРАФЧЕНО (АКТИВНО)' : (canAfford ? '🛠️ СОБРАТЬ МОДУЛЬ' : 'НЕДОСТАТОЧНО ТРОФЕЕВ')}
+          </button>
+        `;
+
+        card.querySelector('.btn-craft-action').addEventListener('click', (e) => {
+          e.stopPropagation();
+          this.craftModule(r.id);
+        });
+
+        craftGrid.appendChild(card);
+      });
+    }
+  }
+
+  selectDronePrototype(protoId) {
+    const proto = DRONE_PROTOTYPES_DEF[protoId];
+    if (!proto) return;
+
+    if (!this.unlockedPrototypes.has(protoId)) {
+      if (proto.reqShips && this.sunkenShips < proto.reqShips) {
+        this.addNotification('🔒 ЗАБЛОКИРОВАНО', `Требуется потопить ${proto.reqShips} вымпелов (Ваш счет: ${this.sunkenShips})`);
+        return;
+      }
+      if (proto.reqSalvage) {
+        for (const [res, amt] of Object.entries(proto.reqSalvage)) {
+          if ((this.salvage[res] || 0) < amt) {
+            this.addNotification('❌ НЕДОСТАТОЧНО ТРОФЕЕВ', `Требуется ${amt} шт. ${res.toUpperCase()}`);
+            return;
+          }
+        }
+      }
+      if (this.creditsUSD < proto.costUSD) {
+        this.addNotification('❌ НЕДОСТАТОЧНО КРЕДИТОВ', `Требуется $${proto.costUSD.toLocaleString()}`);
+        return;
+      }
+
+      this.creditsUSD -= proto.costUSD;
+      if (proto.reqSalvage) {
+        for (const [res, amt] of Object.entries(proto.reqSalvage)) {
+          this.salvage[res] -= amt;
+        }
+      }
+
+      this.unlockedPrototypes.add(protoId);
+      this.addNotification('⚓ НОВЫЙ КОРПУС', `Разблокирован: ${proto.name}!`);
+      if (window.tacticalAudio) window.tacticalAudio.playMountingSfx();
+    }
+
+    this.selectedPrototype = protoId;
+    if (this.engine3D) {
+      this.engine3D.setDronePrototype(protoId);
+    }
+    if (window.tacticalAudio) window.tacticalAudio.playUpgradeSfx();
+    this.addNotification('⚡ КОРПУС АКТИВИРОВАН', `Выбран дрон: ${proto.name}`);
+    this.renderHangarDOM();
+    this.saveGame();
+    this._uiDirty = true;
+  }
+
+  craftModule(recipeId) {
+    const r = SALVAGE_CRAFT_RECIPES.find(item => item.id === recipeId);
+    if (!r || this.craftedModules.has(recipeId)) return;
+
+    if (r.cost.box && (this.salvage.box || 0) < r.cost.box) return;
+    if (r.cost.chips && (this.salvage.chips || 0) < r.cost.chips) return;
+    if (r.cost.titanium && (this.salvage.titanium || 0) < r.cost.titanium) return;
+    if (r.cost.aicore && (this.salvage.aicore || 0) < r.cost.aicore) return;
+
+    if (r.cost.box) this.salvage.box -= r.cost.box;
+    if (r.cost.chips) this.salvage.chips -= r.cost.chips;
+    if (r.cost.titanium) this.salvage.titanium -= r.cost.titanium;
+    if (r.cost.aicore) this.salvage.aicore -= r.cost.aicore;
+
+    this.craftedModules.add(recipeId);
+    if (window.tacticalAudio) window.tacticalAudio.playSalvagePickup();
+    this.addNotification('🛠️ МОДУЛЬ СОБРАН', `${r.name}\n${r.desc}`);
+    this.checkAchievement('salvage_master');
+    this.renderHangarDOM();
+    this.saveGame();
+    this._uiDirty = true;
+  }
+
+  awardSalvage(lootObj = {}) {
+    const parts = [];
+    if (lootObj.box) {
+      this.salvage.box = (this.salvage.box || 0) + lootObj.box;
+      parts.push(`📦 +${lootObj.box} Черный ящик`);
+    }
+    if (lootObj.chips) {
+      this.salvage.chips = (this.salvage.chips || 0) + lootObj.chips;
+      parts.push(`💎 +${lootObj.chips} GaN-чип`);
+    }
+    if (lootObj.titanium) {
+      this.salvage.titanium = (this.salvage.titanium || 0) + lootObj.titanium;
+      parts.push(`🛡️ +${lootObj.titanium} Титан`);
+    }
+    if (lootObj.aicore) {
+      this.salvage.aicore = (this.salvage.aicore || 0) + lootObj.aicore;
+      parts.push(`🔮 +${lootObj.aicore} ИИ-Ядро`);
+    }
+
+    if (parts.length > 0) {
+      this.addNotification('💠 ТРОФЕИ ПОДНЯТЫ', parts.join(' | '));
+      if (window.tacticalAudio) window.tacticalAudio.playSalvagePickup();
+      if (this.engine3D) this.engine3D.spawnFloatingSalvage(parts);
+      this.renderHangarDOM();
+    }
+  }
+
 
   // =========================================================================
   // DOM INIT
@@ -1954,6 +2944,21 @@ class BarracudaGame {
   // EVENT BINDING
   // =========================================================================
   initEvents() {
+    // Primary Click Collector: Center Interact Zone & Viewport
+    const centerZone = document.querySelector('.center-interact-zone');
+    if (centerZone) {
+      centerZone.addEventListener('click', (e) => {
+        this.handleClick(e.clientX, e.clientY);
+      });
+    }
+
+    const viewport = document.getElementById('drone-3d-viewport');
+    if (viewport) {
+      viewport.addEventListener('click', (e) => {
+        this.handleClick(e.clientX, e.clientY);
+      });
+    }
+
     // Ring Buttons
     document.querySelectorAll('.ring-action-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
@@ -2026,6 +3031,12 @@ class BarracudaGame {
     }
     if (this.btnCloseHelp) {
       this.btnCloseHelp.addEventListener('click', () => {
+        if (this.helpModal) this.helpModal.classList.remove('active');
+      });
+    }
+    const btnUnderstood = document.getElementById('btn-help-understood');
+    if (btnUnderstood) {
+      btnUnderstood.addEventListener('click', () => {
         if (this.helpModal) this.helpModal.classList.remove('active');
       });
     }
@@ -2146,6 +3157,11 @@ class BarracudaGame {
             this.addNotification('🏆 ПОЛНЫЙ ВЗЛОМ', 'Все 3 канала дешифрованы! Мега-бонус!');
             this.cyberModal.classList.remove('active');
             this.cyberHackActive = false;
+
+            // Check if active campaign mission in phase 1
+            if (this.activeMission && this.missionPhase === 1) {
+              this.advanceMissionPhase();
+            }
           }
           this.checkAllAchievements();
           this.updateUI();
@@ -2392,13 +3408,11 @@ class BarracudaGame {
     this.addData(gainMB);
     this.addCredits(gainUSD);
     this.engine3D.triggerClickBounce();
-
-    // Damage the target ship
-    const dmg = gainMB * 0.5 * (isCrit ? 3 : 1);
-    this.damageShip(dmg);
   }
 
   damageShip(dmg) {
+    const proto = DRONE_PROTOTYPES_DEF[this.selectedPrototype] || DRONE_PROTOTYPES_DEF.phantom;
+    dmg *= (proto.fpvDamageMult || 1.0);
     this.shipHP = Math.max(0, this.shipHP - dmg);
     this._uiDirty = true;
 
@@ -2414,6 +3428,16 @@ class BarracudaGame {
       if (this.engine3D) {
         this.engine3D.triggerShipExplosion();
       }
+
+      // Drop random salvage from sunken ship
+      const shipLoot = {};
+      if (Math.random() < 0.65) shipLoot.titanium = 1 + Math.floor(Math.random() * 2);
+      if (Math.random() < 0.45) shipLoot.chips = 1;
+      if (this.shipLevel % 5 === 0) {
+        shipLoot.box = 1;
+        shipLoot.aicore = 1;
+      }
+      this.awardSalvage(shipLoot);
 
       // Spawn new ship with more HP
       this.shipMaxHP = Math.floor(100 * Math.pow(1.6, this.shipLevel - 1));
@@ -2435,7 +3459,10 @@ class BarracudaGame {
   }
 
   addData(amount) {
-    this.dataMB += amount;
+    const maxBuf = this.getMaxBufferMB();
+    if (this.dataMB < maxBuf) {
+      this.dataMB = Math.min(this.dataMB + amount, maxBuf);
+    }
     this.totalDataMB += amount;
     this.dailyDataCollected += amount;
     // Also charge assault meter (proportional) — plasma_warhead doubles rate
@@ -2566,7 +3593,11 @@ class BarracudaGame {
       this.fpvGame.bossData = null;
     }
 
-    this.fpvGame.setDifficulty(this.blueprintsBP, this.hw.armor, this.tech.ghost_protocol);
+    const proto = DRONE_PROTOTYPES_DEF[this.selectedPrototype] || DRONE_PROTOTYPES_DEF.phantom;
+    let extraArmor = this.hw.armor + (proto.fpvExtraLives || 0) * 2;
+    if (this.craftedModules && this.craftedModules.has('armor_titan')) extraArmor += 2;
+
+    this.fpvGame.setDifficulty(this.blueprintsBP, extraArmor, this.tech.ghost_protocol || proto.id === 'phantom');
     this.fpvGame.start(this.fpvCanvas);
     window.tacticalAudio.playAlarm();
     this.checkAchievement('first_assault');
@@ -2642,15 +3673,17 @@ class BarracudaGame {
       // Rewards scaled by rating + boss multiplier
       const ratingMults = { S: 2.0, A: 1.5, B: 1.2, C: 1.0 };
       const rMult = ratingMults[this.lastAssaultRating] || 1.0;
-      const bossMult = this.bossActive && this.currentBoss ? this.currentBoss.rewardMult : 1.0;
+      let bossMult = this.bossActive && this.currentBoss ? this.currentBoss.rewardMult : 1.0;
+      if (this.craftedModules && this.craftedModules.has('plasma_warhead')) bossMult *= 2.0;
 
       this.blueprintsBP++;
-      this.sunkenShips++;
       this.creditsUSD += Math.floor(15000 * rMult * bossMult);
-      // Reset assault charge, increase requirement — data stays as currency
       this.assaultCharge = 0;
-      this.assaultChargeMax = Math.floor(100.0 * (1.0 + this.blueprintsBP * 0.4));
+      this.assaultChargeMax = Math.floor(500 * (1.0 + this.blueprintsBP * 0.4));
       this.currentDossierStage = 0;
+
+      // Deliver kinetic impact to enemy warship
+      this.damageShip(this.shipMaxHP);
 
       // Boss defeat tracking
       if (this.bossActive) {
@@ -2662,7 +3695,21 @@ class BarracudaGame {
 
       // Bonus data from pickups
       if (this.fpvGame.collectedData > 0) {
-        this.totalDataMB += this.fpvGame.collectedData * 15;
+        this.totalDataMB += this.fpvGame.collectedData * 50;
+      }
+
+      // Salvage Drop from assault
+      const assaultLoot = {
+        box: this.lastAssaultRating === 'S' ? 2 : 1,
+        chips: 1 + Math.floor(Math.random() * 2),
+        titanium: 1 + Math.floor(Math.random() * 2)
+      };
+      if (this.lastAssaultRating === 'S') assaultLoot.aicore = 1;
+      this.awardSalvage(assaultLoot);
+
+      // Advance campaign mission if active
+      if (this.activeMission) {
+        this.advanceMissionPhase();
       }
 
       // Check special achievements
@@ -2756,7 +3803,10 @@ class BarracudaGame {
         let passiveMB = this.getPassiveRate();
         if (this.tech.data_nexus) passiveMB *= 2.0;
         if (passiveMB > 0) {
-          this.dataMB += passiveMB * dt;
+          const maxBuf = this.getMaxBufferMB();
+          if (this.dataMB < maxBuf) {
+            this.dataMB = Math.min(this.dataMB + passiveMB * dt, maxBuf);
+          }
           this.totalDataMB += passiveMB * dt;
           this.dailyDataCollected += passiveMB * dt;
           // Charge assault meter — plasma_warhead doubles rate
@@ -2848,18 +3898,23 @@ class BarracudaGame {
   // UI UPDATE
   // =========================================================================
   updateUI() {
+    const maxBuf = this.getMaxBufferMB();
+    const maxBufStr = isFinite(maxBuf) ? (maxBuf >= 1000 ? `${(maxBuf / 1000).toFixed(1)} ГБ` : `${maxBuf} МБ`) : '∞ БЕЗЛИМИТ';
+    const dataStr = this.dataMB >= 1000 ? `${(this.dataMB / 1000).toFixed(2)} ГБ` : `${this.dataMB.toFixed(1)} МБ`;
+
     const chargePercent = Math.min(100, (this.assaultCharge / this.assaultChargeMax) * 100.0);
 
-    if (this.lblBuffer) this.lblBuffer.textContent = `${this.dataMB.toFixed(1)} МБ`;
+    if (this.lblBuffer) this.lblBuffer.textContent = `${dataStr} / ${maxBufStr}`;
     if (this.lblCredits) this.lblCredits.textContent = `$${Math.floor(this.creditsUSD).toLocaleString()}`;
     if (this.lblEnergyPercent) this.lblEnergyPercent.textContent = `${chargePercent.toFixed(0)}%`;
     if (this.progressBarFill) this.progressBarFill.style.width = `${chargePercent}%`;
 
-    if (this.lblPassiveUSD) this.lblPassiveUSD.textContent = `+$${Math.floor(this.getUSDPassiveRate())}/с`;
+    const passUSD = this.getUSDPassiveRate();
+    if (this.lblPassiveUSD) this.lblPassiveUSD.textContent = `+$${Math.floor(passUSD)}/с`;
     if (this.lblPassive) this.lblPassive.textContent = `+${this.getPassiveRate().toFixed(1)} МБ/с`;
     if (this.lblClick) this.lblClick.textContent = `+${this.getClickPower().toFixed(1)} МБ`;
     if (this.lblMultiplier) this.lblMultiplier.textContent = `x${this.getGlobalMultiplier().toFixed(1)} [${this.blueprintsBP} ЧЖ]`;
-    if (this.lblTotalData) this.lblTotalData.textContent = `ВСЕГО: ${this.totalDataMB.toFixed(0)} МБ`;
+    if (this.lblTotalData) this.lblTotalData.textContent = `ВСЕГО: ${this.totalDataMB >= 1000 ? (this.totalDataMB / 1000).toFixed(2) + ' ГБ' : this.totalDataMB.toFixed(0) + ' МБ'}`;
 
     if (this.lblSunkenCount) this.lblSunkenCount.textContent = `${this.sunkenShips} ВЫМПЕЛОВ`;
     if (this.lblKillsStatus) {
@@ -2877,7 +3932,7 @@ class BarracudaGame {
         this.btnAssault.textContent = `>>> ЗАПУСК FPV-ШТУРМА [ГОТОВ] <<<`;
       } else {
         this.btnAssault.classList.remove('ready');
-        this.btnAssault.textContent = `FPV-ШТУРМ [${chargePercent.toFixed(0)}%]`;
+        this.btnAssault.textContent = `FPV-ЗАРЯД [${chargePercent.toFixed(0)}%] (${Math.floor(this.assaultCharge)}/${this.assaultChargeMax} МБ)`;
       }
     }
 
@@ -2889,32 +3944,43 @@ class BarracudaGame {
       hpFill.style.width = `${hpPct}%`;
       hpFill.style.background = hpPct > 50 ? '#ff4444' : hpPct > 25 ? '#ff8800' : '#ff0000';
     }
+    const shipData = getEnemyShipData(this.shipLevel);
     if (hpLabel) {
-      hpLabel.textContent = `ЦЕЛЬ [Ур.${this.shipLevel}]: ${Math.ceil(this.shipHP)} / ${this.shipMaxHP} HP`;
+      hpLabel.textContent = `${shipData.icon} ${shipData.name} [Ур.${this.shipLevel}]: ${Math.ceil(this.shipHP).toLocaleString()} / ${this.shipMaxHP.toLocaleString()} HP`;
     }
   }
 
   updateUIElements() {
     ['satcom', 'optics', 'armor', 'waterjets', 'missiles'].forEach(k => {
-      const cost = this.getHWCost(k);
+      const c = this.getHWCost(k);
       const costEl = document.getElementById(`cost-hw-${k}`);
       const tierEl = document.getElementById(`tier-hw-${k}`);
       if (costEl) {
-        costEl.textContent = `${cost} МБ`;
-        costEl.disabled = this.dataMB < cost;
+        if (c.isMax) {
+          costEl.textContent = 'MAX (МК 10)';
+          costEl.disabled = true;
+        } else {
+          costEl.textContent = `${c.mb >= 1000 ? (c.mb / 1000).toFixed(1) + ' ГБ' : c.mb + ' МБ'} | $${c.usd >= 1000 ? Math.floor(c.usd / 1000) + 'k' : c.usd}`;
+          costEl.disabled = this.dataMB < c.mb || this.creditsUSD < c.usd;
+        }
       }
-      if (tierEl) tierEl.textContent = `МК ${this.hw[k] + 1}`;
+      if (tierEl) tierEl.textContent = `МК ${Math.min(10, (this.hw[k] || 0) + 1)}`;
     });
 
     ['sniffer', 'quantum', 'autosiphon'].forEach(k => {
-      const cost = this.getCyberCost(k);
+      const c = this.getCyberCost(k);
       const costEl = document.getElementById(`cost-cyber-${k}`);
       const tierEl = document.getElementById(`tier-cyber-${k}`);
       if (costEl) {
-        costEl.textContent = `${cost} МБ`;
-        costEl.disabled = this.dataMB < cost;
+        if (c.isMax) {
+          costEl.textContent = 'MAX (V.10)';
+          costEl.disabled = true;
+        } else {
+          costEl.textContent = `${c.mb >= 1000 ? (c.mb / 1000).toFixed(1) + ' ГБ' : c.mb + ' МБ'} | $${c.usd >= 1000 ? Math.floor(c.usd / 1000) + 'k' : c.usd}`;
+          costEl.disabled = this.dataMB < c.mb || this.creditsUSD < c.usd;
+        }
       }
-      if (tierEl) tierEl.textContent = `V.${this.cyber[k] + 1}`;
+      if (tierEl) tierEl.textContent = `V.${Math.min(10, (this.cyber[k] || 0) + 1)}`;
     });
 
     this.activeContracts.forEach(c => {

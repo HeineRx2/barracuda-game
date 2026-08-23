@@ -5,13 +5,28 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>BARRACUDA // Автономный Ударный Дрон</title>
   <meta name="description" content="Тактический симулятор боевого надводного дрона Барракуда с реалистичной 3D-моделью.">
-  <link rel="stylesheet" href="style.css?v=20260821_11">
+  <link rel="stylesheet" href="style.css?v=2.7.0_local">
 
-  <!-- Three.js Core + Extensions -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/objects/Water.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/objects/Sky.js"></script>
+  <!-- Global Error Handler Overlay -->
+  <script>
+    window.addEventListener('error', function(e) {
+      console.error('[GLOBAL ERROR]', e);
+      var b = document.getElementById('debug-error-banner');
+      if (!b) {
+        b = document.createElement('div');
+        b.id = 'debug-error-banner';
+        b.style.cssText = 'position:fixed; top:20px; left:20px; right:20px; z-index:999999; background:rgba(220,20,20,0.95); color:#fff; font-family:monospace; padding:15px; font-size:13px; border:2px solid #ffcc00; border-radius:6px; box-shadow:0 0 20px rgba(0,0,0,0.8);';
+        document.addEventListener('DOMContentLoaded', function() { document.body.appendChild(b); });
+      }
+      b.innerHTML += '<div style="margin-bottom:6px;">⚠️ <b>JS ОШИБКА:</b> ' + (e.message || e) + '<br><small style="color:#ffcccc;">Файл: ' + (e.filename ? e.filename.split('/').pop() : 'script') + ' : строка ' + e.lineno + '</small></div>';
+    });
+  </script>
+
+  <!-- Three.js Core + Extensions (100% Local Offline Bundles) -->
+  <script src="libs/three.min.js"></script>
+  <script src="libs/GLTFLoader.js"></script>
+  <script src="libs/Water.js"></script>
+  <script src="libs/Sky.js"></script>
 </head>
 <body>
 
@@ -59,6 +74,14 @@
     <header class="top-hud-bar">
       <div class="top-left-controls">
         <button class="btn-tactical-pause" id="btn-toggle-tma" title="Скрыть/Показать HUD">👁️</button>
+        <button class="btn-dossier-pill" id="btn-open-campaign" title="Сюжетная кампания и боевые операции" style="border-color:rgba(0,255,136,0.6); background:rgba(0,255,136,0.15); color:#00ff88;">
+          <span class="dossier-pill-icon">⚔️</span>
+          <span class="dossier-pill-text">ОПЕРАЦИИ</span>
+        </button>
+        <button class="btn-dossier-pill" id="btn-open-hangar" title="Ангар прототипов дронов и крафт" style="border-color:rgba(0,240,255,0.6); background:rgba(0,240,255,0.12); color:#00f0ff;">
+          <span class="dossier-pill-icon">⚓</span>
+          <span class="dossier-pill-text">АНГАР</span>
+        </button>
         <button class="btn-dossier-pill" id="btn-toggle-dossier" title="Открыть секретное досье">
           <span class="dossier-pill-icon">📁</span>
           <span class="dossier-pill-text">ДОСЬЕ</span>
@@ -451,28 +474,75 @@
   <!-- Notification Container -->
   <div id="notification-container"></div>
 
-  <!-- HELP / TUTORIAL MODAL -->
-  <!-- SETTINGS MODAL -->
-  <div id="settings-modal" class="help-modal-overlay">
-    <div class="help-modal-content" style="max-width:450px;">
-      <button class="help-close-btn" id="btn-close-settings">✕</button>
-      <h2 style="text-align:center; color:#00ff66; font-family:'Rajdhani',sans-serif; margin-bottom:20px;">⚙️ НАСТРОЙКИ</h2>
-      <div style="display:flex; flex-direction:column; gap:16px; padding:0 16px;">
-        <div class="settings-row">
-          <button id="setting-sound" class="btn-buy-action" style="width:100%; padding:12px; font-size:14px; cursor:pointer;">🔊 ЗВУК: ВКЛ</button>
+  <!-- HELP / TACTICAL MANUAL MODAL -->
+  <div id="help-modal" class="help-modal-overlay">
+    <div class="help-modal-content">
+      <button class="help-close-btn" id="btn-close-help" title="Закрыть руководство">✕</button>
+      
+      <div class="help-header">
+        <div class="help-badge">ИНСТРУКЦИЯ ОПЕРАТОРА // СЕКРЕТНО</div>
+        <h2 class="help-title">📖 ТАКТИЧЕСКИЙ СПРАВОЧНИК «БАРРАКУДА»</h2>
+        <p class="help-subtitle">Боевое руководство по управлению автономным морским ударным дроном</p>
+      </div>
+
+      <div class="help-sections-grid">
+        <!-- Section 1 -->
+        <div class="help-card">
+          <div class="help-card-icon">📡</div>
+          <h3 class="help-card-title">1. РАДИОРАЗВЕДКА И ДОБЫЧА (SIGINT)</h3>
+          <p class="help-card-text">
+            Тапы по 3D-дрону перехватывают зашифрованную радио-телеметрию врага. Каждый клик генерирует <strong>МБ разведданных</strong> и <strong>$ финансовые кредиты</strong>, а также накапливает заряд боевой батареи FPV-штурма.
+          </p>
         </div>
-        <div class="settings-row">
-          <label style="color:#889999; font-size:12px; display:block; margin-bottom:6px;">ГРОМКОСТЬ</label>
-          <input id="setting-volume" type="range" min="0" max="100" value="70" style="width:100%; accent-color:#00ff66;">
+
+        <!-- Section 2 -->
+        <div class="help-card">
+          <div class="help-card-icon">🚀</div>
+          <h3 class="help-card-title">2. FPV-ШТУРМ И УДАР ПО КОРАБЛЯМ</h3>
+          <p class="help-card-text">
+            Корабли противника уничтожаются кинетическими ударами! По накоплению шкалы нажмите <strong>«FPV-ШТУРМ»</strong>: управляйте штурмовым дроном, обходите зоны ПВО и поражайте флагманы, зарабатывая редкие трофеи и чертежи престижа.
+          </p>
         </div>
-        <hr style="border:1px solid rgba(255,255,255,0.1); margin:8px 0;">
-        <div class="settings-row">
-          <button id="btn-new-game" class="btn-buy-action" style="width:100%; padding:12px; font-size:13px; cursor:pointer; background:rgba(255,42,42,0.15); border-color:#ff4444; color:#ff4444;">🗑️ НОВАЯ ИГРА (СБРОСИТЬ ПРОГРЕСС)</button>
+
+        <!-- Section 3 -->
+        <div class="help-card">
+          <div class="help-card-icon">🗺️</div>
+          <h3 class="help-card-title">3. СЮЖЕТНАЯ КАМПАНИЯ (4 АКТА)</h3>
+          <p class="help-card-text">
+            Проходите боевые операции: <em>«Тень над Змеиным»</em> $\rightarrow$ <em>«Прорыв Севастопольских бонов»</em> $\rightarrow$ <em>«Охота на Новороссийский терминал»</em> $\rightarrow$ <em>«Ликвидация супер-флагмана Левиафан»</em> с диалогами штаба и офицеров РЭБ.
+          </p>
         </div>
-        <div style="text-align:center; color:#556666; font-size:10px; margin-top:8px;">
-          BARRACUDA v2.0 // ТАКТИЧЕСКАЯ ОПЕРАЦИЯ<br>
-          Сохранение: localStorage // Автосейв каждые 30с
+
+        <!-- Section 4 -->
+        <div class="help-card">
+          <div class="help-card-icon">🛠️</div>
+          <h3 class="help-card-title">4. АНГАР КОРПУСОВ И КУЗНИЦА</h3>
+          <p class="help-card-text">
+            Открывайте новые прототипы: <strong>Phantom</strong> (стелс), <strong>Strike</strong> (ракетоносец), <strong>Aegis</strong> (флагман РЭБ с роем). Создавайте в Кузнице модули из трофеев: <em>Броня «Титан-М»</em>, <em>Квантовый дешифратор</em>, <em>Боеголовка X-9</em> и <em>Ведомый рой</em>.
+          </p>
         </div>
+
+        <!-- Section 5 -->
+        <div class="help-card">
+          <div class="help-card-icon">📻</div>
+          <h3 class="help-card-title">5. РЭБ И СКАНИРОВАНИЕ ЧАСТОТ</h3>
+          <p class="help-card-text">
+            Взламывайте радары противника в мини-игре РЭБ: сопоставьте частоту и амплитуду волны с сигналом вражеского корабля для перехвата данных и отключения систем помех.
+          </p>
+        </div>
+
+        <!-- Section 6 -->
+        <div class="help-card">
+          <div class="help-card-icon">🧬</div>
+          <h3 class="help-card-title">6. НИОКР И ДЕРЕВО ТЕХНОЛОГИЙ</h3>
+          <p class="help-card-text">
+            Инвестируйте терабайты данных в 13 уникальных ветвей НИОКР: открывайте автономную добычу, квантовое ускорение, роевой искусственный интеллект и безлимитный накопитель Nexus.
+          </p>
+        </div>
+      </div>
+
+      <div class="help-footer-row">
+        <button class="btn-buy-action" id="btn-help-understood" style="max-width: 280px; margin: 0 auto;">ПРИНЯТО В РАБОТУ ⚓</button>
       </div>
     </div>
   </div>
@@ -886,14 +956,206 @@
             <li>Прогресс <strong>автосохраняется</strong> каждые 30 секунд</li>
           </ul>
         </div>
-
       </div>
     </div>
   </div>
 
+  <!-- SETTINGS MODAL -->
+  <div id="settings-modal" class="help-modal-overlay">
+    <div class="help-modal-content" style="max-width: 480px;">
+      <div class="help-modal-header">
+        <h2>⚙️ НАСТРОЙКИ СИСТЕМЫ</h2>
+        <button class="btn-close-help" id="btn-close-settings">✕</button>
+      </div>
+      <div class="help-modal-body">
+        <div class="help-section">
+          <h3>🔊 АУДИО И СВЯЗЬ</h3>
+          <div style="display:flex; gap:12px; align-items:center; margin-bottom:14px;">
+            <button id="setting-sound" class="btn-buy-action" style="flex:1;">🔊 ЗВУК: ВКЛ</button>
+          </div>
+          <div style="font-size:12px; color:#8da4af; margin-bottom:6px;">ГРОМКОСТЬ ТАКТИЧЕСКИХ СИГНАЛОВ:</div>
+          <input type="range" id="setting-volume" min="0" max="100" value="70" style="width:100%;">
+        </div>
+        <div class="help-section">
+          <h3>💾 УПРАВЛЕНИЕ ДАННЫМИ</h3>
+          <button id="btn-new-game" class="btn-buy-action" style="background:rgba(255,40,40,0.2); border-color:#ff4444; color:#ff6666; width:100%;">⚠️ СБРОСИТЬ ПРОГРЕСС / НОВАЯ ИГРА</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TACTICAL RADIO COMMS TERMINAL (HUD OVERLAY) -->
+  <div id="comms-terminal-modal">
+    <div class="comms-top-bar">
+      <div class="comms-status-wrap">
+        <span class="comms-live-dot"></span>
+        <span id="comms-channel-tag">SECURE COMMS // CH-12 [ENCRYPTED]</span>
+      </div>
+      <button class="comms-close-btn" id="btn-close-comms" title="Свернуть радиоканал">✕</button>
+    </div>
+    <div class="comms-main-content">
+      <div class="comms-avatar-box" id="comms-avatar-icon">
+        📡
+        <span class="comms-avatar-badge" id="comms-speaker-role">HQ</span>
+      </div>
+      <div class="comms-text-pane">
+        <div class="comms-speaker-name" id="comms-speaker-title">ШТАБ [МАЯК]</div>
+        <div class="comms-callsign-sub" id="comms-speaker-sub">ГЕНЕРАЛЬНЫЙ ОПЕРАТИВНЫЙ ЦЕНТР // ЧЁРНОЕ МОРЕ</div>
+        <div class="comms-dialogue-body" id="comms-dialogue-text">Инициализация защищённого канала телеметрии...</div>
+      </div>
+    </div>
+    <div class="comms-choices-tray" id="comms-choices-container">
+      <!-- Injected choices -->
+    </div>
+  </div>
+
+  <!-- CAMPAIGN STORY OPERATIONS MODAL -->
+  <div id="campaign-modal" class="help-modal-overlay">
+    <div class="help-modal-content campaign-modal-container">
+      <button class="help-close-btn" id="btn-close-campaign" title="Закрыть операции">✕</button>
+      
+      <div style="text-align:center; margin-bottom:16px;">
+        <div style="font-family:'Rajdhani',monospace; font-size:11px; color:#00ff88; letter-spacing:2px;">OPERATIONAL COMMAND // BLACK SEA THEATER</div>
+        <h2 style="font-family:'Rajdhani',sans-serif; font-size:24px; font-weight:800; color:#fff; margin:4px 0;">⚔️ БОЕВЫЕ ОПЕРАЦИИ «ПРОЕКТ ЛЕВИАФАН»</h2>
+        <p style="color:#8da4af; font-size:12px;">Многоступенчатые тактические операции: разведка, РЭБ-саботаж, FPV-удар и подъем черных ящиков.</p>
+      </div>
+
+      <!-- Acts Navigation Tabs -->
+      <div class="campaign-acts-nav">
+        <div class="campaign-act-tab active" data-act="1">
+          <div class="campaign-act-tag">АКТ I</div>
+          <div class="campaign-act-title">🏝️ ТЕНЬ НАД ЗМЕИНЫМ</div>
+        </div>
+        <div class="campaign-act-tab" data-act="2">
+          <div class="campaign-act-tag">АКТ II</div>
+          <div class="campaign-act-title">⚓ СЕВАСТОПОЛЬСКИЙ ПРОРЫВ</div>
+        </div>
+        <div class="campaign-act-tab" data-act="3">
+          <div class="campaign-act-tag">АКТ III</div>
+          <div class="campaign-act-title">🚢 ПРИЗРАЧНЫЙ КОНВОЙ</div>
+        </div>
+        <div class="campaign-act-tab" data-act="4">
+          <div class="campaign-act-tag">АКТ IV // ФИНАЛ</div>
+          <div class="campaign-act-title">💀 КОД: ЛЕВИАФАН</div>
+        </div>
+      </div>
+
+      <!-- Missions Grid for Selected Act -->
+      <div class="campaign-mission-grid" id="campaign-missions-list">
+        <!-- Injected via JS -->
+      </div>
+
+    </div>
+  </div>
+
+  <!-- DRONE HANGAR & SALVAGE/CRAFTING FORGE MODAL -->
+  <div id="hangar-modal" class="help-modal-overlay">
+    <div class="help-modal-content hangar-modal-container">
+      <button class="help-close-btn" id="btn-close-hangar" title="Закрыть ангар">✕</button>
+
+      <div style="text-align:center; margin-bottom:18px;">
+        <div style="font-family:'Rajdhani',monospace; font-size:11px; color:#00f0ff; letter-spacing:2px;">NAVAL DRONE YARD // PROTOYPE HANGAR</div>
+        <h2 style="font-family:'Rajdhani',sans-serif; font-size:24px; font-weight:800; color:#fff; margin:4px 0;">⚓ АНГАР ПРОТОТИПОВ И ЦЕХ КРАФТА</h2>
+        <p style="color:#8da4af; font-size:12px;">Выбирайте специализированные 3D-корпуса катеров и создавайте военные модули из трофейного лута.</p>
+      </div>
+
+      <!-- Prototypes Cards Grid -->
+      <div class="hangar-prototype-grid">
+        <!-- MK1 PHANTOM -->
+        <div class="proto-card selected" data-proto="phantom">
+          <div>
+            <span class="proto-badge">MK-1 // СТЕЛС</span>
+            <div class="proto-title">BARRACUDA «PHANTOM»</div>
+            <div class="proto-role">Разведывательно-диверсионная платформа</div>
+            <div class="proto-stats-list">
+              <div class="proto-stat-item"><span>Стелс-маскировка:</span><span class="proto-stat-val text-green">95% (-40% препятствий)</span></div>
+              <div class="proto-stat-item"><span>Сбор разведданных:</span><span class="proto-stat-val text-cyan">+50% к МБ</span></div>
+              <div class="proto-stat-item"><span>Скорость взлома РЭБ:</span><span class="proto-stat-val text-yellow">+30% времени</span></div>
+            </div>
+          </div>
+          <button class="btn-launch-mission btn-proto-select" data-select-proto="phantom" style="background:#00ff88;">ВЫБРАН КОРПУС</button>
+        </div>
+
+        <!-- MK2 STRIKE -->
+        <div class="proto-card" data-proto="strike">
+          <div>
+            <span class="proto-badge" style="color:#ff5555; background:rgba(255,85,85,0.15); border-color:#ff5555;">MK-2 // ШТУРМОВИК</span>
+            <div class="proto-title">BARRACUDA «STRIKE»</div>
+            <div class="proto-role">Тяжёлый ударный ракетоносец</div>
+            <div class="proto-stats-list">
+              <div class="proto-stat-item"><span>Урон FPV-удара:</span><span class="proto-stat-val text-green">+100% (x2 урон)</span></div>
+              <div class="proto-stat-item"><span>Критический множитель:</span><span class="proto-stat-val text-yellow">До x12 Крит</span></div>
+              <div class="proto-stat-item"><span>Кулдаун пуска FPV:</span><span class="proto-stat-val text-cyan">-30% задержка</span></div>
+            </div>
+          </div>
+          <button class="btn-launch-mission btn-proto-select" data-select-proto="strike" style="background:rgba(255,255,255,0.15); color:#fff;">АКТИВИРОВАТЬ</button>
+        </div>
+
+        <!-- MK3 AEGIS -->
+        <div class="proto-card" data-proto="aegis">
+          <div>
+            <span class="proto-badge" style="color:#00f0ff; background:rgba(0,240,255,0.15); border-color:#00f0ff;">MK-3 // ФЛАГМАН РЭБ</span>
+            <div class="proto-title">BARRACUDA «AEGIS»</div>
+            <div class="proto-role">Комплекс радиоэлектронной борьбы и Рой ИИ</div>
+            <div class="proto-stats-list">
+              <div class="proto-stat-item"><span>Авто-подавление РЭБ:</span><span class="proto-stat-val text-cyan">Пассивный взлом</span></div>
+              <div class="proto-stat-item"><span>Рой ведомых дронов:</span><span class="proto-stat-val text-green">+100% пассивный $</span></div>
+              <div class="proto-stat-item"><span>Защита от ПВО:</span><span class="proto-stat-val text-yellow">+2 Доп. Жизни в FPV</span></div>
+            </div>
+          </div>
+          <button class="btn-launch-mission btn-proto-select" data-select-proto="aegis" style="background:rgba(255,255,255,0.15); color:#fff;">АКТИВИРОВАТЬ</button>
+        </div>
+      </div>
+
+      <!-- Salvage Inventory & Crafting Forge -->
+      <div class="salvage-forge-section">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+          <h3 style="font-family:'Rajdhani',sans-serif; font-size:16px; color:#ffcc00; margin:0;">💠 ТРОФЕИ И ЦЕХ МОДЕРНИЗАЦИИ (SALVAGE FORGE)</h3>
+          <span style="font-size:11px; color:#8da4af;">Добывается при потоплении кораблей и в S-рангах FPV</span>
+        </div>
+
+        <div class="salvage-inventory-bar">
+          <div class="salvage-inv-pill">
+            <span class="salvage-inv-icon">📦</span>
+            <div>
+              <div class="salvage-inv-label">ЧЁРНЫЕ ЯЩИКИ:</div>
+              <div class="salvage-inv-val" id="val-salvage-box">0 шт</div>
+            </div>
+          </div>
+          <div class="salvage-inv-pill">
+            <span class="salvage-inv-icon">💎</span>
+            <div>
+              <div class="salvage-inv-label">МИКРОЧИПЫ GaN:</div>
+              <div class="salvage-inv-val" id="val-salvage-chips">0 шт</div>
+            </div>
+          </div>
+          <div class="salvage-inv-pill">
+            <span class="salvage-inv-icon">🛡️</span>
+            <div>
+              <div class="salvage-inv-label">ТИТАНОВЫЙ СПЛАВ:</div>
+              <div class="salvage-inv-val" id="val-salvage-titanium">0 шт</div>
+            </div>
+          </div>
+          <div class="salvage-inv-pill">
+            <span class="salvage-inv-icon">🔮</span>
+            <div>
+              <div class="salvage-inv-label">ИИ-ЯДРА «ЛЕВИАФАН»:</div>
+              <div class="salvage-inv-val" id="val-salvage-aicore">0 шт</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="crafting-grid" id="crafting-recipes-grid">
+          <!-- Crafting Recipes injected via JS -->
+        </div>
+      </div>
+
+    </div>
+  </div>
+
   <!-- Audio, 3D Engine & Game Logic -->
-  <script src="audio.js?v=20260821_11"></script>
-  <script src="drone3d.js?v=20260821_11"></script>
-  <script src="game.js?v=20260821_11"></script>
+  <script src="audio.js?v=2.7.0_local"></script>
+  <script src="drone3d.js?v=2.7.0_local"></script>
+  <script src="game.js?v=2.7.0_local"></script>
 </body>
 </html>

@@ -2289,3 +2289,696 @@ body {
     width: 100%;
   }
 }
+
+/* ==========================================================================
+   TACTICAL RADIO COMMS TERMINAL (COMMS HUD OVERLAY)
+   ========================================================================== */
+#comms-terminal-modal {
+  position: fixed;
+  bottom: 24px;
+  left: 24px;
+  max-width: 520px;
+  width: calc(100% - 48px);
+  background: rgba(3, 14, 22, 0.94);
+  border: 1px solid rgba(0, 255, 136, 0.4);
+  border-left: 4px solid #00ff88;
+  border-radius: 10px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8), 0 0 25px rgba(0, 255, 136, 0.2);
+  z-index: 1050;
+  display: none;
+  flex-direction: column;
+  backdrop-filter: blur(12px);
+  animation: commsSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+}
+
+@keyframes commsSlideIn {
+  from { opacity: 0; transform: translateY(30px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.comms-top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 14px;
+  background: rgba(0, 255, 136, 0.08);
+  border-bottom: 1px solid rgba(0, 255, 136, 0.2);
+}
+
+.comms-status-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Rajdhani', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  color: #00ff88;
+  letter-spacing: 1px;
+}
+
+.comms-live-dot {
+  width: 8px;
+  height: 8px;
+  background: #ff2244;
+  border-radius: 50%;
+  box-shadow: 0 0 8px #ff2244;
+  animation: commsPulse 1s infinite alternate;
+}
+
+@keyframes commsPulse {
+  from { opacity: 0.4; }
+  to { opacity: 1; }
+}
+
+.comms-close-btn {
+  background: none;
+  border: none;
+  color: #6a8c98;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 2px 6px;
+  transition: color 0.2s;
+}
+.comms-close-btn:hover { color: #ff4466; }
+
+.comms-main-content {
+  display: flex;
+  gap: 14px;
+  padding: 14px;
+  align-items: flex-start;
+}
+
+.comms-avatar-box {
+  width: 58px;
+  height: 58px;
+  border-radius: 8px;
+  background: rgba(0, 25, 35, 0.8);
+  border: 1px solid rgba(0, 255, 136, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  position: relative;
+  flex-shrink: 0;
+  box-shadow: inset 0 0 12px rgba(0, 255, 136, 0.15);
+}
+
+.comms-avatar-badge {
+  position: absolute;
+  bottom: -4px;
+  right: -4px;
+  font-size: 9px;
+  font-weight: 900;
+  background: #00ff88;
+  color: #000;
+  padding: 1px 4px;
+  border-radius: 4px;
+  font-family: 'Rajdhani', sans-serif;
+}
+
+.comms-text-pane {
+  flex: 1;
+}
+
+.comms-speaker-name {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 14px;
+  font-weight: 800;
+  color: #00ff88;
+  letter-spacing: 1px;
+  margin-bottom: 2px;
+}
+
+.comms-callsign-sub {
+  font-family: 'Rajdhani', monospace;
+  font-size: 10px;
+  color: #6a9aa8;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
+.comms-dialogue-body {
+  font-family: 'Rajdhani', monospace;
+  font-size: 13px;
+  line-height: 1.45;
+  color: #d8edf5;
+  min-height: 38px;
+  word-break: break-word;
+}
+
+.comms-choices-tray {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 0 14px 14px 14px;
+}
+
+.comms-choice-btn {
+  background: rgba(0, 35, 48, 0.7);
+  border: 1px solid rgba(0, 255, 136, 0.3);
+  color: #e0f8ff;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+
+.comms-choice-btn:hover {
+  background: rgba(0, 255, 136, 0.2);
+  border-color: #00ff88;
+  color: #00ff88;
+  transform: translateX(4px);
+  box-shadow: 0 0 12px rgba(0, 255, 136, 0.25);
+}
+
+.comms-choice-tag {
+  background: rgba(0, 255, 136, 0.2);
+  color: #00ff88;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+/* ==========================================================================
+   CAMPAIGN OPERATIONS MODAL (TACTICAL STORY OPERATIONS)
+   ========================================================================== */
+.campaign-modal-container {
+  max-width: 920px;
+  width: 94vw;
+  background: rgba(2, 10, 18, 0.95);
+  border: 1px solid rgba(0, 240, 255, 0.3);
+  box-shadow: 0 16px 60px rgba(0, 0, 0, 0.85), 0 0 35px rgba(0, 240, 255, 0.15);
+}
+
+.campaign-acts-nav {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 18px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.campaign-act-tab {
+  flex: 1;
+  min-width: 170px;
+  background: rgba(0, 25, 38, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 10px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  text-align: left;
+}
+
+.campaign-act-tab:hover {
+  border-color: rgba(0, 240, 255, 0.4);
+  background: rgba(0, 38, 55, 0.8);
+}
+
+.campaign-act-tab.active {
+  border-color: #00f0ff;
+  background: rgba(0, 240, 255, 0.15);
+  box-shadow: 0 0 16px rgba(0, 240, 255, 0.2);
+}
+
+.campaign-act-tag {
+  font-family: 'Rajdhani', monospace;
+  font-size: 10px;
+  color: #00f0ff;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.campaign-act-title {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 13px;
+  font-weight: 800;
+  color: #fff;
+  margin-top: 2px;
+}
+
+.campaign-mission-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+@media (max-width: 720px) {
+  .campaign-mission-grid { grid-template-columns: 1fr; }
+}
+
+.campaign-mission-card {
+  background: rgba(4, 18, 30, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+  transition: all 0.25s ease;
+}
+
+.campaign-mission-card.active {
+  border-color: rgba(0, 255, 136, 0.5);
+  box-shadow: 0 0 18px rgba(0, 255, 136, 0.15);
+}
+
+.campaign-mission-card.completed {
+  border-color: rgba(0, 240, 255, 0.4);
+  background: rgba(0, 28, 40, 0.6);
+}
+
+.mission-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.mission-code-badge {
+  font-family: 'Rajdhani', monospace;
+  font-size: 11px;
+  font-weight: 800;
+  color: #00ff88;
+  background: rgba(0, 255, 136, 0.12);
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid rgba(0, 255, 136, 0.3);
+}
+
+.mission-status-pill {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+.mission-status-pill.ready { background: rgba(0, 255, 136, 0.2); color: #00ff88; border: 1px solid #00ff88; }
+.mission-status-pill.locked { background: rgba(255, 68, 68, 0.15); color: #ff5555; }
+.mission-status-pill.done { background: rgba(0, 240, 255, 0.2); color: #00f0ff; }
+
+.mission-title-text {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 16px;
+  font-weight: 800;
+  color: #fff;
+  margin-bottom: 4px;
+}
+
+.mission-desc-text {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 12px;
+  color: #8da4af;
+  line-height: 1.4;
+  margin-bottom: 12px;
+}
+
+.mission-phases-track {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.mission-phase-step {
+  flex: 1;
+  background: rgba(0, 20, 30, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 6px 4px;
+  border-radius: 6px;
+  text-align: center;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  color: #6a8c98;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.mission-phase-step.active {
+  border-color: #00ff88;
+  color: #00ff88;
+  background: rgba(0, 255, 136, 0.15);
+  box-shadow: 0 0 8px rgba(0, 255, 136, 0.2);
+}
+
+.mission-phase-step.done {
+  border-color: #00f0ff;
+  color: #00f0ff;
+  background: rgba(0, 240, 255, 0.1);
+}
+
+.mission-rewards-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  font-family: 'Rajdhani', monospace;
+  font-size: 11px;
+  color: #ffcc00;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.btn-launch-mission {
+  width: 100%;
+  padding: 10px;
+  border-radius: 6px;
+  background: linear-gradient(135deg, #00ff88 0%, #00b359 100%);
+  border: none;
+  color: #021a0e;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 14px rgba(0, 255, 136, 0.3);
+}
+
+.btn-launch-mission:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.1);
+  box-shadow: 0 6px 20px rgba(0, 255, 136, 0.5);
+}
+
+.btn-launch-mission:disabled {
+  background: rgba(255, 255, 255, 0.1);
+  color: #6a8c98;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* ==========================================================================
+   DRONE HANGAR & SALVAGE/CRAFTING MODAL
+   ========================================================================== */
+.hangar-modal-container {
+  max-width: 960px;
+  width: 94vw;
+  background: rgba(2, 12, 20, 0.96);
+  border: 1px solid rgba(0, 255, 136, 0.3);
+  box-shadow: 0 16px 60px rgba(0, 0, 0, 0.85), 0 0 35px rgba(0, 255, 136, 0.15);
+}
+
+.hangar-prototype-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+@media (max-width: 780px) {
+  .hangar-prototype-grid { grid-template-columns: 1fr; }
+}
+
+.proto-card {
+  background: rgba(4, 18, 30, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.proto-card:hover {
+  border-color: rgba(0, 255, 136, 0.5);
+  transform: translateY(-2px);
+}
+
+.proto-card.selected {
+  border-color: #00ff88;
+  background: linear-gradient(180deg, rgba(0, 255, 136, 0.12) 0%, rgba(4, 18, 30, 0.9) 100%);
+  box-shadow: 0 0 20px rgba(0, 255, 136, 0.25);
+}
+
+.proto-badge {
+  font-family: 'Rajdhani', monospace;
+  font-size: 10px;
+  font-weight: 800;
+  color: #00ff88;
+  background: rgba(0, 255, 136, 0.15);
+  padding: 2px 6px;
+  border-radius: 4px;
+  display: inline-block;
+  margin-bottom: 6px;
+}
+
+.proto-title {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 17px;
+  font-weight: 800;
+  color: #fff;
+}
+
+.proto-role {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 11px;
+  color: #00f0ff;
+  margin-bottom: 12px;
+  font-weight: 600;
+}
+
+.proto-stats-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.proto-stat-item {
+  display: flex;
+  justify-content: space-between;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 11px;
+  color: #8da4af;
+}
+
+.proto-stat-val {
+  font-weight: 700;
+  color: #fff;
+}
+
+.salvage-forge-section {
+  background: rgba(0, 20, 32, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 16px;
+}
+
+.salvage-inventory-bar {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.salvage-inv-pill {
+  flex: 1;
+  min-width: 140px;
+  background: rgba(4, 25, 40, 0.8);
+  border: 1px solid rgba(0, 240, 255, 0.2);
+  padding: 8px 12px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.salvage-inv-icon {
+  font-size: 20px;
+}
+
+.salvage-inv-label {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 11px;
+  color: #7a9aa8;
+  font-weight: 600;
+}
+
+.salvage-inv-val {
+  font-family: 'Rajdhani', monospace;
+  font-size: 14px;
+  font-weight: 800;
+  color: #00f0ff;
+}
+
+.crafting-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+@media (max-width: 680px) {
+  .crafting-grid { grid-template-columns: 1fr; }
+}
+
+.craft-card {
+  background: rgba(4, 18, 28, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 12px;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.craft-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.craft-card-title {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 13px;
+  font-weight: 800;
+  color: #ffcc00;
+}
+
+.craft-card-cost {
+  font-family: 'Rajdhani', monospace;
+  font-size: 11px;
+  color: #8da4af;
+}
+
+.craft-card-effect {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 11px;
+  color: #d8edf5;
+}
+
+.btn-craft-action {
+  background: rgba(255, 204, 0, 0.15);
+  border: 1px solid #ffcc00;
+  color: #ffcc00;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-craft-action:hover {
+  background: #ffcc00;
+  color: #000;
+  box-shadow: 0 0 12px rgba(255, 204, 0, 0.4);
+}
+
+.btn-craft-action:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: #6a8c98;
+}
+
+/* =========================================================================
+   TACTICAL HELP / MANUAL STYLES
+   ========================================================================= */
+.help-header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.help-badge {
+  display: inline-block;
+  background: rgba(0, 240, 255, 0.12);
+  border: 1px solid rgba(0, 240, 255, 0.4);
+  color: #00f0ff;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  padding: 3px 10px;
+  border-radius: 12px;
+  margin-bottom: 8px;
+}
+
+.help-title {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 22px;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: 1px;
+  margin: 4px 0;
+  text-shadow: 0 0 15px rgba(0, 240, 255, 0.4);
+}
+
+.help-subtitle {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 13px;
+  color: #8da4af;
+}
+
+.help-sections-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 14px;
+  margin-bottom: 20px;
+  max-height: 55vh;
+  overflow-y: auto;
+  padding-right: 6px;
+}
+
+.help-card {
+  background: rgba(10, 22, 28, 0.7);
+  border: 1px solid rgba(0, 240, 255, 0.18);
+  border-radius: 10px;
+  padding: 14px;
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.help-card:hover {
+  border-color: #00f0ff;
+  background: rgba(12, 28, 36, 0.85);
+  box-shadow: 0 0 15px rgba(0, 240, 255, 0.15);
+}
+
+.help-card-icon {
+  font-size: 24px;
+  margin-bottom: 8px;
+}
+
+.help-card-title {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 14px;
+  font-weight: 800;
+  color: #00f0ff;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+
+.help-card-text {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 12px;
+  line-height: 1.45;
+  color: #c5dbe4;
+}
+
+.help-footer-row {
+  display: flex;
+  justify-content: center;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
