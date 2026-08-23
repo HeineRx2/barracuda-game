@@ -81,11 +81,13 @@ class Barracuda3DEngine {
     this.pilotSpeed = 0;
     this.pilotThrottle = 0;
     this.pilotSteer = 0;
+    this.pilotAngularVelocity = 0;
     this.pilotBoost = false;
     this.pilotRoll = 0;
     this.pilotPitch = 0;
     this.pilotHullHP = 100;
     this.pilotHullMaxHP = 100;
+    this.smoothLookTarget = new THREE.Vector3(0, 0, 0);
     this.missionMines = [];
     this.missionCrates = [];
     this.missionSearchlights = [];
@@ -1197,20 +1199,24 @@ class Barracuda3DEngine {
 
     // Camera orbit, Chase-cam for Piloting, or FLIR scope mode
     if (this.pilotMode && this.boatModel) {
-      // Third-person dynamic chase camera following boat
-      const camDist = this.pilotBoost ? 13.5 : 10.8;
-      const camHeight = this.pilotBoost ? 5.6 : 4.6;
+      // Dynamic chase camera with damped tracking
+      const camDist = this.pilotBoost ? 12.5 : 10.0;
+      const camHeight = this.pilotBoost ? 4.8 : 4.2;
       const targetCamX = this.pilotBoatPos.x - Math.sin(this.pilotHeading) * camDist;
       const targetCamZ = this.pilotBoatPos.z - Math.cos(this.pilotHeading) * camDist;
       const targetCamY = this.boatBaseY + camHeight;
 
-      this.camera.position.lerp(new THREE.Vector3(targetCamX, targetCamY, targetCamZ), 0.12);
-      const lookTarget = new THREE.Vector3(
-        this.pilotBoatPos.x + Math.sin(this.pilotHeading) * 12.0,
-        this.boatBaseY + 1.2,
-        this.pilotBoatPos.z + Math.cos(this.pilotHeading) * 12.0
+      // Smooth camera position interpolation
+      this.camera.position.lerp(new THREE.Vector3(targetCamX, targetCamY, targetCamZ), 0.07);
+
+      // Smooth look-ahead target (eliminates jerking and camera snapping)
+      const rawLookTarget = new THREE.Vector3(
+        this.pilotBoatPos.x + Math.sin(this.pilotHeading) * 8.0,
+        this.boatBaseY + 1.0,
+        this.pilotBoatPos.z + Math.cos(this.pilotHeading) * 8.0
       );
-      this.camera.lookAt(lookTarget);
+      this.smoothLookTarget.lerp(rawLookTarget, 0.08);
+      this.camera.lookAt(this.smoothLookTarget);
     } else if (this.cameraMode === 'flir') {
       // Look directly through thermal FLIR optic towards enemy ship
       const shipPos = this.enemyShip ? this.enemyShip.position : new THREE.Vector3(38, 2, -75);
@@ -1394,18 +1400,20 @@ class Barracuda3DEngine {
     // REAL-TIME 3D PILOTING PHYSICS & BOAT DYNAMICS (MISSIONS)
     // -------------------------------------------------------------
     if (this.pilotMode && this.boatModel) {
-      const maxForwardSpeed = this.pilotBoost ? 42.0 : 25.0;
-      const maxReverseSpeed = -10.0;
-      const accelRate = (this.pilotThrottle > 0 ? 16.0 : 24.0) * dt;
-      const turnRate = 2.4 * dt;
+      const maxForwardSpeed = this.pilotBoost ? 36.0 : 22.0;
+      const maxReverseSpeed = -8.0;
+      const accelRate = (this.pilotThrottle > 0 ? 12.0 : 18.0) * dt;
 
       // Update speed with inertia:
       const targetSpeed = this.pilotThrottle > 0 ? this.pilotThrottle * maxForwardSpeed : this.pilotThrottle * (-maxReverseSpeed);
       this.pilotSpeed += (targetSpeed - this.pilotSpeed) * Math.min(1.0, accelRate);
 
-      // Turning effectiveness depends on movement speed:
-      const steerFactor = Math.max(0.25, Math.min(1.2, Math.abs(this.pilotSpeed) / 12.0));
-      this.pilotHeading -= this.pilotSteer * turnRate * steerFactor * (this.pilotSpeed >= 0 ? 1 : -1);
+      // Smooth hydrodynamic turning (prevents sudden twitching and jerking):
+      const maxTurnRate = 1.25; // Gentle realistic naval rudder rate
+      const speedFactor = Math.min(1.0, Math.max(0.2, Math.abs(this.pilotSpeed) / 10.0));
+      const targetAngularVel = -this.pilotSteer * maxTurnRate * speedFactor;
+      this.pilotAngularVelocity += (targetAngularVel - this.pilotAngularVelocity) * Math.min(1.0, 5.5 * dt);
+      this.pilotHeading += this.pilotAngularVelocity * dt * (this.pilotSpeed >= 0 ? 1 : -0.7);
 
       // Translate coordinates:
       const vx = Math.sin(this.pilotHeading) * this.pilotSpeed;
@@ -1413,12 +1421,12 @@ class Barracuda3DEngine {
       this.pilotBoatPos.x += vx * dt;
       this.pilotBoatPos.z += vz * dt;
 
-      // Realistic hydrodynamic pitch and roll:
-      const waveHeave = Math.sin(t * 3.0) * 0.05 + Math.cos(t * 2.1) * 0.03;
-      const targetRoll = -this.pilotSteer * (Math.abs(this.pilotSpeed) / 25.0) * 0.35;
-      const targetPitch = (this.pilotSpeed / 35.0) * 0.14 + (this.pilotBoost ? 0.05 : 0.0);
-      this.pilotRoll += (targetRoll - this.pilotRoll) * 0.15;
-      this.pilotPitch += (targetPitch - this.pilotPitch) * 0.15;
+      // Realistic hydrodynamic pitch and roll based on smoothed angular velocity:
+      const waveHeave = Math.sin(t * 2.6) * 0.04 + Math.cos(t * 1.8) * 0.02;
+      const targetRoll = this.pilotAngularVelocity * 0.32;
+      const targetPitch = (this.pilotSpeed / 36.0) * 0.12 + (this.pilotBoost ? 0.04 : 0.0);
+      this.pilotRoll += (targetRoll - this.pilotRoll) * Math.min(1.0, 6.0 * dt);
+      this.pilotPitch += (targetPitch - this.pilotPitch) * Math.min(1.0, 6.0 * dt);
 
       this.boatModel.position.set(this.pilotBoatPos.x, this.boatBaseY + waveHeave, this.pilotBoatPos.z);
       this.boatModel.rotation.set(this.pilotPitch, this.pilotHeading, this.pilotRoll);

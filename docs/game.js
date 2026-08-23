@@ -2678,8 +2678,8 @@ class BarracudaGame {
       if (!this.sortieActive) return;
       if (e.code === 'KeyW' || e.code === 'ArrowUp') this.inputState.throttle = 1.0;
       else if (e.code === 'KeyS' || e.code === 'ArrowDown') this.inputState.throttle = -0.6;
-      else if (e.code === 'KeyA' || e.code === 'ArrowLeft') this.inputState.steer = 1.0;
-      else if (e.code === 'KeyD' || e.code === 'ArrowRight') this.inputState.steer = -1.0;
+      else if (e.code === 'KeyA' || e.code === 'ArrowLeft') this.inputState.steer = 0.75;
+      else if (e.code === 'KeyD' || e.code === 'ArrowRight') this.inputState.steer = -0.75;
       else if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') this.inputState.boost = true;
       else if (e.code === 'Space') {
         e.preventDefault();
@@ -2729,9 +2729,24 @@ class BarracudaGame {
             const nx = Math.cos(angle) * (clampedDist / maxR);
             const ny = Math.sin(angle) * (clampedDist / maxR);
 
+            // Deadzone and smooth precision curve
+            const deadzone = 0.08;
+            let steerVal = 0;
+            if (Math.abs(nx) > deadzone) {
+              const sign = Math.sign(nx);
+              const remapped = (Math.abs(nx) - deadzone) / (1.0 - deadzone);
+              steerVal = -sign * Math.pow(remapped, 1.3) * 0.8;
+            }
+            let throttleVal = 0;
+            if (Math.abs(ny) > deadzone) {
+              const sign = Math.sign(ny);
+              const remapped = (Math.abs(ny) - deadzone) / (1.0 - deadzone);
+              throttleVal = -sign * Math.pow(remapped, 1.1) * 1.0;
+            }
+
             joyThumb.style.transform = `translate(${nx * maxR}px, ${ny * maxR}px)`;
-            this.inputState.steer = -nx * 1.2;
-            this.inputState.throttle = -ny * 1.2;
+            this.inputState.steer = steerVal;
+            this.inputState.throttle = throttleVal;
             this.applyPilotInputs();
             break;
           }
