@@ -2323,9 +2323,9 @@ class BarracudaGame {
   }
 
   getHWCost(type) {
-    const basesMB = { satcom: 100, optics: 250, armor: 500, waterjets: 1000, missiles: 2500 };
-    const basesUSD = { satcom: 250, optics: 600, armor: 1200, waterjets: 2500, missiles: 6000 };
-    const scales = { satcom: 2.1, optics: 2.15, armor: 2.2, waterjets: 2.25, missiles: 2.3 };
+    const basesMB = { satcom: 15, optics: 45, armor: 80, waterjets: 150, missiles: 300 };
+    const basesUSD = { satcom: 50, optics: 150, armor: 300, waterjets: 600, missiles: 1500 };
+    const scales = { satcom: 1.8, optics: 1.85, armor: 1.9, waterjets: 1.95, missiles: 2.0 };
     const lvl = this.hw[type] || 0;
     return {
       mb: Math.floor(basesMB[type] * Math.pow(scales[type], lvl)),
@@ -2335,9 +2335,9 @@ class BarracudaGame {
   }
 
   getCyberCost(type) {
-    const basesMB = { sniffer: 300, quantum: 1200, autosiphon: 2500 };
-    const basesUSD = { sniffer: 500, quantum: 3000, autosiphon: 7500 };
-    const scales = { sniffer: 2.15, quantum: 2.25, autosiphon: 2.35 };
+    const basesMB = { sniffer: 30, quantum: 100, autosiphon: 200 };
+    const basesUSD = { sniffer: 100, quantum: 400, autosiphon: 1000 };
+    const scales = { sniffer: 1.85, quantum: 1.95, autosiphon: 2.05 };
     const lvl = this.cyber[type] || 0;
     return {
       mb: Math.floor(basesMB[type] * Math.pow(scales[type], lvl)),
@@ -3489,9 +3489,10 @@ class BarracudaGame {
 
   buyHardware(type) {
     const cost = this.getHWCost(type);
-    if (this.dataMB >= cost) {
-      this.dataMB -= cost;
-      this.hw[type]++;
+    if (!cost.isMax && this.dataMB >= cost.mb && this.creditsUSD >= cost.usd) {
+      this.dataMB -= cost.mb;
+      this.creditsUSD -= cost.usd;
+      this.hw[type] = (this.hw[type] || 0) + 1;
       window.tacticalAudio.playMountingSfx();
       if (this.engine3D) {
         this.engine3D.updateUpgrades({ ...this.hw, prestige: this.blueprintsBP });
@@ -3504,9 +3505,10 @@ class BarracudaGame {
 
   buyCyber(type) {
     const cost = this.getCyberCost(type);
-    if (this.dataMB >= cost) {
-      this.dataMB -= cost;
-      this.cyber[type]++;
+    if (!cost.isMax && this.dataMB >= cost.mb && this.creditsUSD >= cost.usd) {
+      this.dataMB -= cost.mb;
+      this.creditsUSD -= cost.usd;
+      this.cyber[type] = (this.cyber[type] || 0) + 1;
       window.tacticalAudio.playMountingSfx();
       if (this.engine3D) this.engine3D.addModule(type);
       this.saveGame();
