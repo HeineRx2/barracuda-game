@@ -1145,7 +1145,7 @@ class Barracuda3DEngine {
         this.isDragging = true;
         const dx = e.clientX - this.prevMouse.x;
         const dy = e.clientY - this.prevMouse.y;
-        this.targetRotation.y -= dx * 0.007;
+        this.targetRotation.y += dx * 0.007;
         this.targetRotation.x = Math.max(0.05, Math.min(1.1, this.targetRotation.x - dy * 0.007));
         this.prevMouse = { x: e.clientX, y: e.clientY };
       }
@@ -1173,7 +1173,7 @@ class Barracuda3DEngine {
           this.isDragging = true;
           const dx = e.touches[0].clientX - this.prevMouse.x;
           const dy = e.touches[0].clientY - this.prevMouse.y;
-          this.targetRotation.y -= dx * 0.008;
+          this.targetRotation.y += dx * 0.008;
           this.targetRotation.x = Math.max(0.05, Math.min(1.1, this.targetRotation.x - dy * 0.008));
           this.prevMouse = { x: e.touches[0].clientX, y: e.touches[0].clientY };
         }

@@ -2678,8 +2678,8 @@ class BarracudaGame {
       if (!this.sortieActive) return;
       if (e.code === 'KeyW' || e.code === 'ArrowUp') this.inputState.throttle = 1.0;
       else if (e.code === 'KeyS' || e.code === 'ArrowDown') this.inputState.throttle = -0.6;
-      else if (e.code === 'KeyA' || e.code === 'ArrowLeft') this.inputState.steer = 0.75;
-      else if (e.code === 'KeyD' || e.code === 'ArrowRight') this.inputState.steer = -0.75;
+      else if (e.code === 'KeyA' || e.code === 'ArrowLeft') this.inputState.steer = -0.75;
+      else if (e.code === 'KeyD' || e.code === 'ArrowRight') this.inputState.steer = 0.75;
       else if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') this.inputState.boost = true;
       else if (e.code === 'Space') {
         e.preventDefault();
@@ -2692,8 +2692,8 @@ class BarracudaGame {
       if (!this.sortieActive) return;
       if ((e.code === 'KeyW' || e.code === 'ArrowUp') && this.inputState.throttle > 0) this.inputState.throttle = 0;
       else if ((e.code === 'KeyS' || e.code === 'ArrowDown') && this.inputState.throttle < 0) this.inputState.throttle = 0;
-      else if ((e.code === 'KeyA' || e.code === 'ArrowLeft') && this.inputState.steer > 0) this.inputState.steer = 0;
-      else if ((e.code === 'KeyD' || e.code === 'ArrowRight') && this.inputState.steer < 0) this.inputState.steer = 0;
+      else if ((e.code === 'KeyA' || e.code === 'ArrowLeft') && this.inputState.steer < 0) this.inputState.steer = 0;
+      else if ((e.code === 'KeyD' || e.code === 'ArrowRight') && this.inputState.steer > 0) this.inputState.steer = 0;
       else if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') this.inputState.boost = false;
       this.applyPilotInputs();
     });
@@ -2735,7 +2735,7 @@ class BarracudaGame {
             if (Math.abs(nx) > deadzone) {
               const sign = Math.sign(nx);
               const remapped = (Math.abs(nx) - deadzone) / (1.0 - deadzone);
-              steerVal = -sign * Math.pow(remapped, 1.3) * 0.8;
+              steerVal = sign * Math.pow(remapped, 1.3) * 0.8;
             }
             let throttleVal = 0;
             if (Math.abs(ny) > deadzone) {
