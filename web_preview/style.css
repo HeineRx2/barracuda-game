@@ -3150,3 +3150,476 @@ body {
   border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
+/* =========================================================================
+   3D REAL-TIME MISSION COCKPIT HUD (SORTIE MODE)
+   ========================================================================= */
+
+#mission-cockpit-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: max(12px, env(safe-area-inset-top)) 16px max(14px, env(safe-area-inset-bottom)) 16px;
+  pointer-events: none;
+  box-sizing: border-box;
+  overflow: hidden;
+  transition: opacity 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+#mission-cockpit-overlay.mission-hud-hidden {
+  opacity: 0;
+  pointer-events: none;
+  display: none !important;
+}
+
+/* ------------------- TOP MISSION HEADER ------------------- */
+.mission-top-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  background: rgba(5, 16, 22, 0.88);
+  border: 1px solid rgba(0, 255, 136, 0.4);
+  border-radius: 8px;
+  padding: 8px 16px;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.8), 0 0 15px rgba(0, 255, 136, 0.15);
+  pointer-events: auto;
+}
+
+.mission-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.mission-badge {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 13px;
+  font-weight: 800;
+  color: #00ff88;
+  letter-spacing: 1px;
+  text-shadow: 0 0 8px rgba(0, 255, 136, 0.4);
+}
+
+.mission-timer {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 14px;
+  font-weight: 700;
+  color: #ffcc00;
+  background: rgba(255, 204, 0, 0.12);
+  padding: 2px 8px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 204, 0, 0.3);
+}
+
+.mission-objectives-box {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.mission-obj-item {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 13px;
+  color: #b5e8c8;
+}
+.mission-obj-item b {
+  color: #00f0ff;
+  font-weight: 800;
+}
+
+.btn-abort-mission {
+  background: rgba(255, 68, 68, 0.15);
+  border: 1px solid rgba(255, 68, 68, 0.5);
+  color: #ff5555;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 5px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.btn-abort-mission:hover {
+  background: #ff4444;
+  color: #000;
+  box-shadow: 0 0 15px rgba(255, 68, 68, 0.6);
+}
+
+/* ------------------- CENTER HUD & COMPASS ------------------- */
+.mission-center-hud {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  pointer-events: none;
+}
+
+.mission-compass-tape {
+  display: flex;
+  gap: 16px;
+  padding: 4px 16px;
+  background: rgba(4, 14, 20, 0.7);
+  border: 1px solid rgba(0, 240, 255, 0.3);
+  border-radius: 20px;
+  backdrop-filter: blur(8px);
+}
+
+.compass-marker {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  color: #6a8c9e;
+}
+
+.mission-crosshair {
+  width: 40px;
+  height: 40px;
+  border: 1.5px solid rgba(0, 240, 255, 0.35);
+  border-radius: 50%;
+  position: relative;
+}
+.mission-crosshair::before,
+.mission-crosshair::after {
+  content: '';
+  position: absolute;
+  background: rgba(0, 240, 255, 0.6);
+}
+.mission-crosshair::before {
+  top: 50%;
+  left: -8px;
+  right: -8px;
+  height: 1px;
+  transform: translateY(-50%);
+}
+.mission-crosshair::after {
+  left: 50%;
+  top: -8px;
+  bottom: -8px;
+  width: 1px;
+  transform: translateX(-50%);
+}
+
+.mission-warning-banner {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: #ffcc00;
+  background: rgba(255, 204, 0, 0.15);
+  padding: 4px 12px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 204, 0, 0.4);
+  animation: warningPulse 1s infinite alternate;
+}
+@keyframes warningPulse {
+  from { opacity: 0.6; }
+  to { opacity: 1; transform: scale(1.02); }
+}
+
+/* ------------------- BOTTOM LEFT: SPEED & HULL ------------------- */
+.mission-bottom-left {
+  display: flex;
+  align-items: flex-end;
+  gap: 14px;
+  pointer-events: auto;
+}
+
+.mission-speed-dial {
+  background: rgba(4, 16, 22, 0.9);
+  border: 1.5px solid rgba(0, 240, 255, 0.4);
+  border-radius: 8px;
+  padding: 8px 14px;
+  text-align: center;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.7);
+}
+
+.speed-number {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 26px;
+  font-weight: 800;
+  color: #00f0ff;
+  line-height: 1;
+}
+
+.speed-unit {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 9px;
+  font-weight: 700;
+  color: #7ab8cc;
+  letter-spacing: 0.5px;
+  margin-top: 2px;
+}
+
+.mission-hull-widget {
+  background: rgba(4, 16, 22, 0.9);
+  border: 1px solid rgba(0, 255, 136, 0.3);
+  border-radius: 8px;
+  padding: 8px 14px;
+  min-width: 170px;
+  backdrop-filter: blur(10px);
+}
+
+.hull-label {
+  display: flex;
+  justify-content: space-between;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 4px;
+}
+
+.hull-bar-track {
+  width: 100%;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.hull-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #00ff88, #00f0ff);
+  box-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+  transition: width 0.15s ease-out;
+}
+
+/* ------------------- MOBILE TOUCH JOYSTICK ------------------- */
+.virtual-joystick-container {
+  display: none; /* Shown only on mobile touch screens */
+  position: absolute;
+  bottom: 24px;
+  left: 24px;
+  width: 120px;
+  height: 120px;
+  pointer-events: auto;
+  touch-action: none;
+  z-index: 2050;
+}
+
+.joystick-base {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(0, 240, 255, 0.12) 0%, rgba(4, 16, 22, 0.6) 100%);
+  border: 2px solid rgba(0, 240, 255, 0.4);
+  box-shadow: 0 0 20px rgba(0, 240, 255, 0.2), inset 0 0 15px rgba(0, 240, 255, 0.1);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.joystick-thumb {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(0, 240, 255, 0.8), rgba(0, 255, 136, 0.8));
+  border: 2px solid #fff;
+  box-shadow: 0 0 15px #00f0ff;
+  position: absolute;
+  transform: translate(0px, 0px);
+  pointer-events: none;
+}
+
+.joystick-label {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 10px;
+  font-weight: 800;
+  color: #00f0ff;
+  text-align: center;
+  letter-spacing: 1px;
+  margin-top: 6px;
+}
+
+/* ------------------- BOTTOM RIGHT CONTROLS ------------------- */
+.mission-bottom-right {
+  display: flex;
+  gap: 10px;
+  pointer-events: auto;
+  align-self: flex-end;
+}
+
+.btn-mission-action {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 8px 14px;
+  min-width: 75px;
+  height: 48px;
+  border-radius: 8px;
+  font-family: 'Rajdhani', sans-serif;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  transition: all 0.15s ease;
+}
+
+.btn-mission-boost {
+  background: rgba(255, 204, 0, 0.15);
+  border: 1.5px solid #ffcc00;
+  color: #ffcc00;
+  box-shadow: 0 0 14px rgba(255, 204, 0, 0.2);
+}
+.btn-mission-boost:hover, .btn-mission-boost.active {
+  background: #ffcc00;
+  color: #000;
+  box-shadow: 0 0 22px rgba(255, 204, 0, 0.8);
+  transform: scale(1.05);
+}
+
+.btn-mission-strike {
+  background: rgba(255, 68, 68, 0.2);
+  border: 1.5px solid #ff4444;
+  color: #ff5555;
+  box-shadow: 0 0 14px rgba(255, 68, 68, 0.25);
+}
+.btn-mission-strike:hover {
+  background: #ff4444;
+  color: #fff;
+  box-shadow: 0 0 25px rgba(255, 68, 68, 0.8);
+  transform: scale(1.05);
+}
+
+.btn-ma-icon { font-size: 16px; line-height: 1; }
+.btn-ma-text { font-size: 10px; font-weight: 800; letter-spacing: 0.5px; }
+
+/* ------------------- PC KEYBIND HINTS ------------------- */
+.mission-pc-hints {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 12px;
+  color: #7ab8cc;
+  background: rgba(4, 16, 22, 0.7);
+  padding: 4px 18px;
+  border-radius: 20px;
+  border: 1px solid rgba(0, 240, 255, 0.2);
+  align-self: center;
+}
+.mission-pc-hints b { color: #00f0ff; }
+
+/* ------------------- MISSION DEBRIEFING MODAL ------------------- */
+.debrief-card {
+  max-width: 520px !important;
+  border-color: rgba(0, 255, 136, 0.5) !important;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.9), 0 0 30px rgba(0, 255, 136, 0.25) !important;
+}
+
+.debrief-stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin: 16px 0;
+}
+
+.debrief-stat-box {
+  background: rgba(6, 20, 28, 0.85);
+  border: 1px solid rgba(0, 240, 255, 0.25);
+  border-radius: 6px;
+  padding: 10px 12px;
+}
+
+.debrief-stat-label {
+  font-size: 10px;
+  color: #7ab8cc;
+  margin-bottom: 2px;
+}
+
+.debrief-stat-val {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 16px;
+  font-weight: 800;
+  color: #00ff88;
+}
+
+.debrief-actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 14px;
+}
+
+.btn-claim-mission-reward {
+  width: 100%;
+  height: 44px;
+  border-radius: 8px;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  background: linear-gradient(135deg, #00ff88, #00f0ff);
+  border: none;
+  color: #000;
+  cursor: pointer;
+  box-shadow: 0 0 25px rgba(0, 255, 136, 0.5);
+  transition: all 0.2s ease;
+}
+.btn-claim-mission-reward:hover {
+  transform: scale(1.02);
+  box-shadow: 0 0 35px rgba(0, 255, 136, 0.8);
+}
+
+/* Responsive adjustment for Mobile Cockpit */
+@media (max-width: 768px) {
+  .virtual-joystick-container {
+    display: block; /* Enable touch joystick on mobile */
+  }
+
+  .mission-pc-hints {
+    display: none;
+  }
+
+  .mission-top-header {
+    padding: 6px 10px;
+    gap: 6px;
+  }
+  .mission-badge { font-size: 11px; }
+  .mission-timer { font-size: 11px; padding: 2px 5px; }
+  .mission-obj-item { font-size: 11px; }
+  .btn-abort-mission { font-size: 9px; padding: 4px 8px; }
+
+  .mission-bottom-left {
+    position: absolute;
+    top: 65px;
+    left: 12px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .mission-speed-dial {
+    padding: 4px 8px;
+  }
+  .speed-number { font-size: 18px; }
+  .speed-unit { font-size: 7.5px; }
+
+  .mission-hull-widget {
+    min-width: 120px;
+    padding: 4px 8px;
+  }
+  .hull-label { font-size: 9px; }
+
+  .mission-bottom-right {
+    position: absolute;
+    bottom: 24px;
+    right: 16px;
+    flex-direction: column;
+  }
+  .btn-mission-action {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+  }
+}
+
+

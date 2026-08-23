@@ -2558,7 +2558,15 @@ class BarracudaGame {
     });
   }
 
+  // =========================================================================
+  // REAL-TIME 3D BOAT SORTIES & INTERACTIVE MISSIONS
+  // =========================================================================
+
   startCampaignMission(missionId) {
+    this.start3DMissionSortie(missionId);
+  }
+
+  start3DMissionSortie(missionId) {
     let found = null;
     let foundAct = null;
     for (const act of CAMPAIGN_ACTS_DEF) {
@@ -2568,104 +2576,397 @@ class BarracudaGame {
     if (!found) return;
 
     this.activeMission = found;
-    this.missionPhase = 1;
+    this.sortieActive = true;
+    this.sortieTimeLeft = 120; // 2 minutes
+    this.sortieStats = { crates: 0, totalCrates: 3, hitMines: 0, detected: 0 };
+    this.inputState = { throttle: 0, steer: 0, boost: false };
 
+    // Close any open modals
+    document.querySelectorAll('.help-modal-overlay, .tactical-modal-overlay').forEach(el => el.classList.remove('active'));
+
+    // Switch weather / sector if specified
     if (foundAct.sector && this.currentSector !== foundAct.sector) {
       this.changeSector(foundAct.sector);
     }
 
-    const campaignModal = document.getElementById('campaign-modal');
-    if (campaignModal) campaignModal.classList.remove('active');
+    // Hide base HUD, show 3D Mission Cockpit Overlay
+    const gameFrame = document.getElementById('game-frame');
+    if (gameFrame) gameFrame.style.display = 'none';
+    const cockpit = document.getElementById('mission-cockpit-overlay');
+    if (cockpit) {
+      cockpit.classList.remove('mission-hud-hidden');
+      cockpit.style.display = 'flex';
+    }
 
-    if (found.commsIntro) {
-      this.showCommsTransmission({
-        speaker: found.commsIntro.speaker,
-        role: found.commsIntro.role,
-        text: found.commsIntro.text,
-        choices: [
-          {
-            text: '«Тактику понял. Перехожу к Фазе 1: Сканирование и Взлом РЭБ!»',
-            action: () => {
-              this.addNotification('🎯 МИССИЯ АКТИВИРОВАНА', `${found.title} — Фаза 1: Взлом РЭБ`);
-              if (this.btnOpenCyber) this.btnOpenCyber.click();
-            }
-          },
-          {
-            text: '«Подготовить ударные FPV-комплексы!»',
-            action: () => {
-              this.addNotification('🛸 ОРУЖИЕ НАИЗГОТОВКУ', 'Приготовьтесь к прорыву эшелона.');
-            }
+    // Setup HUD labels
+    const badgeEl = document.getElementById('hud-mission-code');
+    if (badgeEl) badgeEl.textContent = `ОПЕРАЦИЯ: «${found.title}»`;
+
+    // Configure 3D Engine Mission World
+    const mission3DConfig = {
+      type: 'sortie',
+      mineCount: foundAct.act === 1 ? 6 : (foundAct.act === 2 ? 8 : 12),
+      crateCount: 3,
+      searchlightCount: foundAct.act >= 2 ? 3 : 1,
+      targetDist: 120 + foundAct.act * 25,
+      targetLabel: found.title,
+      lootPool: ['Микрочип GaN', 'Титановый сплав', 'Чёрный ящик', 'Шифровальный ключ']
+    };
+
+    if (this.engine3D) {
+      this.engine3D.startPilotMission(mission3DConfig, (event, data) => this.handle3DMissionEvent(event, data));
+    }
+
+    // Start mission loop & inputs
+    this.initPilotInputListeners();
+    this.startSortieTimer();
+
+    this.addNotification('⚓ ВЫЛАЗКА НАЧАТА', `Управляйте катером: собирайте грузы и прорывайтесь к цели!`);
+    if (window.tacticalAudio) window.tacticalAudio.playCritPing();
+  }
+
+  handle3DMissionEvent(event, data) {
+    if (!this.sortieActive) return;
+
+    if (event === 'mine_hit') {
+      if (window.tacticalAudio) window.tacticalAudio.playHeavyExplosion();
+      this.showMissionWarning('💥 ПОДРЫВ НА МИНЕ! -35 HP КОРПУСА');
+      this.sortieStats.hitMines++;
+      if (data.hp <= 0) {
+        this.finishSortie(false, 'Корпус катера уничтожен серией мин');
+      }
+    } else if (event === 'crate_collected') {
+      if (window.tacticalAudio) window.tacticalAudio.playSalvagePickup();
+      this.sortieStats.crates = data.collected;
+      this.sortieStats.totalCrates = data.total;
+      this.showMissionWarning(`📦 ПОДОБРАН ГРУЗ: ${data.loot} (${data.collected}/${data.total})`);
+      const cratesEl = document.getElementById('hud-val-crates');
+      if (cratesEl) cratesEl.textContent = `${data.collected} / ${data.total}`;
+    } else if (event === 'searchlight_detected') {
+      this.showMissionWarning('⚠️ ВНИМАНИЕ: ВАС ЗАСЕКЛИ! ОГОНЬ БЕРЕГОВОЙ БАТАРЕИ!');
+      this.sortieStats.detected++;
+    } else if (event === 'tracer_hit') {
+      if (window.tacticalAudio) window.tacticalAudio.playEnemyShoot();
+      this.showMissionWarning('⚡ ПОПАДАНИЕ СНАРЯДА! -8 HP');
+      if (data.hp <= 0) {
+        this.finishSortie(false, 'Катер потоплен огнём противника');
+      }
+    } else if (event === 'waypoint_reached') {
+      if (window.tacticalAudio) window.tacticalAudio.playTargetLock();
+      this.showMissionWarning('🎯 ЗОНА ЦЕЛИ ДОСТИГНУТА! НАЖМИТЕ [ПУСК FPV] ДЛЯ УДАРА!');
+    }
+  }
+
+  showMissionWarning(text) {
+    const banner = document.getElementById('hud-warning-banner');
+    if (banner) {
+      banner.textContent = text;
+      banner.style.display = 'block';
+      clearTimeout(this._warnTimer);
+      this._warnTimer = setTimeout(() => {
+        if (banner) banner.textContent = '⚠️ ВНИМАНИЕ: МИННОЕ ПОЛЕ // ЛУЧИ ПРОЖЕКТОРОВ';
+      }, 3500);
+    }
+  }
+
+  initPilotInputListeners() {
+    if (this._pilotInputsBound) return;
+    this._pilotInputsBound = true;
+
+    // 1. Keyboard Controls (PC)
+    window.addEventListener('keydown', (e) => {
+      if (!this.sortieActive) return;
+      if (e.code === 'KeyW' || e.code === 'ArrowUp') this.inputState.throttle = 1.0;
+      else if (e.code === 'KeyS' || e.code === 'ArrowDown') this.inputState.throttle = -0.6;
+      else if (e.code === 'KeyA' || e.code === 'ArrowLeft') this.inputState.steer = 1.0;
+      else if (e.code === 'KeyD' || e.code === 'ArrowRight') this.inputState.steer = -1.0;
+      else if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') this.inputState.boost = true;
+      else if (e.code === 'Space') {
+        e.preventDefault();
+        this.executeSortieStrike();
+      }
+      this.applyPilotInputs();
+    });
+
+    window.addEventListener('keyup', (e) => {
+      if (!this.sortieActive) return;
+      if ((e.code === 'KeyW' || e.code === 'ArrowUp') && this.inputState.throttle > 0) this.inputState.throttle = 0;
+      else if ((e.code === 'KeyS' || e.code === 'ArrowDown') && this.inputState.throttle < 0) this.inputState.throttle = 0;
+      else if ((e.code === 'KeyA' || e.code === 'ArrowLeft') && this.inputState.steer > 0) this.inputState.steer = 0;
+      else if ((e.code === 'KeyD' || e.code === 'ArrowRight') && this.inputState.steer < 0) this.inputState.steer = 0;
+      else if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') this.inputState.boost = false;
+      this.applyPilotInputs();
+    });
+
+    // 2. Mobile Touch Virtual Joystick
+    const joyZone = document.getElementById('virtual-joystick-zone');
+    const joyThumb = document.getElementById('joystick-thumb-knob');
+    if (joyZone && joyThumb) {
+      let touchId = null;
+      let startX = 0, startY = 0;
+      const maxR = 45;
+
+      joyZone.addEventListener('touchstart', (e) => {
+        if (!this.sortieActive) return;
+        const touch = e.changedTouches[0];
+        touchId = touch.identifier;
+        const rect = joyZone.getBoundingClientRect();
+        startX = rect.left + rect.width / 2;
+        startY = rect.top + rect.height / 2;
+      }, { passive: false });
+
+      joyZone.addEventListener('touchmove', (e) => {
+        if (!this.sortieActive) return;
+        e.preventDefault();
+        for (let i = 0; i < e.changedTouches.length; i++) {
+          const t = e.changedTouches[i];
+          if (t.identifier === touchId) {
+            const dx = t.clientX - startX;
+            const dy = t.clientY - startY;
+            const dist = Math.hypot(dx, dy);
+            const clampedDist = Math.min(maxR, dist);
+            const angle = Math.atan2(dy, dx);
+            const nx = Math.cos(angle) * (clampedDist / maxR);
+            const ny = Math.sin(angle) * (clampedDist / maxR);
+
+            joyThumb.style.transform = `translate(${nx * maxR}px, ${ny * maxR}px)`;
+            this.inputState.steer = -nx * 1.2;
+            this.inputState.throttle = -ny * 1.2;
+            this.applyPilotInputs();
+            break;
           }
-        ]
+        }
+      }, { passive: false });
+
+      const onTouchEnd = (e) => {
+        for (let i = 0; i < e.changedTouches.length; i++) {
+          if (e.changedTouches[i].identifier === touchId) {
+            touchId = null;
+            joyThumb.style.transform = 'translate(0px, 0px)';
+            this.inputState.steer = 0;
+            this.inputState.throttle = 0;
+            this.applyPilotInputs();
+            break;
+          }
+        }
+      };
+      joyZone.addEventListener('touchend', onTouchEnd);
+      joyZone.addEventListener('touchcancel', onTouchEnd);
+    }
+
+    // 3. Action buttons
+    const btnBoost = document.getElementById('btn-mission-boost');
+    if (btnBoost) {
+      btnBoost.addEventListener('pointerdown', () => {
+        this.inputState.boost = true;
+        btnBoost.classList.add('active');
+        this.applyPilotInputs();
       });
+      const endBoost = () => {
+        this.inputState.boost = false;
+        btnBoost.classList.remove('active');
+        this.applyPilotInputs();
+      };
+      btnBoost.addEventListener('pointerup', endBoost);
+      btnBoost.addEventListener('pointerleave', endBoost);
+    }
+
+    const btnStrike = document.getElementById('btn-mission-strike');
+    if (btnStrike) {
+      btnStrike.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.executeSortieStrike();
+      });
+    }
+
+    const btnAbort = document.getElementById('btn-abort-sortie');
+    if (btnAbort) {
+      btnAbort.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.finishSortie(false, 'Экстренная эвакуация по решению оператора');
+      });
+    }
+
+    const btnDebriefClaim = document.getElementById('btn-debrief-claim');
+    if (btnDebriefClaim) {
+      btnDebriefClaim.addEventListener('click', () => {
+        const modal = document.getElementById('mission-debrief-modal');
+        if (modal) modal.classList.remove('active');
+      });
+    }
+  }
+
+  applyPilotInputs() {
+    if (this.engine3D) {
+      this.engine3D.setPilotInput(this.inputState.throttle, this.inputState.steer, this.inputState.boost);
+    }
+  }
+
+  executeSortieStrike() {
+    if (!this.sortieActive || !this.engine3D) return;
+    const telem = this.engine3D.getPilotTelemetry();
+    if (telem.distToTarget <= 90 || this.sortieStats.crates >= 2) {
+      // Strike the enemy warship!
+      if (this.engine3D.enemyShip) {
+        this.engine3D.launch3DMissile(this.engine3D.enemyShip.position);
+      }
+      if (window.tacticalAudio) window.tacticalAudio.playLaunchSfx();
+      this.showMissionWarning('🚀 FPV-ШТУРМОВИК ВЫПУЩЕН! ТОЧНОЕ ПОРАЖЕНИЕ ЦЕЛИ!');
+      setTimeout(() => {
+        this.finishSortie(true);
+      }, 2500);
     } else {
-      this.addNotification('🎯 МИССИЯ АКТИВИРОВАНА', `${found.title} — Фаза 1`);
+      this.showMissionWarning('⚠️ ЦЕЛЬ СЛИШКОМ ДАЛЕКО! Подойдите ближе (дистанция < 90 м)');
+      if (window.tacticalAudio) window.tacticalAudio.playGlitchSound();
     }
-
-    this.renderCampaignDOM();
   }
 
-  advanceMissionPhase() {
-    if (!this.activeMission) return;
-    this.missionPhase++;
+  startSortieTimer() {
+    clearInterval(this._sortieInterval);
+    this._sortieInterval = setInterval(() => {
+      if (!this.sortieActive) {
+        clearInterval(this._sortieInterval);
+        return;
+      }
+      this.sortieTimeLeft--;
+      const timerEl = document.getElementById('hud-mission-timer');
+      if (timerEl) {
+        const m = Math.floor(this.sortieTimeLeft / 60);
+        const s = this.sortieTimeLeft % 60;
+        timerEl.textContent = `⏱️ ${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+      }
 
-    if (this.missionPhase === 2) {
-      this.addNotification('⚡ ФАЗА 2: САБОТАЖ ПВО', 'Радиоканал взломан! ПВО подавлено на 40%!');
-      this.showCommsTransmission({
-        speaker: 'ЛЕЙТЕНАНТ [ВЕКТОР]',
-        role: 'EW',
-        text: 'Отличная работа! Частоты перехвачены. Запускайте FPV-штурмовик для прорыва к кораблю!',
-        choices: [{ text: '«Запуск FPV!»', action: () => { this.startAssault(); } }]
-      });
-    } else if (this.missionPhase === 3) {
-      this.addNotification('🚀 ФАЗА 3: ТОЧЕЧНЫЙ УДАР', 'Зафиксируйте прицел FLIR на уязвимом отсеке судна!');
-    } else if (this.missionPhase >= 4) {
-      this.completeCampaignMission();
-    }
+      if (this.sortieTimeLeft <= 0) {
+        this.finishSortie(false, 'Время операции истекло // Топливо на нуле');
+      }
 
-    this.renderCampaignDOM();
+      this.updateSortieTelemetryHUD();
+    }, 100);
   }
 
-  completeCampaignMission() {
-    if (!this.activeMission) return;
-    const m = this.activeMission;
-    this.completedMissions.add(m.id);
+  updateSortieTelemetryHUD() {
+    if (!this.sortieActive || !this.engine3D) return;
+    const telem = this.engine3D.getPilotTelemetry();
 
-    this.creditsUSD += m.reward.usd;
-    this.addData(m.reward.mb);
-    if (m.reward.bp > 0) this.blueprintsBP += m.reward.bp;
+    const speedEl = document.getElementById('hud-val-speed');
+    if (speedEl) speedEl.textContent = telem.speedKnots;
 
-    if (m.reward.salvage) {
-      this.awardSalvage(m.reward.salvage);
+    const hpEl = document.getElementById('hud-val-hp');
+    const hpFill = document.getElementById('hud-fill-hp');
+    if (hpEl) {
+      hpEl.textContent = `${telem.hullHP}%`;
+      hpEl.className = telem.hullHP > 50 ? 'text-green' : (telem.hullHP > 25 ? 'text-yellow' : 'text-red');
+    }
+    if (hpFill) {
+      hpFill.style.width = `${telem.hullHP}%`;
+      hpFill.style.background = telem.hullHP > 50 ? 'linear-gradient(90deg, #00ff88, #00f0ff)' : (telem.hullHP > 25 ? '#ffcc00' : '#ff4444');
     }
 
-    if (window.tacticalAudio) window.tacticalAudio.playMissionVictory();
+    const distEl = document.getElementById('hud-val-target');
+    if (distEl) distEl.textContent = `${telem.distToTarget} м`;
 
-    if (this.completedMissions.has('m1_3')) this.checkAchievement('campaign_act1');
-    if (this.completedMissions.has('m2_3')) this.checkAchievement('campaign_act2');
-    if (this.completedMissions.has('m3_3')) this.checkAchievement('campaign_act3');
-    if (this.completedMissions.has('m4_3')) this.checkAchievement('campaign_act4');
+    const cratesEl = document.getElementById('hud-val-crates');
+    if (cratesEl) cratesEl.textContent = `${telem.cratesCollected} / ${telem.totalCrates}`;
 
-    this.addNotification('🏆 ОПЕРАЦИЯ ЗАВЕРШЕНА', `${m.title} — УСПЕХ! +$${m.reward.usd.toLocaleString()}`);
+    const compassEl = document.getElementById('hud-compass-heading');
+    if (compassEl) compassEl.textContent = `▲ КУРС ${String(telem.headingDeg).padStart(3, '0')}°`;
+  }
 
-    setTimeout(() => {
-      this.showCommsTransmission({
-        speaker: 'ШТАБ [МАЯК]',
-        role: 'HQ',
-        text: `Отличная работа, оператор! Операция «${m.title}» успешно завершена. Трофеи подняты на борт и доставлены в Ангар для крафта.`,
-        choices: [
-          { text: '«Открыть Ангар и изучить трофеи.»', action: () => { const h = document.getElementById('hangar-modal'); if (h) h.classList.add('active'); this.renderHangarDOM(); } },
-          { text: '«Продолжить патрулирование сектора.»', action: () => {} }
-        ]
-      });
-    }, 1500);
+  finishSortie(isVictory, reason = '') {
+    if (!this.sortieActive) return;
+    this.sortieActive = false;
+    clearInterval(this._sortieInterval);
 
-    this.activeMission = null;
-    this.missionPhase = 0;
+    // Stop 3D Pilot mode
+    if (this.engine3D) this.engine3D.stopPilotMission();
+
+    // Hide Cockpit Overlay, show Base HUD
+    const cockpit = document.getElementById('mission-cockpit-overlay');
+    if (cockpit) {
+      cockpit.classList.add('mission-hud-hidden');
+      cockpit.style.display = 'none';
+    }
+    const gameFrame = document.getElementById('game-frame');
+    if (gameFrame) gameFrame.style.display = 'flex';
+
+    const debriefModal = document.getElementById('mission-debrief-modal');
+    const titleEl = document.getElementById('debrief-title');
+    const descEl = document.getElementById('debrief-desc');
+    const statsEl = document.getElementById('debrief-stats');
+
+    if (isVictory) {
+      const m = this.activeMission;
+      this.completedMissions.add(m.id);
+      const usdEarned = Math.floor(m.reward.usd * 1.5 * this.getGlobalMultiplier());
+      const mbEarned = Math.floor(m.reward.mb * 1.5 * this.getGlobalMultiplier());
+      const bpEarned = m.reward.bp || 1;
+
+      this.creditsUSD += usdEarned;
+      this.addData(mbEarned);
+      this.blueprintsBP += bpEarned;
+      this.sunkenShips++;
+      this.salvage.box = (this.salvage.box || 0) + 2;
+      this.salvage.chips = (this.salvage.chips || 0) + 3;
+      this.salvage.titanium = (this.salvage.titanium || 0) + 2;
+
+      if (titleEl) {
+        titleEl.textContent = '🏆 ОПЕРАЦИЯ ЗАВЕРШЕНА // ТРИУМФ';
+        titleEl.style.color = '#00ff88';
+      }
+      if (descEl) {
+        descEl.textContent = `Катер «Барракуда» блестяще выполнил боевую задачу «${m.title}», прорвал минные поля и уничтожил цель!`;
+      }
+      if (statsEl) {
+        statsEl.innerHTML = `
+          <div class="debrief-stat-box">
+            <div class="debrief-stat-label">КУШ КРЕДИТОВ</div>
+            <div class="debrief-stat-val text-green">+$${usdEarned.toLocaleString()}</div>
+          </div>
+          <div class="debrief-stat-box">
+            <div class="debrief-stat-label">РАЗВЕДДАННЫЕ</div>
+            <div class="debrief-stat-val text-cyan">+${mbEarned} МБ</div>
+          </div>
+          <div class="debrief-stat-box">
+            <div class="debrief-stat-label">ЧЕРТЕЖИ ПРЕСТИЖА</div>
+            <div class="debrief-stat-val text-yellow">+${bpEarned} ЧЖ</div>
+          </div>
+          <div class="debrief-stat-box">
+            <div class="debrief-stat-label">ТРОФЕЙНЫЙ ЛУТ</div>
+            <div class="debrief-stat-val text-cyan">📦x2 💎x3 🛡️x2</div>
+          </div>
+        `;
+      }
+
+      if (window.tacticalAudio) window.tacticalAudio.playMissionVictory();
+      this.addNotification('🏆 ПОБЕДА НА ВЫЛАЗКЕ', `Получено: +$${usdEarned.toLocaleString()} и +${mbEarned} МБ`);
+    } else {
+      if (titleEl) {
+        titleEl.textContent = '⚠️ ВЫЛАЗКА ПРЕРВАНА // ЭВАКУАЦИЯ';
+        titleEl.style.color = '#ff5555';
+      }
+      if (descEl) {
+        descEl.textContent = reason || 'Катер был вынужден отступить на базу для экстренного ремонта.';
+      }
+      if (statsEl) {
+        statsEl.innerHTML = `
+          <div class="debrief-stat-box">
+            <div class="debrief-stat-label">СТАТУС КОРПУСА</div>
+            <div class="debrief-stat-val text-red">ПОВРЕЖДЁН</div>
+          </div>
+          <div class="debrief-stat-box">
+            <div class="debrief-stat-label">СОБРАНО ГРУЗОВ</div>
+            <div class="debrief-stat-val text-yellow">${this.sortieStats.crates} / ${this.sortieStats.totalCrates}</div>
+          </div>
+        `;
+      }
+      if (window.tacticalAudio) window.tacticalAudio.playEmpExplosion();
+    }
+
+    if (debriefModal) debriefModal.classList.add('active');
     this.renderCampaignDOM();
     this.renderHangarDOM();
     this.saveGame();
-    this._uiDirty = true;
+    this.updateUI();
   }
 
   // =========================================================================

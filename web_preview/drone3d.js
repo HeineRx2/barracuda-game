@@ -69,8 +69,32 @@ class Barracuda3DEngine {
     this.shipDamageLevel = 0; // 0-5, increases after each prestige
     this.shipFirePoints = [];
 
-    this.cameraMode = 'orbit'; // 'orbit' or 'flir'
+    this.cameraMode = 'orbit'; // 'orbit', 'flir', or 'chase'
     this.flirZoom = 1.0;
+
+    // -------------------------------------------------------------
+    // REAL-TIME 3D PILOTING & TACTICAL SORTIES SYSTEM
+    // -------------------------------------------------------------
+    this.pilotMode = false;
+    this.pilotBoatPos = new THREE.Vector3(0, 0, 0);
+    this.pilotHeading = 0;
+    this.pilotSpeed = 0;
+    this.pilotThrottle = 0;
+    this.pilotSteer = 0;
+    this.pilotBoost = false;
+    this.pilotRoll = 0;
+    this.pilotPitch = 0;
+    this.pilotHullHP = 100;
+    this.pilotHullMaxHP = 100;
+    this.missionMines = [];
+    this.missionCrates = [];
+    this.missionSearchlights = [];
+    this.missionWaypoints = [];
+    this.missionTracers = [];
+    this.missionConfig = null;
+    this.missionStats = { cratesCollected: 0, totalCrates: 0, damageTaken: 0, detectedCount: 0 };
+    this.missionActive = false;
+    this.onMissionEvent = null;
 
     this.clock = new THREE.Clock();
     this.isDragging = false;
@@ -1171,8 +1195,23 @@ class Barracuda3DEngine {
     const t = this.clock.getElapsedTime();
     const dt = 0.016;
 
-    // Camera orbit or FLIR scope targeting mode
-    if (this.cameraMode === 'flir') {
+    // Camera orbit, Chase-cam for Piloting, or FLIR scope mode
+    if (this.pilotMode && this.boatModel) {
+      // Third-person dynamic chase camera following boat
+      const camDist = this.pilotBoost ? 13.5 : 10.8;
+      const camHeight = this.pilotBoost ? 5.6 : 4.6;
+      const targetCamX = this.pilotBoatPos.x - Math.sin(this.pilotHeading) * camDist;
+      const targetCamZ = this.pilotBoatPos.z - Math.cos(this.pilotHeading) * camDist;
+      const targetCamY = this.boatBaseY + camHeight;
+
+      this.camera.position.lerp(new THREE.Vector3(targetCamX, targetCamY, targetCamZ), 0.12);
+      const lookTarget = new THREE.Vector3(
+        this.pilotBoatPos.x + Math.sin(this.pilotHeading) * 12.0,
+        this.boatBaseY + 1.2,
+        this.pilotBoatPos.z + Math.cos(this.pilotHeading) * 12.0
+      );
+      this.camera.lookAt(lookTarget);
+    } else if (this.cameraMode === 'flir') {
       // Look directly through thermal FLIR optic towards enemy ship
       const shipPos = this.enemyShip ? this.enemyShip.position : new THREE.Vector3(38, 2, -75);
       this.camera.position.set(0, 2.2, 2.5);
@@ -1351,15 +1390,77 @@ class Barracuda3DEngine {
       }
     }
 
-    // Boat wave simulation
-    if (this.boatModel) {
+    // -------------------------------------------------------------
+    // REAL-TIME 3D PILOTING PHYSICS & BOAT DYNAMICS (MISSIONS)
+    // -------------------------------------------------------------
+    if (this.pilotMode && this.boatModel) {
+      const maxForwardSpeed = this.pilotBoost ? 42.0 : 25.0;
+      const maxReverseSpeed = -10.0;
+      const accelRate = (this.pilotThrottle > 0 ? 16.0 : 24.0) * dt;
+      const turnRate = 2.4 * dt;
+
+      // Update speed with inertia:
+      const targetSpeed = this.pilotThrottle > 0 ? this.pilotThrottle * maxForwardSpeed : this.pilotThrottle * (-maxReverseSpeed);
+      this.pilotSpeed += (targetSpeed - this.pilotSpeed) * Math.min(1.0, accelRate);
+
+      // Turning effectiveness depends on movement speed:
+      const steerFactor = Math.max(0.25, Math.min(1.2, Math.abs(this.pilotSpeed) / 12.0));
+      this.pilotHeading -= this.pilotSteer * turnRate * steerFactor * (this.pilotSpeed >= 0 ? 1 : -1);
+
+      // Translate coordinates:
+      const vx = Math.sin(this.pilotHeading) * this.pilotSpeed;
+      const vz = Math.cos(this.pilotHeading) * this.pilotSpeed;
+      this.pilotBoatPos.x += vx * dt;
+      this.pilotBoatPos.z += vz * dt;
+
+      // Realistic hydrodynamic pitch and roll:
+      const waveHeave = Math.sin(t * 3.0) * 0.05 + Math.cos(t * 2.1) * 0.03;
+      const targetRoll = -this.pilotSteer * (Math.abs(this.pilotSpeed) / 25.0) * 0.35;
+      const targetPitch = (this.pilotSpeed / 35.0) * 0.14 + (this.pilotBoost ? 0.05 : 0.0);
+      this.pilotRoll += (targetRoll - this.pilotRoll) * 0.15;
+      this.pilotPitch += (targetPitch - this.pilotPitch) * 0.15;
+
+      this.boatModel.position.set(this.pilotBoatPos.x, this.boatBaseY + waveHeave, this.pilotBoatPos.z);
+      this.boatModel.rotation.set(this.pilotPitch, this.pilotHeading, this.pilotRoll);
+
+      // Waterjet Spray & Foaming Wake:
+      if (Math.abs(this.pilotSpeed) > 1.0) {
+        const sternDist = 2.2;
+        const wakeX = this.pilotBoatPos.x - Math.sin(this.pilotHeading) * sternDist;
+        const wakeZ = this.pilotBoatPos.z - Math.cos(this.pilotHeading) * sternDist;
+        const sprayScale = this.pilotBoost ? 2.8 : 1.5;
+        this.emitWakeParticle(wakeX - Math.cos(this.pilotHeading) * 0.4, wakeZ + Math.sin(this.pilotHeading) * 0.4, sprayScale);
+        this.emitWakeParticle(wakeX + Math.cos(this.pilotHeading) * 0.4, wakeZ - Math.sin(this.pilotHeading) * 0.4, sprayScale);
+        if (Math.random() > 0.4) {
+          this.emitWakeParticle(wakeX, wakeZ, sprayScale * 1.2);
+        }
+      }
+
+      // Sync module objects to boat:
+      for (const [id, mod] of Object.entries(this.moduleObjects)) {
+        if (mod.userData && mod.userData.modOffset) {
+          const off = mod.userData.modOffset;
+          const rotOffX = off.x * Math.cos(this.pilotHeading) + off.z * Math.sin(this.pilotHeading);
+          const rotOffZ = -off.x * Math.sin(this.pilotHeading) + off.z * Math.cos(this.pilotHeading);
+          mod.position.set(
+            this.pilotBoatPos.x + rotOffX,
+            this.boatModel.position.y + off.y,
+            this.pilotBoatPos.z + rotOffZ
+          );
+          mod.rotation.set(this.pilotPitch, this.pilotHeading, this.pilotRoll);
+        }
+      }
+
+      // Update Mission Objects & Collisions:
+      this.updateMissionWorld(dt, t);
+    } else if (this.boatModel) {
+      // Idle base wave simulation
       const heave = Math.sin(t * 1.6) * 0.035 + Math.cos(t * 1.1) * 0.015;
       const pitch = Math.sin(t * 1.4) * 0.010;
       const roll = Math.cos(t * 1.0) * 0.008;
 
-      this.boatModel.position.y = this.boatBaseY + heave - (this.bounceImpulse * 0.05);
-      this.boatModel.rotation.x = pitch + (this.bounceImpulse * 0.012);
-      this.boatModel.rotation.z = roll;
+      this.boatModel.position.set(0, this.boatBaseY + heave - (this.bounceImpulse * 0.05), 0);
+      this.boatModel.rotation.set(pitch + (this.bounceImpulse * 0.012), 0, roll);
 
       // Module position sync (modules are scene objects, follow boat)
       for (const [id, mod] of Object.entries(this.moduleObjects)) {
@@ -1402,13 +1503,11 @@ class Barracuda3DEngine {
       if (this.moduleObjects['waterjets'] && Math.random() > 0.3) {
         this.emitWakeParticle(this.boatModel.position.x - 0.2, this.boatModel.position.z - 1.8);
         this.emitWakeParticle(this.boatModel.position.x + 0.2, this.boatModel.position.z - 1.8);
-        // Side spray particles
         if (Math.random() > 0.6) {
           this.emitWakeParticle(this.boatModel.position.x - 0.5, this.boatModel.position.z - 1.2, 1.3);
           this.emitWakeParticle(this.boatModel.position.x + 0.5, this.boatModel.position.z - 1.2, 1.3);
         }
       }
-      // Bow spray at speed
       if (Math.random() > 0.7) {
         this.emitWakeParticle(this.boatModel.position.x + (Math.random() - 0.5) * 0.3, this.boatModel.position.z + 1.5, 0.5);
       }
@@ -1555,6 +1654,473 @@ class Barracuda3DEngine {
       this.scene.add(crateGroup);
       this.floatingSalvage.push(crateGroup);
     }
+  }
+  // =========================================================================
+  // REAL-TIME 3D BOAT PILOTING & TACTICAL SORTIES API
+  // =========================================================================
+
+  setPilotInput(throttle, steer, boost) {
+    this.pilotThrottle = Math.max(-1.0, Math.min(1.0, throttle));
+    this.pilotSteer = Math.max(-1.0, Math.min(1.0, steer));
+    this.pilotBoost = !!boost;
+  }
+
+  startPilotMission(missionConfig, onEventCallback) {
+    this.pilotMode = true;
+    this.missionActive = true;
+    this.missionConfig = missionConfig || {};
+    this.onMissionEvent = onEventCallback || null;
+    this.cameraMode = 'chase';
+
+    // Reset boat state
+    this.pilotBoatPos.set(0, 0, 0);
+    this.pilotHeading = 0;
+    this.pilotSpeed = 0;
+    this.pilotThrottle = 0;
+    this.pilotSteer = 0;
+    this.pilotBoost = false;
+    this.pilotHullHP = 100;
+    this.pilotHullMaxHP = 100;
+
+    this.missionStats = {
+      cratesCollected: 0,
+      totalCrates: 0,
+      damageTaken: 0,
+      detectedCount: 0
+    };
+
+    // Clean old mission meshes
+    this.clearMissionEnvironment();
+
+    // Spawn 3D mission world elements based on mission config
+    this.setupMissionWorld(this.missionConfig);
+  }
+
+  stopPilotMission() {
+    this.pilotMode = false;
+    this.missionActive = false;
+    this.cameraMode = 'orbit';
+    this.clearMissionEnvironment();
+
+    // Reset boat back to center for base mode
+    this.pilotBoatPos.set(0, 0, 0);
+    this.pilotHeading = 0;
+    this.pilotSpeed = 0;
+    if (this.boatModel) {
+      this.boatModel.position.set(0, this.boatBaseY, 0);
+      this.boatModel.rotation.set(0, 0, 0);
+    }
+  }
+
+  clearMissionEnvironment() {
+    // Remove mines
+    this.missionMines.forEach(m => this.scene.remove(m));
+    this.missionMines = [];
+
+    // Remove crates
+    this.missionCrates.forEach(c => this.scene.remove(c));
+    this.missionCrates = [];
+
+    // Remove searchlights
+    this.missionSearchlights.forEach(s => {
+      if (s.coneMesh) this.scene.remove(s.coneMesh);
+      if (s.light) this.scene.remove(s.light);
+      if (s.target) this.scene.remove(s.target);
+    });
+    this.missionSearchlights = [];
+
+    // Remove waypoints
+    this.missionWaypoints.forEach(w => this.scene.remove(w));
+    this.missionWaypoints = [];
+
+    // Remove tracers
+    this.missionTracers.forEach(tr => this.scene.remove(tr.mesh));
+    this.missionTracers = [];
+  }
+
+  setupMissionWorld(config) {
+    const type = config.type || 'patrol';
+
+    // 1. Spawning Floating Naval Mines
+    const mineCount = config.mineCount !== undefined ? config.mineCount : 6;
+    for (let i = 0; i < mineCount; i++) {
+      const dist = 35 + Math.random() * 80;
+      const angle = (i / mineCount) * Math.PI * 1.5 - 0.4 + (Math.random() - 0.5) * 0.4;
+      const mx = Math.sin(angle) * dist;
+      const mz = Math.cos(angle) * dist;
+      this.create3DMine(mx, mz);
+    }
+
+    // 2. Spawning Salvage Crates (Black Boxes, GaN Chips, Titanium)
+    const crateCount = config.crateCount !== undefined ? config.crateCount : 3;
+    this.missionStats.totalCrates = crateCount;
+    const lootPool = config.lootPool || ['Микрочип GaN', 'Титановый сплав', 'Чёрный ящик'];
+    for (let i = 0; i < crateCount; i++) {
+      const dist = 30 + (i + 1) * 28 + (Math.random() - 0.5) * 10;
+      const angle = (Math.random() - 0.5) * 1.2;
+      const cx = Math.sin(angle) * dist;
+      const cz = Math.cos(angle) * dist;
+      this.create3DCrate(cx, cz, lootPool[i % lootPool.length]);
+    }
+
+    // 3. Spawning Coastal Searchlights
+    const searchlightCount = config.searchlightCount !== undefined ? config.searchlightCount : 2;
+    for (let i = 0; i < searchlightCount; i++) {
+      const sx = (i === 0 ? -45 : 45) + (Math.random() - 0.5) * 10;
+      const sz = 60 + i * 40;
+      this.create3DSearchlight(sx, sz, 45, 0.6 + i * 0.3);
+    }
+
+    // 4. Spawning Extraction / Strike Waypoint
+    const targetDist = config.targetDist || 140;
+    const targetAngle = config.targetAngle || 0;
+    const wx = Math.sin(targetAngle) * targetDist;
+    const wz = Math.cos(targetAngle) * targetDist;
+    this.create3DWaypoint(wx, wz, 15, config.targetLabel || 'ЗОНА ПУСКА FPV');
+
+    // Position enemy warship at the objective point
+    if (this.enemyShip) {
+      this.enemyShip.position.set(wx, -0.6, wz + 12);
+      this.enemyShip.lookAt(0, -0.6, 0);
+    }
+  }
+
+  create3DMine(x, z) {
+    const mineGroup = new THREE.Group();
+
+    // Spherical Hull with Spike Horns
+    const mineMat = new THREE.MeshStandardMaterial({
+      color: 0x1a1c1e,
+      roughness: 0.7,
+      metalness: 0.9
+    });
+    const sphere = new THREE.Mesh(new THREE.SphereGeometry(0.9, 12, 12), mineMat);
+    mineGroup.add(sphere);
+
+    // Spikes (contact detonators)
+    const spikeGeom = new THREE.ConeGeometry(0.12, 0.6, 6);
+    const spikeMat = new THREE.MeshStandardMaterial({ color: 0x222222, metalness: 0.9 });
+    for (let i = 0; i < 8; i++) {
+      const spike = new THREE.Mesh(spikeGeom, spikeMat);
+      const theta = (i / 8) * Math.PI * 2;
+      spike.position.set(Math.cos(theta) * 0.9, Math.sin(theta * 2) * 0.4, Math.sin(theta) * 0.9);
+      spike.rotation.z = Math.PI / 2 + Math.cos(theta);
+      mineGroup.add(spike);
+    }
+
+    // Blinking Danger Strobe LED
+    const ledMat = new THREE.MeshBasicMaterial({ color: 0xff0033 });
+    const led = new THREE.Mesh(new THREE.SphereGeometry(0.18, 8, 8), ledMat);
+    led.position.set(0, 0.95, 0);
+    mineGroup.add(led);
+
+    const redLight = new THREE.PointLight(0xff0022, 1.5, 8);
+    redLight.position.set(0, 1.1, 0);
+    mineGroup.add(redLight);
+
+    mineGroup.position.set(x, 0.1, z);
+    mineGroup.userData = {
+      type: 'mine',
+      radius: 2.8,
+      led: led,
+      light: redLight,
+      blinkSeed: Math.random() * 10
+    };
+
+    this.scene.add(mineGroup);
+    this.missionMines.push(mineGroup);
+  }
+
+  create3DCrate(x, z, loot) {
+    const crateGroup = new THREE.Group();
+
+    // High-tech salvage crate
+    const crateMat = new THREE.MeshStandardMaterial({
+      color: 0x00f0ff,
+      metalness: 0.85,
+      roughness: 0.2,
+      emissive: 0x003344
+    });
+    const box = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.9, 1.4), crateMat);
+    crateGroup.add(box);
+
+    // Flotation Collars
+    const buoyMat = new THREE.MeshStandardMaterial({ color: 0xff6600, roughness: 0.4 });
+    const buoy = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.25, 1.6, 8), buoyMat);
+    buoy.rotation.z = Math.PI / 2;
+    buoy.position.set(0, -0.25, 0.8);
+    crateGroup.add(buoy);
+    const buoy2 = buoy.clone();
+    buoy2.position.z = -0.8;
+    crateGroup.add(buoy2);
+
+    // Glowing Vertical Hologram Beacon
+    const beamMat = new THREE.MeshBasicMaterial({
+      color: 0x00f0ff,
+      transparent: true,
+      opacity: 0.35,
+      side: THREE.DoubleSide
+    });
+    const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.6, 18, 8, 1, true), beamMat);
+    beam.position.set(0, 9.0, 0);
+    crateGroup.add(beam);
+
+    const light = new THREE.PointLight(0x00f0ff, 2.5, 15);
+    light.position.set(0, 1.0, 0);
+    crateGroup.add(light);
+
+    crateGroup.position.set(x, 0.15, z);
+    crateGroup.userData = {
+      type: 'crate',
+      radius: 3.2,
+      loot: loot || 'Разведданные',
+      beam: beam,
+      light: light,
+      collected: false
+    };
+
+    this.scene.add(crateGroup);
+    this.missionCrates.push(crateGroup);
+  }
+
+  create3DSearchlight(x, z, range, speed) {
+    const coneGeom = new THREE.ConeGeometry(8, range, 16, 1, true);
+    const coneMat = new THREE.MeshBasicMaterial({
+      color: 0xffffcc,
+      transparent: true,
+      opacity: 0.18,
+      side: THREE.DoubleSide
+    });
+    const coneMesh = new THREE.Mesh(coneGeom, coneMat);
+    coneMesh.position.set(x, 8, z);
+    coneMesh.rotation.x = Math.PI / 2.3;
+
+    const spotLight = new THREE.SpotLight(0xffffdd, 5.0, range + 20, Math.PI / 6, 0.5, 1.5);
+    spotLight.position.set(x, 10, z);
+
+    const targetObj = new THREE.Object3D();
+    targetObj.position.set(x, 0, z + range * 0.7);
+    this.scene.add(targetObj);
+    spotLight.target = targetObj;
+
+    this.scene.add(coneMesh);
+    this.scene.add(spotLight);
+
+    this.missionSearchlights.push({
+      originX: x,
+      originZ: z,
+      range: range,
+      speed: speed || 0.8,
+      coneMesh: coneMesh,
+      light: spotLight,
+      target: targetObj,
+      sweepAngle: 0
+    });
+  }
+
+  create3DWaypoint(x, z, radius, label) {
+    const wpGroup = new THREE.Group();
+
+    // Holographic Pulsing Rings
+    const ringMat = new THREE.MeshBasicMaterial({
+      color: 0x00ff88,
+      transparent: true,
+      opacity: 0.6,
+      side: THREE.DoubleSide
+    });
+    const ring1 = new THREE.Mesh(new THREE.RingGeometry(radius - 0.8, radius, 32), ringMat);
+    ring1.rotation.x = -Math.PI / 2;
+    ring1.position.y = 0.2;
+    wpGroup.add(ring1);
+
+    const ring2 = new THREE.Mesh(new THREE.RingGeometry(radius * 0.4, radius * 0.45, 24), ringMat);
+    ring2.rotation.x = -Math.PI / 2;
+    ring2.position.y = 0.25;
+    wpGroup.add(ring2);
+
+    const pLight = new THREE.PointLight(0x00ff88, 3.0, radius * 2.5);
+    pLight.position.set(0, 2, 0);
+    wpGroup.add(pLight);
+
+    wpGroup.position.set(x, 0, z);
+    wpGroup.userData = {
+      type: 'waypoint',
+      radius: radius,
+      label: label,
+      ring1: ring1,
+      ring2: ring2,
+      reached: false
+    };
+
+    this.scene.add(wpGroup);
+    this.missionWaypoints.push(wpGroup);
+  }
+
+  fireEnemyTracer(fromPos, toPos) {
+    const tracerGeom = new THREE.CylinderGeometry(0.1, 0.1, 2.5, 6);
+    const tracerMat = new THREE.MeshBasicMaterial({ color: 0xff3300 });
+    const mesh = new THREE.Mesh(tracerGeom, tracerMat);
+
+    mesh.position.copy(fromPos);
+    mesh.lookAt(toPos);
+    mesh.rotateX(Math.PI / 2);
+
+    const dir = new THREE.Vector3().subVectors(toPos, fromPos).normalize();
+    const speed = 75.0; // Tracer speed
+
+    this.scene.add(mesh);
+    this.missionTracers.push({
+      mesh: mesh,
+      dir: dir,
+      speed: speed,
+      targetPos: toPos.clone(),
+      life: 0,
+      maxLife: 2.0
+    });
+  }
+
+  updateMissionWorld(dt, t) {
+    if (!this.missionActive) return;
+
+    // 1. Update Mines
+    for (let i = this.missionMines.length - 1; i >= 0; i--) {
+      const m = this.missionMines[i];
+      const bob = Math.sin(t * 2.0 + m.userData.blinkSeed) * 0.08;
+      m.position.y = 0.1 + bob;
+      m.rotation.y += dt * 0.4;
+
+      // LED Strobe Blink
+      const blink = Math.sin(t * 6.0 + m.userData.blinkSeed) > 0.3;
+      m.userData.led.material.color.setHex(blink ? 0xff0033 : 0x330000);
+      m.userData.light.intensity = blink ? 2.5 : 0.2;
+
+      // Distance collision check to player boat
+      const dist = Math.hypot(this.pilotBoatPos.x - m.position.x, this.pilotBoatPos.z - m.position.z);
+      if (dist < m.userData.radius) {
+        // MINE DETONATION!
+        this.create3DExplosion(m.position);
+        this.scene.remove(m);
+        this.missionMines.splice(i, 1);
+        this.pilotHullHP = Math.max(0, this.pilotHullHP - 35);
+        this.missionStats.damageTaken += 35;
+        if (this.onMissionEvent) this.onMissionEvent('mine_hit', { hp: this.pilotHullHP });
+      }
+    }
+
+    // 2. Update Salvage Crates
+    for (let i = this.missionCrates.length - 1; i >= 0; i--) {
+      const c = this.missionCrates[i];
+      if (c.userData.collected) continue;
+      const bob = Math.sin(t * 1.8 + c.position.x) * 0.06;
+      c.position.y = 0.15 + bob;
+      c.rotation.y += dt * 0.6;
+      if (c.userData.beam) c.userData.beam.rotation.y = -t * 1.2;
+
+      const dist = Math.hypot(this.pilotBoatPos.x - c.position.x, this.pilotBoatPos.z - c.position.z);
+      if (dist < c.userData.radius) {
+        // COLLECTED!
+        c.userData.collected = true;
+        this.create3DExplosion(c.position);
+        this.scene.remove(c);
+        this.missionCrates.splice(i, 1);
+        this.missionStats.cratesCollected++;
+        if (this.onMissionEvent) {
+          this.onMissionEvent('crate_collected', {
+            loot: c.userData.loot,
+            collected: this.missionStats.cratesCollected,
+            total: this.missionStats.totalCrates
+          });
+        }
+      }
+    }
+
+    // 3. Update Searchlights & Detection
+    this.missionSearchlights.forEach((s) => {
+      s.sweepAngle = Math.sin(t * s.speed) * 0.75;
+      const sweepX = s.originX + Math.sin(s.sweepAngle) * s.range;
+      const sweepZ = s.originZ + Math.cos(s.sweepAngle) * s.range;
+      s.target.position.set(sweepX, 0, sweepZ);
+      s.coneMesh.lookAt(sweepX, 0, sweepZ);
+      s.coneMesh.rotateX(Math.PI / 2);
+
+      // Check if player boat is in the illuminated zone
+      const distToLightBeam = Math.hypot(this.pilotBoatPos.x - sweepX, this.pilotBoatPos.z - sweepZ);
+      if (distToLightBeam < 14.0) {
+        // Detected by searchlight!
+        this.missionStats.detectedCount++;
+        if (Math.random() > 0.85) {
+          // Fire tracer round from coastal battery
+          const batteryPos = new THREE.Vector3(s.originX, 8, s.originZ);
+          this.fireEnemyTracer(batteryPos, this.pilotBoatPos);
+        }
+        if (this.onMissionEvent) this.onMissionEvent('searchlight_detected');
+      }
+    });
+
+    // 4. Update Enemy Tracers
+    for (let i = this.missionTracers.length - 1; i >= 0; i--) {
+      const tr = this.missionTracers[i];
+      tr.life += dt;
+      tr.mesh.position.addScaledVector(tr.dir, tr.speed * dt);
+
+      // Check hit with boat
+      const distToBoat = Math.hypot(tr.mesh.position.x - this.pilotBoatPos.x, tr.mesh.position.z - this.pilotBoatPos.z);
+      if (distToBoat < 2.2 && Math.abs(tr.mesh.position.y - this.boatBaseY) < 2.0) {
+        this.scene.remove(tr.mesh);
+        this.missionTracers.splice(i, 1);
+        this.pilotHullHP = Math.max(0, this.pilotHullHP - 8);
+        this.missionStats.damageTaken += 8;
+        if (this.onMissionEvent) this.onMissionEvent('tracer_hit', { hp: this.pilotHullHP });
+        continue;
+      }
+
+      if (tr.life >= tr.maxLife || tr.mesh.position.y <= 0) {
+        this.scene.remove(tr.mesh);
+        this.missionTracers.splice(i, 1);
+      }
+    }
+
+    // 5. Update Waypoints
+    this.missionWaypoints.forEach((wp) => {
+      wp.userData.ring1.rotation.z += dt * 0.8;
+      wp.userData.ring2.rotation.z -= dt * 1.2;
+      const pulseScale = 1.0 + Math.sin(t * 4.0) * 0.08;
+      wp.userData.ring1.scale.set(pulseScale, pulseScale, 1);
+
+      const dist = Math.hypot(this.pilotBoatPos.x - wp.position.x, this.pilotBoatPos.z - wp.position.z);
+      if (dist < wp.userData.radius && !wp.userData.reached) {
+        wp.userData.reached = true;
+        if (this.onMissionEvent) this.onMissionEvent('waypoint_reached', { label: wp.userData.label });
+      }
+    });
+  }
+
+  getPilotTelemetry() {
+    let targetX = 0, targetZ = 140;
+    if (this.missionCrates.length > 0) {
+      targetX = this.missionCrates[0].position.x;
+      targetZ = this.missionCrates[0].position.z;
+    } else if (this.missionWaypoints.length > 0) {
+      targetX = this.missionWaypoints[0].position.x;
+      targetZ = this.missionWaypoints[0].position.z;
+    }
+
+    const distToTarget = Math.hypot(targetX - this.pilotBoatPos.x, targetZ - this.pilotBoatPos.z);
+    const speedKnots = Math.abs(Math.round(this.pilotSpeed * 1.852));
+    const headingDeg = Math.round(((this.pilotHeading * (180 / Math.PI)) % 360 + 360) % 360);
+
+    return {
+      speedKnots: speedKnots,
+      headingDeg: headingDeg,
+      x: Math.round(this.pilotBoatPos.x),
+      z: Math.round(this.pilotBoatPos.z),
+      hullHP: Math.round(this.pilotHullHP),
+      maxHP: this.pilotHullMaxHP,
+      distToTarget: Math.round(distToTarget),
+      cratesCollected: this.missionStats.cratesCollected,
+      totalCrates: this.missionStats.totalCrates,
+      boostActive: this.pilotBoost
+    };
   }
 }
 

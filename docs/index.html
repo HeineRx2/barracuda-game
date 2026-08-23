@@ -373,6 +373,98 @@
 
   </div>
 
+  <!-- =========================================================================
+       3D REAL-TIME MISSION COCKPIT HUD (Sortie Mode)
+       ========================================================================= -->
+  <div id="mission-cockpit-overlay" class="mission-hud-hidden">
+    <!-- Top Mission Status Bar -->
+    <header class="mission-top-header">
+      <div class="mission-header-left">
+        <div class="mission-badge" id="hud-mission-code">ОПЕРАЦИЯ: «НОЧНОЙ ПРОРЫВ»</div>
+        <div class="mission-timer" id="hud-mission-timer">⏱️ 01:45</div>
+      </div>
+      <div class="mission-objectives-box">
+        <div class="mission-obj-item" id="hud-obj-crates">📦 Контейнеры: <b id="hud-val-crates">0 / 3</b></div>
+        <div class="mission-obj-item" id="hud-obj-target">🎯 Дистанция: <b id="hud-val-target">140 м</b></div>
+      </div>
+      <button class="btn-abort-mission" id="btn-abort-sortie" title="Экстренная эвакуация на базу">✕ ЭВАКУАЦИЯ</button>
+    </header>
+
+    <!-- Center Compass & Reticle -->
+    <div class="mission-center-hud">
+      <div class="mission-compass-tape">
+        <span class="compass-marker">З</span>
+        <span class="compass-marker">СЗ</span>
+        <span class="compass-marker text-green" id="hud-compass-heading">▲ С (000°)</span>
+        <span class="compass-marker">СВ</span>
+        <span class="compass-marker">В</span>
+      </div>
+      <div class="mission-crosshair"></div>
+      <div class="mission-warning-banner" id="hud-warning-banner">⚠️ ВНИМАНИЕ: МИННОЕ ПОЛЕ // ЛУЧИ ПРОЖЕКТОРОВ</div>
+    </div>
+
+    <!-- Bottom Left: Speedometer & Hull HP -->
+    <div class="mission-bottom-left">
+      <div class="mission-speed-dial">
+        <div class="speed-number" id="hud-val-speed">0</div>
+        <div class="speed-unit">УЗЛОВ (KTS)</div>
+      </div>
+      <div class="mission-hull-widget">
+        <div class="hull-label">
+          <span>ЦЕЛОСТНОСТЬ КОРПУСА:</span>
+          <span id="hud-val-hp" class="text-green">100%</span>
+        </div>
+        <div class="hull-bar-track">
+          <div class="hull-bar-fill" id="hud-fill-hp" style="width:100%;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mobile Touch Joystick Area (Left Thumb) -->
+    <div id="virtual-joystick-zone" class="virtual-joystick-container">
+      <div class="joystick-base">
+        <div class="joystick-thumb" id="joystick-thumb-knob"></div>
+      </div>
+      <div class="joystick-label">🕹️ РУЛЬ & ГАЗ</div>
+    </div>
+
+    <!-- Bottom Right Controls: Boost & FPV Strike (Right Thumb) -->
+    <div class="mission-bottom-right">
+      <button class="btn-mission-action btn-mission-boost" id="btn-mission-boost">
+        <span class="btn-ma-icon">⚡</span>
+        <span class="btn-ma-text">ФОРСАЖ</span>
+      </button>
+      <button class="btn-mission-action btn-mission-strike" id="btn-mission-strike">
+        <span class="btn-ma-icon">🚀</span>
+        <span class="btn-ma-text">ПУСК FPV</span>
+      </button>
+    </div>
+
+    <!-- PC Keybind Hint Bar -->
+    <div class="mission-pc-hints">
+      <span><b>[W / S]</b> Газ / Реверс</span>
+      <span><b>[A / D]</b> Руль</span>
+      <span><b>[Shift]</b> Форсаж</span>
+      <span><b>[Пробел]</b> Пуск FPV</span>
+    </div>
+  </div>
+
+  <!-- Mission Debriefing Modal (Victory / Defeat) -->
+  <div id="mission-debrief-modal" class="tactical-modal-overlay">
+    <div class="tactical-modal-card debrief-card">
+      <div class="modal-card-header">
+        <h2 class="modal-card-title" id="debrief-title">🏆 ОПЕРАЦИЯ ЗАВЕРШЕНА // ПОБЕДА</h2>
+      </div>
+      <p class="modal-card-desc" id="debrief-desc">Катер «Барракуда» успешно выполнил боевую задачу и вернулся в пункт базирования.</p>
+      <div class="debrief-stats-grid" id="debrief-stats">
+        <!-- Injected dynamically -->
+      </div>
+      <div class="debrief-actions">
+        <button class="btn-claim-mission-reward" id="btn-debrief-claim">ВЕРНУТЬСЯ НА БАЗУ (+НАГРАДЫ)</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Global Tactical Operations Map Modal -->
   <div id="map-modal" class="tactical-modal-overlay">
     <div class="tactical-modal-card">
