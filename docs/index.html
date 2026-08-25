@@ -37,7 +37,7 @@
   <div class="center-interact-zone"></div>
 
   <!-- FLIR Thermal Optics Fullscreen Overlay -->
-  <div id="flir-overlay">
+  <div id="flir-overlay" class="flir-thermal-view">
     <div class="flir-crosshair"></div>
     <div class="flir-scan-line"></div>
     <div class="flir-telemetry-box">
@@ -374,7 +374,7 @@
   </div>
 
   <!-- =========================================================================
-       3D REAL-TIME MISSION COCKPIT HUD (Sortie Mode)
+       3D REAL-TIME MISSION COCKPIT HUD (Sortie Boat Mode)
        ========================================================================= -->
   <div id="mission-cockpit-overlay" class="mission-hud-hidden">
     <!-- Top Mission Status Bar -->
@@ -434,7 +434,7 @@
         <span class="btn-ma-icon">⚡</span>
         <span class="btn-ma-text">ФОРСАЖ</span>
       </button>
-      <button class="btn-mission-action btn-mission-strike" id="btn-mission-strike">
+      <button class="btn-mission-action btn-mission-strike pulse-ready" id="btn-mission-strike">
         <span class="btn-ma-icon">🚀</span>
         <span class="btn-ma-text">ПУСК FPV</span>
       </button>
@@ -449,18 +449,155 @@
     </div>
   </div>
 
-  <!-- Mission Debriefing Modal (Victory / Defeat) -->
-  <div id="mission-debrief-modal" class="tactical-modal-overlay">
-    <div class="tactical-modal-card debrief-card">
-      <div class="modal-card-header">
-        <h2 class="modal-card-title" id="debrief-title">🏆 ОПЕРАЦИЯ ЗАВЕРШЕНА // ПОБЕДА</h2>
+  <!-- =========================================================================
+       1ST-PERSON FPV KAMIKAZE DRONE OSD HUD OVERLAY
+       ========================================================================= -->
+  <div id="fpv-flight-overlay" class="mission-hud-hidden">
+    <!-- CRT Noise & Scanlines Overlay -->
+    <div class="fpv-scanlines"></div>
+    <div class="fpv-vignette"></div>
+    <div class="fpv-glitch-layer" id="fpv-glitch-layer"></div>
+
+    <!-- Top FPV OSD Bar -->
+    <header class="fpv-top-osd">
+      <div class="fpv-osd-chip">VTX: 5.8GHz R-8</div>
+      <div class="fpv-osd-chip" id="fpv-osd-bat">🔋 25.2V (6S) 100%</div>
+      <div class="fpv-osd-chip" id="fpv-osd-rssi">📶 RSSI: -42dBm (98%)</div>
+      <div class="fpv-osd-chip" id="fpv-osd-timer">⏱️ 00:00</div>
+    </header>
+
+    <!-- Center Pitch Ladder & Artificial Horizon -->
+    <div class="fpv-center-osd">
+      <div class="fpv-pitch-ladder" id="fpv-pitch-ladder">
+        <div class="pitch-line pitch-up">+20</div>
+        <div class="pitch-line pitch-up">+10</div>
+        <div class="pitch-horizon">───  ───</div>
+        <div class="pitch-line pitch-down">-10</div>
+        <div class="pitch-line pitch-down">-20</div>
       </div>
-      <p class="modal-card-desc" id="debrief-desc">Катер «Барракуда» успешно выполнил боевую задачу и вернулся в пункт базирования.</p>
-      <div class="debrief-stats-grid" id="debrief-stats">
+
+      <!-- FPV Crosshair Reticle -->
+      <div class="fpv-crosshair">
+        <div class="fpv-reticle-box"></div>
+        <div class="fpv-reticle-dot"></div>
+      </div>
+
+      <!-- Lock-On Target Box (Tracks Subsystems) -->
+      <div class="fpv-target-bracket" id="fpv-target-bracket">
+        <div class="target-bracket-corners"></div>
+        <div class="target-bracket-tag" id="fpv-target-tag">🎯 [МОСТИК] 85м</div>
+      </div>
+
+      <!-- CIWS Anti-Air Flak Alert Banner -->
+      <div class="fpv-ciws-alert" id="fpv-ciws-alert">
+        ⚡ ВНИМАНИЕ: ЗЕНИТНЫЙ ОГОНЬ CIWS // МАНЕВРИРУЙТЕ!
+      </div>
+    </div>
+
+    <!-- Left: Flight Speed (km/h) -->
+    <div class="fpv-left-telemetry">
+      <div class="fpv-telem-label">СКОРОСТЬ</div>
+      <div class="fpv-telem-value text-cyan" id="fpv-val-spd">120</div>
+      <div class="fpv-telem-unit">КМ/Ч</div>
+    </div>
+
+    <!-- Right: Flight Altitude (m) & Distance -->
+    <div class="fpv-right-telemetry">
+      <div class="fpv-telem-label">ВЫСОТА</div>
+      <div class="fpv-telem-value text-green" id="fpv-val-alt">14.2</div>
+      <div class="fpv-telem-unit">МЕТРОВ</div>
+      <div class="fpv-telem-divider"></div>
+      <div class="fpv-telem-label">ДО ЦЕЛИ</div>
+      <div class="fpv-telem-value text-yellow" id="fpv-val-dist">85</div>
+      <div class="fpv-telem-unit">МЕТРОВ</div>
+    </div>
+
+    <!-- Bottom Mobile Controls: Flight Joystick & Turbo -->
+    <div id="fpv-joystick-zone" class="virtual-joystick-container fpv-joy">
+      <div class="joystick-base">
+        <div class="joystick-thumb" id="fpv-joystick-thumb"></div>
+      </div>
+      <div class="joystick-label">🕹️ ТАНГАЖ & КРЕН</div>
+    </div>
+
+    <div class="fpv-bottom-actions">
+      <button class="btn-fpv-boost" id="btn-fpv-boost">
+        <span>⚡ ФОРСАЖ</span>
+      </button>
+      <button class="btn-fpv-detonate" id="btn-fpv-detonate">
+        <span>💥 ДЕТОНАЦИЯ</span>
+      </button>
+    </div>
+
+    <!-- PC Key Hints -->
+    <div class="fpv-pc-hints">
+      <span><b>[W / S]</b> Тангаж (Пикирование / Подъём)</span>
+      <span><b>[A / D]</b> Крен и курс</span>
+      <span><b>[Shift]</b> Форсаж (65+ км/ч)</span>
+      <span><b>[Мышь / Пробел]</b> Наведение и удар</span>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       GAME OVER / MISSION FAILED MODAL (THE END)
+       ========================================================================= -->
+  <div id="mission-gameover-modal" class="tactical-modal-overlay">
+    <div class="tactical-modal-card gameover-card">
+      <div class="modal-card-header gameover-header">
+        <div class="gameover-skull-icon">💀</div>
+        <h2 class="modal-card-title text-red" id="gameover-title">СВЯЗЬ ПОТЕРЯНА // THE END</h2>
+        <div class="gameover-subtitle">[СИГНАЛ БОРТОВОЙ ТЕЛЕМЕТРИИ ПРЕРВАН]</div>
+      </div>
+      
+      <div class="gameover-reason-box">
+        <div class="reason-label">ПРИЧИНА ПОТЕРИ:</div>
+        <div class="reason-text" id="gameover-reason">Корпус катера уничтожен детонацией морской мины</div>
+      </div>
+
+      <div class="debrief-stats-grid" id="gameover-stats">
         <!-- Injected dynamically -->
       </div>
-      <div class="debrief-actions">
-        <button class="btn-claim-mission-reward" id="btn-debrief-claim">ВЕРНУТЬСЯ НА БАЗУ (+НАГРАДЫ)</button>
+
+      <div class="gameover-actions">
+        <button class="btn-gameover-retry" id="btn-gameover-retry">
+          <span class="btn-icon">🔄</span> ПОПРОБОВАТЬ СНОВА (RETRY)
+        </button>
+        <button class="btn-gameover-base" id="btn-gameover-base">
+          <span class="btn-icon">⚓</span> ЭВАКУАЦИЯ В ШТАБ
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       MISSION VICTORY / TRIUMPH MODAL
+       ========================================================================= -->
+  <div id="mission-victory-modal" class="tactical-modal-overlay">
+    <div class="tactical-modal-card victory-card">
+      <div class="modal-card-header victory-header">
+        <div class="victory-medal-icon">🏆</div>
+        <h2 class="modal-card-title text-green" id="victory-title">ОПЕРАЦИЯ ЗАВЕРШЕНА // ТРИУМФ</h2>
+        <div class="victory-rank-badge" id="victory-rank-badge">РАНГ: S (ИДЕАЛЬНО)</div>
+      </div>
+
+      <div class="victory-hit-box" id="victory-hit-box">
+        <div class="hit-sub-label">🎯 ПОРАЖЁННЫЙ УЗЕЛ:</div>
+        <div class="hit-sub-title text-yellow" id="victory-hit-sub">ХОДОВОЙ МОСТИК (CRITICAL KILL x2.0)</div>
+      </div>
+
+      <p class="modal-card-desc" id="victory-desc">Корабль противника уничтожен точным ударом FPV-штурмовика «Барракуда» и затонул в море!</p>
+
+      <div class="debrief-stats-grid" id="victory-stats">
+        <!-- Injected dynamically -->
+      </div>
+
+      <div class="victory-actions">
+        <button class="btn-victory-retry" id="btn-victory-retry">
+          <span class="btn-icon">🔄</span> ПОВТОРИТЬ ВЫЛАЗКУ
+        </button>
+        <button class="btn-victory-claim" id="btn-victory-claim">
+          <span class="btn-icon">⚓</span> ЗАБРАТЬ КУШ И В ШТАБ
+        </button>
       </div>
     </div>
   </div>

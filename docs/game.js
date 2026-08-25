@@ -2562,6 +2562,10 @@ class BarracudaGame {
   // REAL-TIME 3D BOAT SORTIES & INTERACTIVE MISSIONS
   // =========================================================================
 
+  // =========================================================================
+  // REAL-TIME 3D BOAT SORTIES & FPV COMBAT STRIKES
+  // =========================================================================
+
   startCampaignMission(missionId) {
     this.start3DMissionSortie(missionId);
   }
@@ -2577,9 +2581,18 @@ class BarracudaGame {
 
     this.activeMission = found;
     this.sortieActive = true;
-    this.sortieTimeLeft = 120; // 2 minutes
-    this.sortieStats = { crates: 0, totalCrates: 3, hitMines: 0, detected: 0 };
-    this.inputState = { throttle: 0, steer: 0, boost: false };
+    this.fpvFlightPhase = false;
+    this.sortieTimeLeft = 300; // 5 minutes
+    this.sortieStats = {
+      crates: 0,
+      totalCrates: 3,
+      hitMines: 0,
+      detected: 0,
+      flakHitsTaken: 0,
+      targetSubsystem: null,
+      startTime: Date.now()
+    };
+    this.inputState = { throttle: 0, steer: 0, boost: false, fpvPitch: 0, fpvYaw: 0 };
 
     // Close any open modals
     document.querySelectorAll('.help-modal-overlay, .tactical-modal-overlay').forEach(el => el.classList.remove('active'));
@@ -2589,9 +2602,16 @@ class BarracudaGame {
       this.changeSector(foundAct.sector);
     }
 
-    // Hide base HUD, show 3D Mission Cockpit Overlay
+    // Hide base HUD, show 3D Mission Boat Cockpit Overlay
     const gameFrame = document.getElementById('game-frame');
     if (gameFrame) gameFrame.style.display = 'none';
+
+    const fpvOverlay = document.getElementById('fpv-flight-overlay');
+    if (fpvOverlay) {
+      fpvOverlay.classList.add('mission-hud-hidden');
+      fpvOverlay.style.display = 'none';
+    }
+
     const cockpit = document.getElementById('mission-cockpit-overlay');
     if (cockpit) {
       cockpit.classList.remove('mission-hud-hidden');
@@ -2621,8 +2641,32 @@ class BarracudaGame {
     this.initPilotInputListeners();
     this.startSortieTimer();
 
-    this.addNotification('⚓ ВЫЛАЗКА НАЧАТА', `Управляйте катером: собирайте грузы и прорывайтесь к цели!`);
+    this.addNotification('⚓ ВЫЛАЗКА НАЧАТА', `Прорывайтесь на катере к цели или запустите FPV-дрон!`);
     if (window.tacticalAudio) window.tacticalAudio.playCritPing();
+  }
+
+  startFpvFlightPhase() {
+    if (!this.sortieActive || this.fpvFlightPhase || !this.engine3D) return;
+    this.fpvFlightPhase = true;
+
+    // Switch HUD from Boat Cockpit to FPV OSD
+    const boatCockpit = document.getElementById('mission-cockpit-overlay');
+    if (boatCockpit) {
+      boatCockpit.classList.add('mission-hud-hidden');
+      boatCockpit.style.display = 'none';
+    }
+
+    const fpvOverlay = document.getElementById('fpv-flight-overlay');
+    if (fpvOverlay) {
+      fpvOverlay.classList.remove('mission-hud-hidden');
+      fpvOverlay.style.display = 'flex';
+    }
+
+    // Start FPV Drone Flight in 3D Engine
+    this.engine3D.startFpvFlight((event, data) => this.handle3DMissionEvent(event, data));
+
+    this.showMissionWarning('🚀 FPV-ШТУРМ НАЧАТ: Наводитесь на уязвимые узлы корабля противника!');
+    if (window.tacticalAudio) window.tacticalAudio.playPhaseTransition();
   }
 
   handle3DMissionEvent(event, data) {
@@ -2633,7 +2677,7 @@ class BarracudaGame {
       this.showMissionWarning('💥 ПОДРЫВ НА МИНЕ! -35 HP КОРПУСА');
       this.sortieStats.hitMines++;
       if (data.hp <= 0) {
-        this.finishSortie(false, 'Корпус катера уничтожен серией мин');
+        this.finishSortie(false, 'Корпус катера уничтожен серией взрывов морских мин');
       }
     } else if (event === 'crate_collected') {
       if (window.tacticalAudio) window.tacticalAudio.playSalvagePickup();
@@ -2649,11 +2693,29 @@ class BarracudaGame {
       if (window.tacticalAudio) window.tacticalAudio.playEnemyShoot();
       this.showMissionWarning('⚡ ПОПАДАНИЕ СНАРЯДА! -8 HP');
       if (data.hp <= 0) {
-        this.finishSortie(false, 'Катер потоплен огнём противника');
+        this.finishSortie(false, 'Катер потоплен огнём береговой артиллерии');
       }
     } else if (event === 'waypoint_reached') {
       if (window.tacticalAudio) window.tacticalAudio.playTargetLock();
       this.showMissionWarning('🎯 ЗОНА ЦЕЛИ ДОСТИГНУТА! НАЖМИТЕ [ПУСК FPV] ДЛЯ УДАРА!');
+    } else if (event === 'fpv_damaged') {
+      this.sortieStats.flakHitsTaken++;
+      const glitchLayer = document.getElementById('fpv-glitch-layer');
+      if (glitchLayer) {
+        glitchLayer.classList.add('fpv-glitched');
+        setTimeout(() => glitchLayer.classList.remove('fpv-glitched'), 200);
+      }
+    } else if (event === 'fpv_crashed') {
+      this.finishSortie(false, data.reason || 'FPV-дрон потерпел крушение');
+    } else if (event === 'fpv_target_hit') {
+      this.sortieStats.targetSubsystem = data.subsystem || 'Ходовой мостик';
+      this.sortieStats.damageBonus = data.damageBonus;
+      this.sortieStats.scoreMult = data.scoreMult || 1.5;
+      
+      // Delay slightly for cinematic explosion & sinking to play
+      setTimeout(() => {
+        this.finishSortie(true, 'Успешный удар');
+      }, 2800);
     }
   }
 
@@ -2676,29 +2738,53 @@ class BarracudaGame {
     // 1. Keyboard Controls (PC)
     window.addEventListener('keydown', (e) => {
       if (!this.sortieActive) return;
-      if (e.code === 'KeyW' || e.code === 'ArrowUp') this.inputState.throttle = 1.0;
-      else if (e.code === 'KeyS' || e.code === 'ArrowDown') this.inputState.throttle = -0.6;
-      else if (e.code === 'KeyA' || e.code === 'ArrowLeft') this.inputState.steer = -0.75;
-      else if (e.code === 'KeyD' || e.code === 'ArrowRight') this.inputState.steer = 0.75;
-      else if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') this.inputState.boost = true;
-      else if (e.code === 'Space') {
-        e.preventDefault();
-        this.executeSortieStrike();
+
+      if (!this.fpvFlightPhase) {
+        // Boat Mode Controls
+        if (e.code === 'KeyW' || e.code === 'ArrowUp') this.inputState.throttle = 1.0;
+        else if (e.code === 'KeyS' || e.code === 'ArrowDown') this.inputState.throttle = -0.6;
+        else if (e.code === 'KeyA' || e.code === 'ArrowLeft') this.inputState.steer = -0.75;
+        else if (e.code === 'KeyD' || e.code === 'ArrowRight') this.inputState.steer = 0.75;
+        else if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') this.inputState.boost = true;
+        else if (e.code === 'Space') {
+          e.preventDefault();
+          this.startFpvFlightPhase();
+        }
+        this.applyPilotInputs();
+      } else {
+        // FPV Drone Mode Controls
+        if (e.code === 'KeyW' || e.code === 'ArrowUp') this.inputState.fpvPitch = -0.9; // Nose down (dive / accelerate)
+        else if (e.code === 'KeyS' || e.code === 'ArrowDown') this.inputState.fpvPitch = 0.9;  // Nose up (climb)
+        else if (e.code === 'KeyA' || e.code === 'ArrowLeft') this.inputState.fpvYaw = -0.8;  // Bank / Yaw left
+        else if (e.code === 'KeyD' || e.code === 'ArrowRight') this.inputState.fpvYaw = 0.8;   // Bank / Yaw right
+        else if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') this.inputState.boost = true;
+        else if (e.code === 'Space') {
+          e.preventDefault();
+          this.inputState.boost = true;
+        }
+        this.applyFpvInputs();
       }
-      this.applyPilotInputs();
     });
 
     window.addEventListener('keyup', (e) => {
       if (!this.sortieActive) return;
-      if ((e.code === 'KeyW' || e.code === 'ArrowUp') && this.inputState.throttle > 0) this.inputState.throttle = 0;
-      else if ((e.code === 'KeyS' || e.code === 'ArrowDown') && this.inputState.throttle < 0) this.inputState.throttle = 0;
-      else if ((e.code === 'KeyA' || e.code === 'ArrowLeft') && this.inputState.steer < 0) this.inputState.steer = 0;
-      else if ((e.code === 'KeyD' || e.code === 'ArrowRight') && this.inputState.steer > 0) this.inputState.steer = 0;
-      else if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') this.inputState.boost = false;
-      this.applyPilotInputs();
+
+      if (!this.fpvFlightPhase) {
+        if ((e.code === 'KeyW' || e.code === 'ArrowUp') && this.inputState.throttle > 0) this.inputState.throttle = 0;
+        else if ((e.code === 'KeyS' || e.code === 'ArrowDown') && this.inputState.throttle < 0) this.inputState.throttle = 0;
+        else if ((e.code === 'KeyA' || e.code === 'ArrowLeft') && this.inputState.steer < 0) this.inputState.steer = 0;
+        else if ((e.code === 'KeyD' || e.code === 'ArrowRight') && this.inputState.steer > 0) this.inputState.steer = 0;
+        else if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') this.inputState.boost = false;
+        this.applyPilotInputs();
+      } else {
+        if (e.code === 'KeyW' || e.code === 'ArrowUp' || e.code === 'KeyS' || e.code === 'ArrowDown') this.inputState.fpvPitch = 0;
+        if (e.code === 'KeyA' || e.code === 'ArrowLeft' || e.code === 'KeyD' || e.code === 'ArrowRight') this.inputState.fpvYaw = 0;
+        if (e.code === 'ShiftLeft' || e.code === 'ShiftRight' || e.code === 'Space') this.inputState.boost = false;
+        this.applyFpvInputs();
+      }
     });
 
-    // 2. Mobile Touch Virtual Joystick
+    // 2. Mobile Touch Virtual Joystick for Boat
     const joyZone = document.getElementById('virtual-joystick-zone');
     const joyThumb = document.getElementById('joystick-thumb-knob');
     if (joyZone && joyThumb) {
@@ -2707,7 +2793,7 @@ class BarracudaGame {
       const maxR = 45;
 
       joyZone.addEventListener('touchstart', (e) => {
-        if (!this.sortieActive) return;
+        if (!this.sortieActive || this.fpvFlightPhase) return;
         const touch = e.changedTouches[0];
         touchId = touch.identifier;
         const rect = joyZone.getBoundingClientRect();
@@ -2716,7 +2802,7 @@ class BarracudaGame {
       }, { passive: false });
 
       joyZone.addEventListener('touchmove', (e) => {
-        if (!this.sortieActive) return;
+        if (!this.sortieActive || this.fpvFlightPhase) return;
         e.preventDefault();
         for (let i = 0; i < e.changedTouches.length; i++) {
           const t = e.changedTouches[i];
@@ -2729,24 +2815,9 @@ class BarracudaGame {
             const nx = Math.cos(angle) * (clampedDist / maxR);
             const ny = Math.sin(angle) * (clampedDist / maxR);
 
-            // Deadzone and smooth precision curve
-            const deadzone = 0.08;
-            let steerVal = 0;
-            if (Math.abs(nx) > deadzone) {
-              const sign = Math.sign(nx);
-              const remapped = (Math.abs(nx) - deadzone) / (1.0 - deadzone);
-              steerVal = sign * Math.pow(remapped, 1.3) * 0.8;
-            }
-            let throttleVal = 0;
-            if (Math.abs(ny) > deadzone) {
-              const sign = Math.sign(ny);
-              const remapped = (Math.abs(ny) - deadzone) / (1.0 - deadzone);
-              throttleVal = -sign * Math.pow(remapped, 1.1) * 1.0;
-            }
-
+            this.inputState.steer = nx * 0.8;
+            this.inputState.throttle = -ny * 1.0;
             joyThumb.style.transform = `translate(${nx * maxR}px, ${ny * maxR}px)`;
-            this.inputState.steer = steerVal;
-            this.inputState.throttle = throttleVal;
             this.applyPilotInputs();
             break;
           }
@@ -2769,7 +2840,63 @@ class BarracudaGame {
       joyZone.addEventListener('touchcancel', onTouchEnd);
     }
 
-    // 3. Action buttons
+    // 3. FPV Touch Flight Joystick (Mobile)
+    const fpvJoyZone = document.getElementById('fpv-joystick-zone');
+    const fpvJoyThumb = document.getElementById('fpv-joystick-thumb');
+    if (fpvJoyZone && fpvJoyThumb) {
+      let touchId = null;
+      let startX = 0, startY = 0;
+      const maxR = 45;
+
+      fpvJoyZone.addEventListener('touchstart', (e) => {
+        if (!this.sortieActive || !this.fpvFlightPhase) return;
+        const touch = e.changedTouches[0];
+        touchId = touch.identifier;
+        const rect = fpvJoyZone.getBoundingClientRect();
+        startX = rect.left + rect.width / 2;
+        startY = rect.top + rect.height / 2;
+      }, { passive: false });
+
+      fpvJoyZone.addEventListener('touchmove', (e) => {
+        if (!this.sortieActive || !this.fpvFlightPhase) return;
+        e.preventDefault();
+        for (let i = 0; i < e.changedTouches.length; i++) {
+          const t = e.changedTouches[i];
+          if (t.identifier === touchId) {
+            const dx = t.clientX - startX;
+            const dy = t.clientY - startY;
+            const dist = Math.hypot(dx, dy);
+            const clampedDist = Math.min(maxR, dist);
+            const angle = Math.atan2(dy, dx);
+            const nx = Math.cos(angle) * (clampedDist / maxR);
+            const ny = Math.sin(angle) * (clampedDist / maxR);
+
+            this.inputState.fpvYaw = nx * 0.9;
+            this.inputState.fpvPitch = ny * 0.9;
+            fpvJoyThumb.style.transform = `translate(${nx * maxR}px, ${ny * maxR}px)`;
+            this.applyFpvInputs();
+            break;
+          }
+        }
+      }, { passive: false });
+
+      const onFpvTouchEnd = (e) => {
+        for (let i = 0; i < e.changedTouches.length; i++) {
+          if (e.changedTouches[i].identifier === touchId) {
+            touchId = null;
+            fpvJoyThumb.style.transform = 'translate(0px, 0px)';
+            this.inputState.fpvYaw = 0;
+            this.inputState.fpvPitch = 0;
+            this.applyFpvInputs();
+            break;
+          }
+        }
+      };
+      fpvJoyZone.addEventListener('touchend', onFpvTouchEnd);
+      fpvJoyZone.addEventListener('touchcancel', onFpvTouchEnd);
+    }
+
+    // 4. Action Buttons
     const btnBoost = document.getElementById('btn-mission-boost');
     if (btnBoost) {
       btnBoost.addEventListener('pointerdown', () => {
@@ -2790,7 +2917,34 @@ class BarracudaGame {
     if (btnStrike) {
       btnStrike.addEventListener('click', (e) => {
         e.stopPropagation();
-        this.executeSortieStrike();
+        this.startFpvFlightPhase();
+      });
+    }
+
+    const btnFpvBoost = document.getElementById('btn-fpv-boost');
+    if (btnFpvBoost) {
+      btnFpvBoost.addEventListener('pointerdown', () => {
+        this.inputState.boost = true;
+        btnFpvBoost.classList.add('active');
+        this.applyFpvInputs();
+      });
+      const endFpvBoost = () => {
+        this.inputState.boost = false;
+        btnFpvBoost.classList.remove('active');
+        this.applyFpvInputs();
+      };
+      btnFpvBoost.addEventListener('pointerup', endFpvBoost);
+      btnFpvBoost.addEventListener('pointerleave', endFpvBoost);
+    }
+
+    const btnFpvDetonate = document.getElementById('btn-fpv-detonate');
+    if (btnFpvDetonate) {
+      btnFpvDetonate.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (this.engine3D) {
+          this.engine3D.triggerShipExplosion();
+          this.finishSortie(true, 'Ручная детонация в зоне цели');
+        }
       });
     }
 
@@ -2802,37 +2956,55 @@ class BarracudaGame {
       });
     }
 
-    const btnDebriefClaim = document.getElementById('btn-debrief-claim');
-    if (btnDebriefClaim) {
-      btnDebriefClaim.addEventListener('click', () => {
-        const modal = document.getElementById('mission-debrief-modal');
+    // Game Over & Victory Modal Buttons
+    const btnGameoverRetry = document.getElementById('btn-gameover-retry');
+    if (btnGameoverRetry) {
+      btnGameoverRetry.addEventListener('click', () => {
+        const modal = document.getElementById('mission-gameover-modal');
+        if (modal) modal.classList.remove('active');
+        if (this.activeMission) {
+          this.start3DMissionSortie(this.activeMission.id);
+        }
+      });
+    }
+
+    const btnGameoverBase = document.getElementById('btn-gameover-base');
+    if (btnGameoverBase) {
+      btnGameoverBase.addEventListener('click', () => {
+        const modal = document.getElementById('mission-gameover-modal');
+        if (modal) modal.classList.remove('active');
+      });
+    }
+
+    const btnVictoryRetry = document.getElementById('btn-victory-retry');
+    if (btnVictoryRetry) {
+      btnVictoryRetry.addEventListener('click', () => {
+        const modal = document.getElementById('mission-victory-modal');
+        if (modal) modal.classList.remove('active');
+        if (this.activeMission) {
+          this.start3DMissionSortie(this.activeMission.id);
+        }
+      });
+    }
+
+    const btnVictoryClaim = document.getElementById('btn-victory-claim');
+    if (btnVictoryClaim) {
+      btnVictoryClaim.addEventListener('click', () => {
+        const modal = document.getElementById('mission-victory-modal');
         if (modal) modal.classList.remove('active');
       });
     }
   }
 
   applyPilotInputs() {
-    if (this.engine3D) {
+    if (this.engine3D && !this.fpvFlightPhase) {
       this.engine3D.setPilotInput(this.inputState.throttle, this.inputState.steer, this.inputState.boost);
     }
   }
 
-  executeSortieStrike() {
-    if (!this.sortieActive || !this.engine3D) return;
-    const telem = this.engine3D.getPilotTelemetry();
-    if (telem.distToTarget <= 90 || this.sortieStats.crates >= 2) {
-      // Strike the enemy warship!
-      if (this.engine3D.enemyShip) {
-        this.engine3D.launch3DMissile(this.engine3D.enemyShip.position);
-      }
-      if (window.tacticalAudio) window.tacticalAudio.playLaunchSfx();
-      this.showMissionWarning('🚀 FPV-ШТУРМОВИК ВЫПУЩЕН! ТОЧНОЕ ПОРАЖЕНИЕ ЦЕЛИ!');
-      setTimeout(() => {
-        this.finishSortie(true);
-      }, 2500);
-    } else {
-      this.showMissionWarning('⚠️ ЦЕЛЬ СЛИШКОМ ДАЛЕКО! Подойдите ближе (дистанция < 90 м)');
-      if (window.tacticalAudio) window.tacticalAudio.playGlitchSound();
+  applyFpvInputs() {
+    if (this.engine3D && this.fpvFlightPhase) {
+      this.engine3D.setFpvInput(this.inputState.fpvYaw, this.inputState.fpvPitch, 0.8, this.inputState.boost);
     }
   }
 
@@ -2844,15 +3016,20 @@ class BarracudaGame {
         return;
       }
       this.sortieTimeLeft--;
+
+      // Update timer HUD
+      const m = Math.floor(this.sortieTimeLeft / 60);
+      const s = this.sortieTimeLeft % 60;
+      const timeStr = `⏱️ ${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+
       const timerEl = document.getElementById('hud-mission-timer');
-      if (timerEl) {
-        const m = Math.floor(this.sortieTimeLeft / 60);
-        const s = this.sortieTimeLeft % 60;
-        timerEl.textContent = `⏱️ ${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-      }
+      if (timerEl) timerEl.textContent = timeStr;
+
+      const fpvTimerEl = document.getElementById('fpv-osd-timer');
+      if (fpvTimerEl) fpvTimerEl.textContent = timeStr;
 
       if (this.sortieTimeLeft <= 0) {
-        this.finishSortie(false, 'Время операции истекло // Топливо на нуле');
+        this.finishSortie(false, 'Время операции истекло // Топливные баки пусты');
       }
 
       this.updateSortieTelemetryHUD();
@@ -2863,28 +3040,116 @@ class BarracudaGame {
     if (!this.sortieActive || !this.engine3D) return;
     const telem = this.engine3D.getPilotTelemetry();
 
-    const speedEl = document.getElementById('hud-val-speed');
-    if (speedEl) speedEl.textContent = telem.speedKnots;
+    if (telem.isFpv) {
+      // Hide boat nav arrow when in FPV
+      const boatNav = document.getElementById('boat-nav-arrow');
+      if (boatNav) boatNav.style.display = 'none';
+      // 1. Update FPV OSD HUD
+      const spdEl = document.getElementById('fpv-val-spd');
+      if (spdEl) spdEl.textContent = telem.speedKmh;
 
-    const hpEl = document.getElementById('hud-val-hp');
-    const hpFill = document.getElementById('hud-fill-hp');
-    if (hpEl) {
-      hpEl.textContent = `${telem.hullHP}%`;
-      hpEl.className = telem.hullHP > 50 ? 'text-green' : (telem.hullHP > 25 ? 'text-yellow' : 'text-red');
+      const altEl = document.getElementById('fpv-val-alt');
+      if (altEl) altEl.textContent = telem.altM;
+
+      const distEl = document.getElementById('fpv-val-dist');
+      if (distEl) distEl.textContent = telem.distToTarget;
+
+      const batEl = document.getElementById('fpv-osd-bat');
+      if (batEl) {
+        batEl.textContent = `🔋 ${telem.batteryVolts}V (${telem.batteryPct}%)`;
+        batEl.style.color = telem.batteryPct > 40 ? '#00ff88' : (telem.batteryPct > 20 ? '#ffcc00' : '#ff3333');
+      }
+
+      const rssiEl = document.getElementById('fpv-osd-rssi');
+      if (rssiEl) {
+        const signalDbm = Math.max(-90, -35 - Math.round(telem.distToTarget * 0.35));
+        rssiEl.textContent = `📶 RSSI: ${signalDbm}dBm`;
+      }
+
+      // Pitch Ladder transform
+      const pitchLadder = document.getElementById('fpv-pitch-ladder');
+      if (pitchLadder) {
+        pitchLadder.style.transform = `translateY(${telem.pitchDeg * 2.5}px) rotate(${telem.rollDeg}deg)`;
+      }
+
+      // Lock on bracket
+      const bracketEl = document.getElementById('fpv-target-bracket');
+      const bracketTag = document.getElementById('fpv-target-tag');
+      if (bracketEl && bracketTag) {
+        if (telem.lockTarget) {
+          bracketEl.style.display = 'flex';
+          bracketTag.textContent = `🎯 [${telem.lockTarget.name}] ${telem.lockTarget.dist}м`;
+        } else {
+          bracketEl.style.display = 'none';
+        }
+      }
+
+      // CIWS Warning Alert
+      const ciwsAlert = document.getElementById('fpv-ciws-alert');
+      if (ciwsAlert) {
+        ciwsAlert.style.display = telem.ciwsActive ? 'block' : 'none';
+      }
+
+      // Bearing Direction Arrow to Target (top of FPV OSD)
+      let bearingEl = document.getElementById('fpv-bearing-arrow');
+      if (!bearingEl) {
+        bearingEl = document.createElement('div');
+        bearingEl.id = 'fpv-bearing-arrow';
+        bearingEl.style.cssText = 'position:fixed; top:18%; left:50%; transform:translateX(-50%); font-size:20px; font-family:monospace; font-weight:bold; color:#ff4400; text-shadow:0 0 12px #ff2200, 0 0 24px rgba(255,34,0,0.5); z-index:200; text-align:center; pointer-events:none; letter-spacing:2px;';
+        document.body.appendChild(bearingEl);
+      }
+      if (telem.bearingArrow && telem.distToTarget > 12) {
+        bearingEl.style.display = 'block';
+        bearingEl.innerHTML = `<div style="font-size:15px;color:#ff8844;">🎯 ЦЕЛЬ: ${telem.distToTarget}м</div><div style="font-size:22px;margin-top:3px;">${telem.bearingArrow}</div>`;
+      } else if (telem.distToTarget <= 12) {
+        bearingEl.style.display = 'block';
+        bearingEl.innerHTML = `<div style="font-size:18px;color:#ff0000;animation:fpvAlertBlink 0.4s infinite alternate;">⚠️ ЦЕЛЬ РЯДОМ — АТАКУЙ!</div>`;
+      } else {
+        bearingEl.style.display = 'none';
+      }
+    } else {
+      // Hide FPV bearing arrow when in boat mode
+      const fpvNav = document.getElementById('fpv-bearing-arrow');
+      if (fpvNav) fpvNav.style.display = 'none';
+      // 2. Update Boat Cockpit HUD
+      const speedEl = document.getElementById('hud-val-speed');
+      if (speedEl) speedEl.textContent = telem.speedKnots;
+
+      const hpEl = document.getElementById('hud-val-hp');
+      const hpFill = document.getElementById('hud-fill-hp');
+      if (hpEl) {
+        hpEl.textContent = `${telem.hullHP}%`;
+        hpEl.className = telem.hullHP > 50 ? 'text-green' : (telem.hullHP > 25 ? 'text-yellow' : 'text-red');
+      }
+      if (hpFill) {
+        hpFill.style.width = `${telem.hullHP}%`;
+        hpFill.style.background = telem.hullHP > 50 ? 'linear-gradient(90deg, #00ff88, #00f0ff)' : (telem.hullHP > 25 ? '#ffcc00' : '#ff4444');
+      }
+
+      const distEl = document.getElementById('hud-val-target');
+      if (distEl) distEl.textContent = `${telem.distToTarget} м`;
+
+      const cratesEl = document.getElementById('hud-val-crates');
+      if (cratesEl) cratesEl.textContent = `${telem.cratesCollected} / ${telem.totalCrates}`;
+
+      const compassEl = document.getElementById('hud-compass-heading');
+      if (compassEl) compassEl.textContent = `▲ КУРС ${String(telem.headingDeg).padStart(3, '0')}°`;
+
+      // Boat Navigation Direction Arrow
+      let navEl = document.getElementById('boat-nav-arrow');
+      if (!navEl) {
+        navEl = document.createElement('div');
+        navEl.id = 'boat-nav-arrow';
+        navEl.style.cssText = 'position:fixed; top:12%; left:50%; transform:translateX(-50%); font-size:18px; font-family:monospace; font-weight:bold; color:#00ffcc; text-shadow:0 0 10px #00ff88, 0 0 20px rgba(0,255,136,0.4); z-index:200; text-align:center; pointer-events:none; letter-spacing:1px;';
+        document.body.appendChild(navEl);
+      }
+      if (telem.bearingArrow) {
+        navEl.style.display = 'block';
+        navEl.innerHTML = `<div style="font-size:14px;color:#00ddaa;">🎯 ЦЕЛЬ: ${telem.distToTarget}м</div><div style="font-size:20px;margin-top:2px;">${telem.bearingArrow}</div>`;
+      } else {
+        navEl.style.display = 'none';
+      }
     }
-    if (hpFill) {
-      hpFill.style.width = `${telem.hullHP}%`;
-      hpFill.style.background = telem.hullHP > 50 ? 'linear-gradient(90deg, #00ff88, #00f0ff)' : (telem.hullHP > 25 ? '#ffcc00' : '#ff4444');
-    }
-
-    const distEl = document.getElementById('hud-val-target');
-    if (distEl) distEl.textContent = `${telem.distToTarget} м`;
-
-    const cratesEl = document.getElementById('hud-val-crates');
-    if (cratesEl) cratesEl.textContent = `${telem.cratesCollected} / ${telem.totalCrates}`;
-
-    const compassEl = document.getElementById('hud-compass-heading');
-    if (compassEl) compassEl.textContent = `▲ КУРС ${String(telem.headingDeg).padStart(3, '0')}°`;
   }
 
   finishSortie(isVictory, reason = '') {
@@ -2892,45 +3157,65 @@ class BarracudaGame {
     this.sortieActive = false;
     clearInterval(this._sortieInterval);
 
-    // Stop 3D Pilot mode
-    if (this.engine3D) this.engine3D.stopPilotMission();
+    // Stop 3D Pilot and FPV modes
+    if (this.engine3D) {
+      if (this.fpvFlightPhase) this.engine3D.stopFpvFlight();
+      this.engine3D.stopPilotMission();
+    }
 
-    // Hide Cockpit Overlay, show Base HUD
+    // Clean up mission nav HUD elements
+    ['boat-nav-arrow', 'fpv-bearing-arrow'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.remove();
+    });
+
+    // Hide Cockpit Overlays, show Base HUD
     const cockpit = document.getElementById('mission-cockpit-overlay');
     if (cockpit) {
       cockpit.classList.add('mission-hud-hidden');
       cockpit.style.display = 'none';
     }
+    const fpvOverlay = document.getElementById('fpv-flight-overlay');
+    if (fpvOverlay) {
+      fpvOverlay.classList.add('mission-hud-hidden');
+      fpvOverlay.style.display = 'none';
+    }
     const gameFrame = document.getElementById('game-frame');
     if (gameFrame) gameFrame.style.display = 'flex';
 
-    const debriefModal = document.getElementById('mission-debrief-modal');
-    const titleEl = document.getElementById('debrief-title');
-    const descEl = document.getElementById('debrief-desc');
-    const statsEl = document.getElementById('debrief-stats');
+    const missionElapsedSec = Math.round((Date.now() - (this.sortieStats.startTime || Date.now())) / 1000);
+    const m = this.activeMission;
 
     if (isVictory) {
-      const m = this.activeMission;
+      // 🏆 VICTORY TRIUMPH MODAL
       this.completedMissions.add(m.id);
-      const usdEarned = Math.floor(m.reward.usd * 1.5 * this.getGlobalMultiplier());
-      const mbEarned = Math.floor(m.reward.mb * 1.5 * this.getGlobalMultiplier());
+
+      const scoreMult = this.sortieStats.scoreMult || 1.5;
+      const usdEarned = Math.floor(m.reward.usd * 1.8 * scoreMult * this.getGlobalMultiplier());
+      const mbEarned = Math.floor(m.reward.mb * 1.8 * scoreMult * this.getGlobalMultiplier());
       const bpEarned = m.reward.bp || 1;
 
       this.creditsUSD += usdEarned;
       this.addData(mbEarned);
       this.blueprintsBP += bpEarned;
       this.sunkenShips++;
-      this.salvage.box = (this.salvage.box || 0) + 2;
-      this.salvage.chips = (this.salvage.chips || 0) + 3;
-      this.salvage.titanium = (this.salvage.titanium || 0) + 2;
+      this.salvage.box = (this.salvage.box || 0) + 3;
+      this.salvage.chips = (this.salvage.chips || 0) + 4;
+      this.salvage.titanium = (this.salvage.titanium || 0) + 3;
 
-      if (titleEl) {
-        titleEl.textContent = '🏆 ОПЕРАЦИЯ ЗАВЕРШЕНА // ТРИУМФ';
-        titleEl.style.color = '#00ff88';
-      }
-      if (descEl) {
-        descEl.textContent = `Катер «Барракуда» блестяще выполнил боевую задачу «${m.title}», прорвал минные поля и уничтожил цель!`;
-      }
+      // Calculate Battle Rating (S / A / B)
+      let rank = 'S';
+      if (this.sortieStats.flakHitsTaken > 2 || missionElapsedSec > 80) rank = 'A';
+      if (this.sortieStats.hitMines > 1 || missionElapsedSec > 110) rank = 'B';
+
+      const victoryModal = document.getElementById('mission-victory-modal');
+      const rankBadge = document.getElementById('victory-rank-badge');
+      const hitSubTitle = document.getElementById('victory-hit-sub');
+      const statsEl = document.getElementById('victory-stats');
+
+      if (rankBadge) rankBadge.textContent = `РАНГ: ${rank} (${rank === 'S' ? 'ИДЕАЛЬНЫЙ ШТУРМ' : (rank === 'A' ? 'ОТЛИЧНЫЙ ПРОРЫВ' : 'УСПЕШНАЯ ОПЕРАЦИЯ')})`;
+      if (hitSubTitle) hitSubTitle.textContent = `${this.sortieStats.targetSubsystem || 'Ходовой мостик'} (${this.sortieStats.damageBonus || 'CRITICAL KILL x2.0'})`;
+
       if (statsEl) {
         statsEl.innerHTML = `
           <div class="debrief-stat-box">
@@ -2947,37 +3232,57 @@ class BarracudaGame {
           </div>
           <div class="debrief-stat-box">
             <div class="debrief-stat-label">ТРОФЕЙНЫЙ ЛУТ</div>
-            <div class="debrief-stat-val text-cyan">📦x2 💎x3 🛡️x2</div>
+            <div class="debrief-stat-val text-cyan">📦x3 💎x4 🛡️x3</div>
           </div>
         `;
       }
 
-      if (window.tacticalAudio) window.tacticalAudio.playMissionVictory();
-      this.addNotification('🏆 ПОБЕДА НА ВЫЛАЗКЕ', `Получено: +$${usdEarned.toLocaleString()} и +${mbEarned} МБ`);
+      if (victoryModal) victoryModal.classList.add('active');
+      if (window.tacticalAudio) {
+        window.tacticalAudio.playMissionVictory();
+        window.tacticalAudio.playRatingReveal(rank);
+      }
+      this.addNotification('🏆 ОПЕРАЦИЯ ВЫПОЛНЕНА', `Вражеский корабль уничтожен! Получено: +$${usdEarned.toLocaleString()}`);
     } else {
-      if (titleEl) {
-        titleEl.textContent = '⚠️ ВЫЛАЗКА ПРЕРВАНА // ЭВАКУАЦИЯ';
-        titleEl.style.color = '#ff5555';
-      }
-      if (descEl) {
-        descEl.textContent = reason || 'Катер был вынужден отступить на базу для экстренного ремонта.';
-      }
+      // 💀 GAME OVER MODAL (THE END)
+      const gameoverModal = document.getElementById('mission-gameover-modal');
+      const reasonEl = document.getElementById('gameover-reason');
+      const statsEl = document.getElementById('gameover-stats');
+
+      if (reasonEl) reasonEl.textContent = reason || 'Катер потерпел крушение // Связь с экипажем потеряна';
+
+      // Partial salvage preserved
+      const salvagedCredits = Math.floor(m.reward.usd * 0.25 * (this.sortieStats.crates / Math.max(1, this.sortieStats.totalCrates)));
+      if (salvagedCredits > 0) this.creditsUSD += salvagedCredits;
+
       if (statsEl) {
         statsEl.innerHTML = `
           <div class="debrief-stat-box">
-            <div class="debrief-stat-label">СТАТУС КОРПУСА</div>
-            <div class="debrief-stat-val text-red">ПОВРЕЖДЁН</div>
+            <div class="debrief-stat-label">ВРЕМЯ В БОЮ</div>
+            <div class="debrief-stat-val text-yellow">${missionElapsedSec} сек</div>
           </div>
           <div class="debrief-stat-box">
             <div class="debrief-stat-label">СОБРАНО ГРУЗОВ</div>
-            <div class="debrief-stat-val text-yellow">${this.sortieStats.crates} / ${this.sortieStats.totalCrates}</div>
+            <div class="debrief-stat-val text-cyan">${this.sortieStats.crates} / ${this.sortieStats.totalCrates}</div>
+          </div>
+          <div class="debrief-stat-box">
+            <div class="debrief-stat-label">КОМПЕНСАЦИЯ</div>
+            <div class="debrief-stat-val text-green">+$${salvagedCredits.toLocaleString()}</div>
+          </div>
+          <div class="debrief-stat-box">
+            <div class="debrief-stat-label">СТАТУС МИССИИ</div>
+            <div class="debrief-stat-val text-red">ПРОВАЛЕНО</div>
           </div>
         `;
       }
-      if (window.tacticalAudio) window.tacticalAudio.playEmpExplosion();
+
+      if (gameoverModal) gameoverModal.classList.add('active');
+      if (window.tacticalAudio) {
+        window.tacticalAudio.playEmpExplosion();
+        window.tacticalAudio.playAlertAlarm();
+      }
     }
 
-    if (debriefModal) debriefModal.classList.add('active');
     this.renderCampaignDOM();
     this.renderHangarDOM();
     this.saveGame();
@@ -3222,7 +3527,7 @@ class BarracudaGame {
     this.boosterStatusTitle = document.getElementById('booster-status-title');
     this.boosterStatusSub = document.getElementById('booster-status-sub');
 
-    this.flirOverlay = document.getElementById('flir-thermal-overlay');
+    this.flirOverlay = document.getElementById('flir-overlay');
     this.btnOpenFlir = document.getElementById('btn-open-flir');
     this.btnExitFlir = document.getElementById('btn-exit-flir');
 
@@ -3330,9 +3635,10 @@ class BarracudaGame {
       });
     }
 
-    // FLIR Thermal Recon Mode
+    // FLIR Thermal Recon Mode (only works when overlay element exists — operations only)
     if (this.btnOpenFlir) {
       this.btnOpenFlir.addEventListener('click', () => {
+        if (!this.flirOverlay) return;  // No FLIR overlay in lobby — do nothing
         window.tacticalAudio.playThermalModeSfx();
         this.flirOverlay.classList.add('active');
         if (this.engine3D) this.engine3D.cameraMode = 'flir';

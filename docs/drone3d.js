@@ -98,6 +98,42 @@ class Barracuda3DEngine {
     this.missionActive = false;
     this.onMissionEvent = null;
 
+    // -------------------------------------------------------------
+    // REAL-TIME 1ST-PERSON FPV KAMIKAZE DRONE FLIGHT SYSTEM
+    // -------------------------------------------------------------
+    this.fpvFlightActive = false;
+    this.fpvPos = new THREE.Vector3(0, 5, 0);
+    this.fpvVel = new THREE.Vector3(0, 0, 0);
+    this.fpvPitch = -0.05;
+    this.fpvYaw = 0;
+    this.fpvRoll = 0;
+    this.fpvThrottle = 0.5;
+    this.fpvBoost = false;
+    this.fpvSteerX = 0;
+    this.fpvSteerY = 0;
+    this.fpvBattery = 25.2; // 6S LiPo battery in Volts
+    this.fpvHP = 100;
+    this.fpvMaxHP = 100;
+    this.fpvFlightTime = 0;
+    this.fpvDroneMesh = null;
+    this.fpvPropellers = [];
+    this.fpvGlowMesh = null;
+    this.fpvLockTarget = null;
+    this.fpvGlitchAmount = 0;
+
+    // Enemy CIWS Anti-Air Defenses
+    this.ciwsTracers = [];
+    this.ciwsCooldown = 0;
+    this.ciwsBurstCount = 0;
+    this.ciwsTargetPos = new THREE.Vector3();
+
+    // Enemy Subsystems & Hitboxes
+    this.enemySubsystems = [];
+    this.shipSinking = { active: false, progress: 0, roll: 0, pitch: 0, depth: 0 };
+
+    // Cinematic Orbit Camera on Strike
+    this.cinematicOrbit = { active: false, center: new THREE.Vector3(), angle: 0, radius: 30, height: 10, speed: 0.4 };
+
     this.clock = new THREE.Clock();
     this.isDragging = false;
     this.mouseDownPos = { x: 0, y: 0 };
@@ -122,15 +158,18 @@ class Barracuda3DEngine {
     this.camera.position.set(7, 4.5, 10);
     this.camera.lookAt(0, 0, 0);
 
+    // Mobile detection for performance optimization
+    this.isMobile = /Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || ('ontouchstart' in window && window.innerWidth < 900);
+
     this.renderer = new THREE.WebGLRenderer({
-      antialias: true,
+      antialias: !this.isMobile,  // Disable antialiasing on mobile
       alpha: false,
       powerPreference: 'high-performance'
     });
     this.renderer.setSize(W, H);
     this.renderer.setClearColor(0x05131e, 1.0);
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.75));
-    this.renderer.shadowMap.enabled = true;
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, this.isMobile ? 1.0 : 1.75));
+    this.renderer.shadowMap.enabled = !this.isMobile;  // Disable shadows on mobile
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.domElement.style.position = 'absolute';
@@ -387,26 +426,29 @@ class Barracuda3DEngine {
   }
 
   // =========================================================================
-  // REALISTIC OCEAN WATER
+  // REALISTIC OCEAN WATER WITH SPECULAR REFLECTIONS
   // =========================================================================
   createWater() {
-    const waterGeometry = new THREE.PlaneGeometry(6000, 6000);
+    const waterGeometry = new THREE.PlaneGeometry(8000, 8000);
 
     if (typeof THREE.Water !== 'undefined') {
       try {
+        const waterNormals = new THREE.TextureLoader().load(
+          'assets/waternormals.jpg',
+          (texture) => {
+            texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+            texture.repeat.set(8, 8);
+          }
+        );
+
         this.water = new THREE.Water(waterGeometry, {
-          textureWidth: 512,
-          textureHeight: 512,
-          waterNormals: new THREE.TextureLoader().load(
-            'assets/waternormals.jpg',
-            (texture) => {
-              texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
-            }
-          ),
-          sunDirection: this.sun ? this.sun.clone().normalize() : new THREE.Vector3(0, 1, 0),
-          sunColor: 0xfff0d0,
-          waterColor: 0x061824,
-          distortionScale: 3.2,
+          textureWidth: 1024,
+          textureHeight: 1024,
+          waterNormals: waterNormals,
+          sunDirection: this.sun ? this.sun.clone().normalize() : new THREE.Vector3(0.5, 0.7, 0.5).normalize(),
+          sunColor: 0xfff4d0,
+          waterColor: 0x051a28,
+          distortionScale: 4.5,
           fog: true
         });
 
@@ -421,9 +463,9 @@ class Barracuda3DEngine {
 
     // Fallback standard ocean surface
     const oceanMat = new THREE.MeshStandardMaterial({
-      color: 0x071e2c,
-      roughness: 0.1,
-      metalness: 0.85
+      color: 0x061e2e,
+      roughness: 0.12,
+      metalness: 0.9
     });
     this.water = new THREE.Mesh(waterGeometry, oceanMat);
     this.water.rotation.x = -Math.PI / 2;
@@ -441,13 +483,13 @@ class Barracuda3DEngine {
     const wakeMat = new THREE.MeshBasicMaterial({
       color: 0xd0f0ff,
       transparent: true,
-      opacity: 0.35,
+      opacity: 0.4,
       depthWrite: false
     });
-    const wakeGeom = new THREE.CircleGeometry(0.12, 8);
+    const wakeGeom = new THREE.CircleGeometry(0.14, 8);
     wakeGeom.rotateX(-Math.PI / 2);
 
-    for (let i = 0; i < 35; i++) {
+    for (let i = 0; i < 40; i++) {
       const p = new THREE.Mesh(wakeGeom, wakeMat.clone());
       p.visible = false;
       p.userData = { life: 0, maxLife: 1.2, vx: 0, vz: 0 };
@@ -460,48 +502,48 @@ class Barracuda3DEngine {
     const p = this.wakeParticles.find(item => !item.visible);
     if (p) {
       p.visible = true;
-      p.position.set(originX + (Math.random() - 0.5) * 0.15, 0.02, originZ - 0.2);
+      p.position.set(originX + (Math.random() - 0.5) * 0.18, 0.02, originZ - 0.2);
       p.scale.set(1, 1, 1);
-      p.material.opacity = 0.45;
+      p.material.opacity = 0.5;
       p.userData.life = 0;
-      p.userData.maxLife = 0.8 + Math.random() * 0.4;
-      p.userData.vz = (-0.8 - Math.random() * 0.6) * speedMultiplier;
-      p.userData.vx = (Math.random() - 0.5) * 0.3;
+      p.userData.maxLife = 0.9 + Math.random() * 0.4;
+      p.userData.vz = (-1.0 - Math.random() * 0.6) * speedMultiplier;
+      p.userData.vx = (Math.random() - 0.5) * 0.35;
     }
   }
 
   // =========================================================================
-  // LIGHTING
+  // LIGHTING & SPECULAR SHINE
   // =========================================================================
   setupLighting() {
-    this.hemiLight = new THREE.HemisphereLight(0x70c0e8, 0x082030, 2.2);
+    this.hemiLight = new THREE.HemisphereLight(0x80ccee, 0x082030, 2.4);
     this.scene.add(this.hemiLight);
 
-    this.sunLight = new THREE.DirectionalLight(0xfff8ee, 3.4);
-    this.sunLight.position.set(16, 24, 18);
+    this.sunLight = new THREE.DirectionalLight(0xfff8ee, 3.8);
+    this.sunLight.position.set(18, 28, 20);
     this.sunLight.castShadow = true;
     this.sunLight.shadow.mapSize.set(1024, 1024);
-    this.sunLight.shadow.camera.left = -8;
-    this.sunLight.shadow.camera.right = 8;
-    this.sunLight.shadow.camera.top = 8;
-    this.sunLight.shadow.camera.bottom = -8;
-    this.sunLight.shadow.bias = -0.001;
+    this.sunLight.shadow.camera.left = -10;
+    this.sunLight.shadow.camera.right = 10;
+    this.sunLight.shadow.camera.top = 10;
+    this.sunLight.shadow.camera.bottom = -10;
+    this.sunLight.shadow.bias = -0.0008;
     this.scene.add(this.sunLight);
 
-    this.fillLight = new THREE.DirectionalLight(0x3088b0, 1.4);
-    this.fillLight.position.set(-12, 10, -10);
+    this.fillLight = new THREE.DirectionalLight(0x3090b8, 1.6);
+    this.fillLight.position.set(-14, 12, -12);
     this.scene.add(this.fillLight);
 
-    this.greenGlow = new THREE.PointLight(0x00ff88, 2.8, 12, 1.5);
-    this.greenGlow.position.set(0, 0.4, 0);
+    this.greenGlow = new THREE.PointLight(0x00ff88, 3.0, 14, 1.4);
+    this.greenGlow.position.set(0, 0.5, 0);
     this.scene.add(this.greenGlow);
 
-    this.ambientLight = new THREE.AmbientLight(0x204860, 1.4);
+    this.ambientLight = new THREE.AmbientLight(0x1a3d52, 1.5);
     this.scene.add(this.ambientLight);
   }
 
   // =========================================================================
-  // 3D ENEMY WARSHIP ON HORIZON + SEARCHLIGHT
+  // 3D ENEMY WARSHIP ON HORIZON + SEARCHLIGHT + SUBSYSTEMS & CIWS
   // =========================================================================
   createEnemyWarship() {
     this.enemyShip = new THREE.Group();
@@ -524,7 +566,7 @@ class Barracuda3DEngine {
     bow.position.set(0, 0.5, 23);
     this.enemyShip.add(bow);
 
-    // Superstructure & Bridge
+    // Superstructure & Bridge (Subsystem 1: Bridge)
     const bridge = new THREE.Mesh(new THREE.BoxGeometry(5.5, 4.0, 14), warshipGreyMat);
     bridge.position.set(0, 4.0, 2);
     this.enemyShip.add(bridge);
@@ -536,7 +578,7 @@ class Barracuda3DEngine {
     bridgeWindows.position.set(0, 5.0, 7.5);
     this.enemyShip.add(bridgeWindows);
 
-    // Radar Mast & Rotating Phased Array
+    // Radar Mast & Rotating Phased Array (Subsystem 2: Radar)
     const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.5, 7.0, 8), darkDeckMat);
     mast.position.set(0, 8.5, 0);
     this.enemyShip.add(mast);
@@ -545,7 +587,7 @@ class Barracuda3DEngine {
     this.enemyRadarDish.position.set(0, 12.0, 0);
     this.enemyShip.add(this.enemyRadarDish);
 
-    // Naval Gun Turret on Bow
+    // Naval Gun Turret on Bow (Subsystem 3: Main Gun Ammo Magazine)
     const turretBase = new THREE.Mesh(new THREE.CylinderGeometry(1.6, 1.8, 1.2, 12), darkDeckMat);
     turretBase.position.set(0, 2.8, 14);
     const turretBarrel = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 4.5, 8), darkDeckMat);
@@ -553,6 +595,18 @@ class Barracuda3DEngine {
     turretBarrel.position.set(0, 0.4, 2.5);
     turretBase.add(turretBarrel);
     this.enemyShip.add(turretBase);
+
+    // CIWS Gatling Flak Turrets (Port & Starboard)
+    const ciwsMat = new THREE.MeshStandardMaterial({ color: 0x1a2228, metalness: 0.9, roughness: 0.3 });
+    const ciwsGeom = new THREE.BoxGeometry(0.8, 0.8, 1.2);
+    
+    this.ciwsPort = new THREE.Mesh(ciwsGeom, ciwsMat);
+    this.ciwsPort.position.set(-3.2, 4.2, -4);
+    this.enemyShip.add(this.ciwsPort);
+
+    this.ciwsStbd = new THREE.Mesh(ciwsGeom, ciwsMat);
+    this.ciwsStbd.position.set(3.2, 4.2, -4);
+    this.enemyShip.add(this.ciwsStbd);
 
     // Searchlight on Bridge Roof
     this.searchlightMount = new THREE.Group();
@@ -573,125 +627,783 @@ class Barracuda3DEngine {
 
     this.enemyShip.add(this.searchlightMount);
 
-    // Position enemy warship on horizon
-    this.enemyShip.position.set(38, -0.6, -75);
+    // Setup Subsystems Definitions with world hitboxes & 3D glowing markers
+    const redHoloMat = new THREE.MeshBasicMaterial({ color: 0xff2200, transparent: true, opacity: 0.8, side: THREE.DoubleSide });
+    const yellowHoloMat = new THREE.MeshBasicMaterial({ color: 0xffcc00, transparent: true, opacity: 0.8, side: THREE.DoubleSide });
+
+    this.enemySubsystems = [
+      {
+        id: 'bridge',
+        name: 'Ходовой мостик',
+        subName: 'COMMAND BRIDGE',
+        localPos: new THREE.Vector3(0, 5.0, 4.0),
+        radius: 4.5,
+        damageBonus: 'CRITICAL KILL (x2.0)',
+        scoreMult: 2.0,
+        destroyed: false
+      },
+      {
+        id: 'radar',
+        name: 'РЛС / Купол РЭБ',
+        subName: 'EW RADAR DOME',
+        localPos: new THREE.Vector3(0, 11.5, 0),
+        radius: 4.0,
+        damageBonus: 'RADAR JAMMED (x1.5)',
+        scoreMult: 1.5,
+        destroyed: false
+      },
+      {
+        id: 'turret',
+        name: 'Носовая башня (БК)',
+        subName: 'AMMO MAGAZINE',
+        localPos: new THREE.Vector3(0, 3.0, 14.0),
+        radius: 4.2,
+        damageBonus: 'MAGAZINE DETONATION (x1.8)',
+        scoreMult: 1.8,
+        destroyed: false
+      },
+      {
+        id: 'engine',
+        name: 'Машинное отделение',
+        subName: 'ENGINE ROOM',
+        localPos: new THREE.Vector3(0, 1.0, -12.0),
+        radius: 4.8,
+        damageBonus: 'CATASTROPHIC FLOOD (x1.3)',
+        scoreMult: 1.3,
+        destroyed: false
+      }
+    ];
+
+    // Add 3D Glowing Hologram Target Rings to each subsystem
+    this.enemySubsystems.forEach(sub => {
+      const ringGeom = new THREE.RingGeometry(sub.radius * 0.7, sub.radius * 0.85, 16);
+      const ringMesh = new THREE.Mesh(ringGeom, sub.id === 'bridge' ? redHoloMat : yellowHoloMat);
+      ringMesh.rotation.x = -Math.PI / 2;
+      ringMesh.position.copy(sub.localPos);
+      this.enemyShip.add(ringMesh);
+      sub.markerMesh = ringMesh;
+    });
+
+    // Towering 35-meter Red Tactical Laser Marker Pillar over Warship (Visible across entire ocean)
+    const pillarGeom = new THREE.CylinderGeometry(0.3, 1.8, 45, 12, 1, true);
+    const pillarMat = new THREE.MeshBasicMaterial({
+      color: 0xff1100,
+      transparent: true,
+      opacity: 0.45,
+      side: THREE.DoubleSide
+    });
+    const markerPillar = new THREE.Mesh(pillarGeom, pillarMat);
+    markerPillar.position.set(0, 22.5, 0);
+    this.enemyShip.add(markerPillar);
+
+    const shipWarningLight = new THREE.PointLight(0xff0022, 6.0, 35);
+    shipWarningLight.position.set(0, 14, 0);
+    this.enemyShip.add(shipWarningLight);
+
+    // Position enemy warship (lobby size — normal scale)
+    this.enemyShip.position.set(25, -0.6, -65);
     this.enemyShip.rotation.y = THREE.MathUtils.degToRad(-135);
-    this.enemyShip.scale.setScalar(0.75);
+    this.enemyShip.scale.setScalar(1.1);
     this.scene.add(this.enemyShip);
   }
 
   // =========================================================================
-  // 3D MISSILE STRIKE ENGINE
+  // 1ST-PERSON FPV KAMIKAZE DRONE ENGINE & CIWS COMBAT
   // =========================================================================
-  launchMissileStrike(onImpactCallback) {
-    if (!this.boatModel) return;
 
-    window.tacticalAudio.playMissileLaunch();
+  createFpvDroneModel() {
+    if (this.fpvDroneMesh) {
+      this.scene.remove(this.fpvDroneMesh);
+    }
 
-    // === FPV DRONE MODEL ===
     const drone = new THREE.Group();
 
-    // Central body — flat rectangular frame
-    const frameMat = new THREE.MeshStandardMaterial({ color: 0x2a2a2a, roughness: 0.4, metalness: 0.8 });
-    const frame = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.08, 0.35), frameMat);
-    drone.add(frame);
+    // Carbon-fiber high-speed racing frame
+    const frameMat = new THREE.MeshStandardMaterial({ color: 0x181a1d, roughness: 0.35, metalness: 0.9 });
+    const body = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.12, 0.42), frameMat);
+    drone.add(body);
 
-    // Warhead nose (orange-tipped)
-    const warheadMat = new THREE.MeshStandardMaterial({ color: 0xff6600, roughness: 0.3, metalness: 0.5 });
-    const warhead = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.2, 6), warheadMat);
-    warhead.rotation.x = -Math.PI / 2;
-    warhead.position.z = -0.25;
-    drone.add(warhead);
+    // Front FPV High-Resolution Camera Lens
+    const lensHousing = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.07, 0.14, 12), frameMat);
+    lensHousing.rotation.x = Math.PI / 2;
+    lensHousing.position.set(0, 0.02, -0.24);
+    const glassLens = new THREE.Mesh(
+      new THREE.SphereGeometry(0.05, 8, 8),
+      new THREE.MeshStandardMaterial({ color: 0x00ff88, roughness: 0.05, metalness: 0.95, emissive: 0x00ff66, emissiveIntensity: 0.8 })
+    );
+    glassLens.position.set(0, 0.02, -0.3);
+    drone.add(lensHousing);
+    drone.add(glassLens);
 
-    // 4 motor arms (X-config)
-    const armMat = new THREE.MeshStandardMaterial({ color: 0x444444, roughness: 0.5, metalness: 0.7 });
+    // High-Explosive Shaped-Charge Warhead (RPG-7 / HEAT)
+    const warheadMat = new THREE.MeshStandardMaterial({ color: 0x2e3b2b, roughness: 0.5, metalness: 0.4 });
+    const warheadNose = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.28, 8), warheadMat);
+    warheadNose.rotation.x = -Math.PI / 2;
+    warheadNose.position.set(0, -0.1, -0.32);
+    drone.add(warheadNose);
+
+    // 4 High-KV Brushless Motor Arms & Propellers
+    const armMat = new THREE.MeshStandardMaterial({ color: 0x222222, metalness: 0.8, roughness: 0.4 });
+    const propMat = new THREE.MeshBasicMaterial({ color: 0x00f0ff, transparent: true, opacity: 0.5 });
     const armPositions = [
-      { x: 0.25, z: 0.15 }, { x: -0.25, z: 0.15 },
-      { x: 0.25, z: -0.15 }, { x: -0.25, z: -0.15 }
+      { x: 0.28, z: 0.22 }, { x: -0.28, z: 0.22 },
+      { x: 0.28, z: -0.22 }, { x: -0.28, z: -0.22 }
     ];
 
-    const propellers = [];
+    this.fpvPropellers = [];
     armPositions.forEach(pos => {
-      // Arm strut
-      const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.3, 6), armMat);
+      const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.35, 6), armMat);
       arm.rotation.z = Math.PI / 2;
-      arm.position.set(pos.x * 0.5, 0.04, pos.z);
+      arm.position.set(pos.x * 0.5, 0.02, pos.z * 0.5);
       drone.add(arm);
 
-      // Propeller disc
-      const propMat = new THREE.MeshBasicMaterial({ color: 0x88ccff, transparent: true, opacity: 0.4 });
-      const prop = new THREE.Mesh(new THREE.CircleGeometry(0.1, 12), propMat);
+      // Motor bell
+      const motor = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.05, 8), frameMat);
+      motor.position.set(pos.x, 0.06, pos.z);
+      drone.add(motor);
+
+      // Spinning translucent prop disc
+      const prop = new THREE.Mesh(new THREE.CircleGeometry(0.14, 12), propMat);
       prop.rotation.x = -Math.PI / 2;
-      prop.position.set(pos.x, 0.08, pos.z);
+      prop.position.set(pos.x, 0.09, pos.z);
       drone.add(prop);
-      propellers.push(prop);
+      this.fpvPropellers.push(prop);
     });
 
-    // LED light
-    const led = new THREE.PointLight(0x00ff44, 1.5, 5);
-    led.position.set(0, -0.05, 0.15);
-    drone.add(led);
+    // 6S LiPo Battery Pack (Rear Mounted)
+    const battMat = new THREE.MeshStandardMaterial({ color: 0xffaa00, roughness: 0.3, metalness: 0.2 });
+    const battery = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.15, 0.32), battMat);
+    battery.position.set(0, 0.12, 0.08);
+    drone.add(battery);
 
-    // Thruster glow (rear)
-    const glowMat = new THREE.MeshBasicMaterial({ color: 0xff4400, transparent: true, opacity: 0.6 });
-    const glow = new THREE.Mesh(new THREE.SphereGeometry(0.04, 6, 6), glowMat);
-    glow.position.z = 0.2;
-    drone.add(glow);
+    // VTX Cloverleaf Antenna
+    const antMat = new THREE.MeshStandardMaterial({ color: 0xff3300, roughness: 0.4 });
+    const ant = new THREE.Mesh(new THREE.SphereGeometry(0.04, 6, 6), antMat);
+    ant.position.set(0, 0.3, 0.25);
+    drone.add(ant);
 
-    // Start position at drone deck/stanchions
-    drone.position.copy(this.boatModel.position);
-    drone.position.y += 0.3;
-    drone.position.z -= 0.5;
-
-    const liftOffPos = drone.position.clone();
-    liftOffPos.y += 3.0; // Lift off height
-
-    const targetPos = this.enemyShip ? this.enemyShip.position.clone() : new THREE.Vector3(38, 2, -75);
-    targetPos.y += 2.5;
+    // Jet Thruster / Afterburner Glow
+    const glowMat = new THREE.MeshBasicMaterial({ color: 0x00ffcc, transparent: true, opacity: 0.8 });
+    this.fpvGlowMesh = new THREE.Mesh(new THREE.SphereGeometry(0.06, 6, 6), glowMat);
+    this.fpvGlowMesh.position.set(0, 0, 0.26);
+    drone.add(this.fpvGlowMesh);
 
     this.scene.add(drone);
-    this.activeMissiles.push({
-      mesh: drone,
-      propellers: propellers,
-      glowMesh: glow,
-      startPos: drone.position.clone(),
-      liftOffPos: liftOffPos,
-      targetPos: targetPos,
-      progress: 0,
-      duration: 3.5, // Slower flight
-      phase: 'liftoff', // liftoff -> cruise
-      onImpact: onImpactCallback
+    this.fpvDroneMesh = drone;
+    this.fpvDroneMesh.visible = false;
+  }
+
+  startFpvFlight(onEventCallback, autopilot = false) {
+    if (!this.fpvDroneMesh) {
+      this.createFpvDroneModel();
+    }
+
+    this.fpvFlightActive = true;
+    this.fpvAutopilot = autopilot;   // true = lobby auto-flight, false = manual mission control
+    if (!autopilot) {
+      this.cameraMode = 'fpv';  // Only switch to 1st-person in missions
+    }
+    if (onEventCallback) this.onMissionEvent = onEventCallback;
+
+    // Launch from boat position
+    const launchX = this.pilotBoatPos ? this.pilotBoatPos.x : (this.boatModel ? this.boatModel.position.x : 0);
+    const launchZ = this.pilotBoatPos ? this.pilotBoatPos.z : (this.boatModel ? this.boatModel.position.z : 0);
+    const launchY = this.boatBaseY + 1.2;
+
+    this.fpvPos.set(launchX, launchY, launchZ);
+
+    // Auto-aim yaw toward enemy ship on launch (both modes)
+    if (this.enemyShip) {
+      const dx = this.enemyShip.position.x - launchX;
+      const dz = this.enemyShip.position.z - launchZ;
+      this.fpvYaw = Math.atan2(dx, dz);
+    } else {
+      this.fpvYaw = this.pilotHeading || 0;
+    }
+
+    this.fpvPitch = -0.04;
+    this.fpvRoll = 0;
+    this.fpvThrottle = autopilot ? 0.85 : 0.7;
+    this.fpvBoost = false;
+    this.fpvSteerX = 0;
+    this.fpvSteerY = 0;
+    this.fpvBattery = 25.2;
+    this.fpvHP = 100;
+    this.fpvFlightTime = 0;
+    this.fpvGlitchAmount = 0;
+    this.ciwsTracers = [];
+    this.ciwsCooldown = 0.8;
+
+    // Launch velocity
+    const launchSpeed = autopilot ? 14.0 : 8.0;
+    const fwdX = Math.sin(this.fpvYaw) * launchSpeed;
+    const fwdZ = Math.cos(this.fpvYaw) * launchSpeed;
+    this.fpvVel.set(fwdX, autopilot ? 6.0 : 4.0, fwdZ);
+
+    // Create 3D guide line toward enemy ship (only in manual mode)
+    if (!autopilot) {
+      this._createFpvGuideLine();
+    }
+
+    this.fpvDroneMesh.position.copy(this.fpvPos);
+    this.fpvDroneMesh.visible = true;
+
+    if (window.tacticalAudio) {
+      window.tacticalAudio.startFpvMotorSound();
+      window.tacticalAudio.playMissileLaunch();
+    }
+  }
+
+  stopFpvFlight() {
+    this.fpvFlightActive = false;
+    if (this.fpvDroneMesh) {
+      this.fpvDroneMesh.visible = false;
+    }
+    if (window.tacticalAudio) {
+      window.tacticalAudio.stopFpvMotorSound();
+    }
+    // Clean up CIWS flak tracers
+    this.ciwsTracers.forEach(tr => this.scene.remove(tr.mesh));
+    this.ciwsTracers = [];
+    // Remove 3D guide line and waypoint marker
+    if (this._fpvGuideLine) {
+      this.scene.remove(this._fpvGuideLine);
+      this._fpvGuideLine = null;
+    }
+    if (this._fpvGuideMarker) {
+      this.scene.remove(this._fpvGuideMarker);
+      this._fpvGuideMarker = null;
+    }
+  }
+
+  // 3D Laser Guide Line: a pulsing dashed line from drone toward enemy warship
+  _createFpvGuideLine() {
+    if (this._fpvGuideLine) this.scene.remove(this._fpvGuideLine);
+    if (this._fpvGuideMarker) this.scene.remove(this._fpvGuideMarker);
+
+    // Thick glowing guide beam (cylinder-based, not Line which is always 1px)
+    const beamGeo = new THREE.CylinderGeometry(0.15, 0.15, 1, 6, 1, true);
+    const beamMat = new THREE.MeshBasicMaterial({
+      color: 0xff3300,
+      transparent: true,
+      opacity: 0.5,
+      side: THREE.DoubleSide
+    });
+    this._fpvGuideLine = new THREE.Mesh(beamGeo, beamMat);
+    this.scene.add(this._fpvGuideLine);
+
+    // Pulsing 3D diamond waypoint marker over target
+    const markerGeo = new THREE.OctahedronGeometry(2.5, 0);
+    const markerMat = new THREE.MeshBasicMaterial({
+      color: 0xff4400,
+      transparent: true,
+      opacity: 0.7,
+      wireframe: true
+    });
+    this._fpvGuideMarker = new THREE.Mesh(markerGeo, markerMat);
+    this.scene.add(this._fpvGuideMarker);
+  }
+
+  _updateFpvGuideLine() {
+    if (!this._fpvGuideLine || !this.enemyShip || !this.fpvDroneMesh) return;
+
+    // Beam from drone toward enemy ship
+    const dronePos = this.fpvPos.clone();
+    const targetPos = this.enemyShip.position.clone();
+    targetPos.y += 10.0;
+
+    // Position beam at midpoint, stretch to full distance, orient toward target
+    const midPoint = dronePos.clone().add(targetPos).multiplyScalar(0.5);
+    const dist = dronePos.distanceTo(targetPos);
+
+    this._fpvGuideLine.position.copy(midPoint);
+    this._fpvGuideLine.scale.set(1, dist, 1);
+    this._fpvGuideLine.lookAt(targetPos);
+    this._fpvGuideLine.rotateX(Math.PI / 2);
+
+    // Pulse beam opacity
+    const t = performance.now() * 0.003;
+    this._fpvGuideLine.material.opacity = 0.25 + Math.sin(t * 4.0) * 0.2;
+
+    // Update waypoint marker position and animation
+    if (this._fpvGuideMarker) {
+      this._fpvGuideMarker.position.copy(targetPos);
+      this._fpvGuideMarker.position.y += 4.0 + Math.sin(t * 2.0) * 1.5;
+      this._fpvGuideMarker.rotation.y += 0.03;
+      this._fpvGuideMarker.material.opacity = 0.5 + Math.sin(t * 3.0) * 0.3;
+    }
+  }
+
+  setFpvInput(steerX, steerY, throttle, boost) {
+    this.fpvSteerX = Math.max(-1.0, Math.min(1.0, steerX));
+    this.fpvSteerY = Math.max(-1.0, Math.min(1.0, steerY));
+    this.fpvThrottle = Math.max(0.0, Math.min(1.0, throttle));
+    this.fpvBoost = !!boost;
+  }
+
+  updateFpvFlight(dt, t) {
+    if (!this.fpvFlightActive || !this.fpvDroneMesh) return;
+
+    this.fpvFlightTime += dt;
+    // Battery discharge
+    this.fpvBattery = Math.max(19.0, this.fpvBattery - (this.fpvBoost ? 0.22 : 0.08) * dt);
+
+    // Check battery dead
+    if (this.fpvBattery <= 20.0) {
+      this.stopFpvFlight();
+      if (this.onMissionEvent) {
+        this.onMissionEvent('fpv_crashed', { reason: 'Аккумулятор LiPo 6S полностью разряжен' });
+      }
+      return;
+    }
+
+    // =====================================================
+    // AUTOPILOT MODE (Lobby) vs MANUAL MODE (Missions)
+    // =====================================================
+    if (this.fpvAutopilot && this.enemyShip) {
+      // ---- AUTOPILOT: Drone flies itself toward enemy ship ----
+      const toTargetX = this.enemyShip.position.x - this.fpvPos.x;
+      const toTargetZ = this.enemyShip.position.z - this.fpvPos.z;
+      const toTargetY = (this.enemyShip.position.y + 3.0) - this.fpvPos.y;
+      const horizDist = Math.sqrt(toTargetX * toTargetX + toTargetZ * toTargetZ);
+      const targetYaw = Math.atan2(toTargetX, toTargetZ);
+
+      // Smooth yaw steering toward target
+      let yawDiff = targetYaw - this.fpvYaw;
+      while (yawDiff > Math.PI) yawDiff -= Math.PI * 2;
+      while (yawDiff < -Math.PI) yawDiff += Math.PI * 2;
+      this.fpvYaw += yawDiff * Math.min(1.0, 2.0 * dt);
+
+      // Auto-pitch: dive toward target at close range
+      const desiredPitch = horizDist < 25 ? -Math.atan2(toTargetY - 2.0, horizDist) * 0.4 : -0.03;
+      this.fpvPitch += (desiredPitch - this.fpvPitch) * Math.min(1.0, 2.0 * dt);
+      this.fpvPitch = Math.max(-Math.PI / 4, Math.min(Math.PI / 6, this.fpvPitch));
+
+      // Banking into turns
+      const turnAmount = Math.max(-1, Math.min(1, yawDiff * 2.0));
+      const autoTargetRoll = -turnAmount * 0.45;
+      this.fpvRoll += (autoTargetRoll - this.fpvRoll) * Math.min(1.0, 3.0 * dt);
+
+      const euler = new THREE.Euler(this.fpvPitch, this.fpvYaw, this.fpvRoll, 'YXZ');
+      this.fpvDroneMesh.quaternion.setFromEuler(euler);
+
+      // Autopilot speed: faster and more aggressive
+      const forwardVector = new THREE.Vector3(0, 0, -1).applyQuaternion(this.fpvDroneMesh.quaternion);
+      const autoSpeed = horizDist < 30 ? 28.0 : 38.0;
+      this.fpvVel.lerp(forwardVector.multiplyScalar(autoSpeed), Math.min(1.0, 5.0 * dt));
+      this.fpvVel.y -= 1.0 * dt;
+
+      // Auto-impact when very close to warship hull
+      if (horizDist < 7.0) {
+        this.create3DExplosion(this.fpvPos.clone());
+        this.stopFpvFlight();
+        if (this.onMissionEvent) {
+          this.onMissionEvent('fpv_hit', { subsystem: 'hull', name: 'Корпус', damageBonus: 1.5 });
+        }
+        return;
+      }
+    } else {
+      // ---- MANUAL MODE: Player-controlled FPV flight (missions only) ----
+      const turnRate = 1.2;   // Gentle, smooth yaw
+      const pitchRate = 0.9;  // Gentle pitch for easy altitude control
+
+      this.fpvPitch += this.fpvSteerY * pitchRate * dt;
+      this.fpvPitch = Math.max(-Math.PI / 3.0, Math.min(Math.PI / 3.5, this.fpvPitch));
+
+      this.fpvYaw -= this.fpvSteerX * turnRate * dt;
+
+      // Natural banking roll when turning (smoothed)
+      const targetRoll = -this.fpvSteerX * 0.55;
+      this.fpvRoll += (targetRoll - this.fpvRoll) * Math.min(1.0, 3.5 * dt);
+
+      // Apply orientation quaternion using Euler YXZ
+      const euler = new THREE.Euler(this.fpvPitch, this.fpvYaw, this.fpvRoll, 'YXZ');
+      this.fpvDroneMesh.quaternion.setFromEuler(euler);
+
+      // Linear Flight Velocity & Thrust (smooth and controllable)
+      const forwardVector = new THREE.Vector3(0, 0, -1).applyQuaternion(this.fpvDroneMesh.quaternion);
+      const speed = (this.fpvBoost ? 32.0 : 18.0) * (0.5 + this.fpvThrottle * 0.5);
+
+      // Very smooth forward acceleration (low lerp = gradual)
+      this.fpvVel.lerp(forwardVector.multiplyScalar(speed), Math.min(1.0, 4.0 * dt));
+
+      // Slight aerodynamic gravity when diving / climbing
+      this.fpvVel.y -= 1.5 * dt;
+
+      // Update 3D guide line from drone toward enemy ship
+      this._updateFpvGuideLine();
+    }
+
+    this.fpvPos.addScaledVector(this.fpvVel, dt);
+    this.fpvDroneMesh.position.copy(this.fpvPos);
+
+    // Spin propellers
+    this.fpvPropellers.forEach((p, idx) => {
+      p.rotation.z += dt * (this.fpvBoost ? 80 : 45) * (idx % 2 === 0 ? 1 : -1);
     });
 
-    this.triggerClickBounce();
+    // Audio frequency update
+    if (window.tacticalAudio) {
+      window.tacticalAudio.updateFpvMotorSound(this.fpvThrottle, this.fpvBoost);
+    }
+
+    // 3. Camera Position (1st Person POV from nose) — ONLY in manual/mission mode
+    if (!this.fpvAutopilot) {
+      // Hide 1st-person drone body to eliminate black camera clipping spot
+      this.fpvDroneMesh.visible = false;
+      const camFwd = new THREE.Vector3(0, 0, -1).applyQuaternion(this.fpvDroneMesh.quaternion);
+      this.camera.position.copy(this.fpvPos).addScaledVector(camFwd, 0.45);
+      this.camera.position.y += 0.05;
+      this.camera.quaternion.copy(this.fpvDroneMesh.quaternion);
+
+      // Slight tactical vibration based on speed
+      const jitter = (this.fpvBoost ? 0.02 : 0.006);
+      this.camera.position.x += (Math.random() - 0.5) * jitter;
+      this.camera.position.y += (Math.random() - 0.5) * jitter;
+    } else {
+      // Autopilot (lobby): drone stays visible as 3D object, camera stays in lobby orbit
+      this.fpvDroneMesh.visible = true;
+    }
+
+    // 4. Rotor Wash Trail Particles
+    if (Math.random() > 0.35) {
+      const smoke = this._acquireFromPool(this._smokePool);
+      if (smoke) {
+        smoke.visible = true;
+        smoke.userData.active = true;
+        smoke.scale.set(0.5, 0.5, 0.5);
+        smoke.material.opacity = 0.35;
+        smoke.material.color.setHex(this.fpvBoost ? 0x00ffcc : 0x88bbdd);
+        smoke.position.copy(this.fpvPos);
+        smoke.userData.life = 0;
+        smoke.userData.maxLife = 0.4;
+        this.explosionParticles.push(smoke);
+      }
+    }
+
+    // 5. Water Surface Collision Check
+    if (this.fpvPos.y <= 0.35) {
+      this.create3DExplosion(this.fpvPos);
+      this.stopFpvFlight();
+      if (this.onMissionEvent) {
+        this.onMissionEvent('fpv_crashed', { reason: 'Столкновение с водной поверхностью на высокой скорости' });
+      }
+      return;
+    }
+
+    // 6. Subsystem Hitbox & Target Collision Detection
+    if (this.enemyShip) {
+      let hitSubsystem = null;
+      let minHitDist = Infinity;
+
+      for (let sub of this.enemySubsystems) {
+        const worldPos = this.enemyShip.localToWorld(sub.localPos.clone());
+        const dist = this.fpvPos.distanceTo(worldPos);
+
+        // Lock-on target detection
+        if (dist < 85.0 && dist < minHitDist) {
+          minHitDist = dist;
+          this.fpvLockTarget = { ...sub, worldPos: worldPos, dist: Math.round(dist) };
+        }
+
+        // Direct Hit Detection
+        if (dist <= sub.radius) {
+          hitSubsystem = sub;
+          break;
+        }
+      }
+
+      // General Warship Hull Collision fallback
+      const distToShipCenter = this.fpvPos.distanceTo(this.enemyShip.position);
+      if (!hitSubsystem && distToShipCenter < 7.5) {
+        hitSubsystem = this.enemySubsystems[0]; // Bridge / Hull fallback
+      }
+
+      if (hitSubsystem) {
+        // TARGET STRUCK! MASSIVE TRIUMPH EXPLOSION
+        this.create3DExplosion(this.fpvPos);
+        setTimeout(() => this.triggerShipExplosion(), 150);
+
+        // Mark subsystem destroyed
+        hitSubsystem.destroyed = true;
+
+        // Start warship sinking sequence
+        this.startEnemyShipSinking();
+
+        // Switch to slow-mo cinematic orbit camera
+        this.startCinematicOrbit(this.enemyShip.position);
+
+        this.stopFpvFlight();
+
+        if (this.onMissionEvent) {
+          this.onMissionEvent('fpv_target_hit', {
+            subsystem: hitSubsystem.name,
+            subName: hitSubsystem.subName,
+            damageBonus: hitSubsystem.damageBonus,
+            scoreMult: hitSubsystem.scoreMult,
+            flightTime: this.fpvFlightTime.toFixed(1),
+            remainingBattery: this.fpvBattery.toFixed(1)
+          });
+        }
+      }
+    }
   }
+
+  // =========================================================================
+  // ENEMY WARSHIP CIWS ANTI-AIR FLAK DEFENSE
+  // =========================================================================
+  updateCiwsFlak(dt, t) {
+    if (!this.fpvFlightActive || !this.enemyShip) return;
+
+    const distToShip = this.fpvPos.distanceTo(this.enemyShip.position);
+
+    // CIWS Engagement Range: 70m (nerfed — gives player more approach time)
+    if (distToShip < 70.0 && distToShip > 10.0) {
+      this.ciwsCooldown -= dt;
+      if (this.ciwsCooldown <= 0) {
+        this.ciwsCooldown = 1.5 + Math.random() * 1.0;  // Much slower fire rate
+        this.fireCiwsSalvo();
+      }
+    }
+
+    // Update In-Flight Flak Tracers
+    for (let i = this.ciwsTracers.length - 1; i >= 0; i--) {
+      const tr = this.ciwsTracers[i];
+      tr.life += dt;
+      tr.mesh.position.addScaledVector(tr.dir, tr.speed * dt);
+
+      // Distance to FPV drone
+      const distToDrone = tr.mesh.position.distanceTo(this.fpvPos);
+      if (distToDrone < 1.5) {
+        // FLAK HIT ON FPV DRONE! (smaller hit radius, less damage)
+        this.scene.remove(tr.mesh);
+        this.ciwsTracers.splice(i, 1);
+        this.fpvHP = Math.max(0, this.fpvHP - 8);
+        this.fpvGlitchAmount = 1.0;
+
+        if (window.tacticalAudio) {
+          window.tacticalAudio.playShieldHit();
+          window.tacticalAudio.playGlitchStatic();
+        }
+
+        if (this.onMissionEvent) {
+          this.onMissionEvent('fpv_damaged', { hp: this.fpvHP });
+        }
+
+        if (this.fpvHP <= 0) {
+          this.create3DExplosion(this.fpvPos);
+          this.stopFpvFlight();
+          if (this.onMissionEvent) {
+            this.onMissionEvent('fpv_crashed', { reason: 'FPV-дрон сбит зенитным огнём CIWS корабля противника' });
+          }
+          return;
+        }
+        continue;
+      }
+
+      if (tr.life >= tr.maxLife || tr.mesh.position.y <= 0) {
+        this.scene.remove(tr.mesh);
+        this.ciwsTracers.splice(i, 1);
+      }
+    }
+  }
+
+  fireCiwsSalvo() {
+    if (!this.enemyShip) return;
+    const origin = this.enemyShip.position.clone();
+    origin.y += 3.5;
+
+    // CIWS Gatling Sound
+    if (window.tacticalAudio) window.tacticalAudio.playCiwsBurst();
+
+    // Fire 2-3 tracer rounds with slight dispersion
+    for (let i = 0; i < 3; i++) {
+      const tracerGeom = new THREE.CylinderGeometry(0.12, 0.12, 3.5, 6);
+      const tracerMat = new THREE.MeshBasicMaterial({ color: 0xff5500 });
+      const mesh = new THREE.Mesh(tracerGeom, tracerMat);
+
+      mesh.position.copy(origin);
+      // Predict lead target position
+      const leadTarget = this.fpvPos.clone().addScaledVector(this.fpvVel, 0.25 + i * 0.08);
+      leadTarget.x += (Math.random() - 0.5) * 5.0;
+      leadTarget.y += (Math.random() - 0.5) * 3.0;
+      leadTarget.z += (Math.random() - 0.5) * 5.0;
+
+      mesh.lookAt(leadTarget);
+      mesh.rotateX(Math.PI / 2);
+
+      const dir = new THREE.Vector3().subVectors(leadTarget, origin).normalize();
+      this.scene.add(mesh);
+      this.ciwsTracers.push({
+        mesh: mesh,
+        dir: dir,
+        speed: 110.0,
+        life: 0,
+        maxLife: 2.2
+      });
+    }
+  }
+
+  // =========================================================================
+  // WARSHIP SINKING & CINEMATIC ORBIT
+  // =========================================================================
+  startEnemyShipSinking() {
+    this.shipSinking.active = true;
+    this.shipSinking.progress = 0;
+    this.shipSinking.roll = 0;
+    this.shipSinking.pitch = 0;
+    this.shipSinking.depth = 0;
+    this.isEnemyBurning = true;
+  }
+
+  updateEnemyShipSinking(dt, t) {
+    if (!this.shipSinking.active || !this.enemyShip) return;
+
+    this.shipSinking.progress += dt * 0.15; // Slow dramatic sinking
+    const p = Math.min(1.0, this.shipSinking.progress);
+
+    // List to starboard and pitch down by the bow
+    this.enemyShip.rotation.z = -p * 0.65;
+    this.enemyShip.rotation.x = p * 0.35;
+    this.enemyShip.position.y = -0.6 - p * 8.0;
+
+    // Periodic secondary explosions
+    if (Math.random() > 0.88) {
+      const blastPos = this.enemyShip.position.clone();
+      blastPos.x += (Math.random() - 0.5) * 6;
+      blastPos.z += (Math.random() - 0.5) * 14;
+      blastPos.y += 2 + Math.random() * 3;
+      this.create3DExplosion(blastPos);
+    }
+  }
+
+  startCinematicOrbit(targetPos) {
+    this.cameraMode = 'cinematic_orbit';
+    this.cinematicOrbit.active = true;
+    this.cinematicOrbit.center.copy(targetPos);
+    this.cinematicOrbit.angle = 0;
+    this.cinematicOrbit.radius = 32.0;
+    this.cinematicOrbit.height = 12.0;
+  }
+
+  updateCinematicOrbit(dt) {
+    if (!this.cinematicOrbit.active) return;
+    this.cinematicOrbit.angle += dt * this.cinematicOrbit.speed;
+    const cx = this.cinematicOrbit.center.x + Math.sin(this.cinematicOrbit.angle) * this.cinematicOrbit.radius;
+    const cz = this.cinematicOrbit.center.z + Math.cos(this.cinematicOrbit.angle) * this.cinematicOrbit.radius;
+    const cy = this.cinematicOrbit.center.y + this.cinematicOrbit.height;
+
+    this.camera.position.set(cx, cy, cz);
+    this.camera.lookAt(this.cinematicOrbit.center.x, this.cinematicOrbit.center.y + 2.0, this.cinematicOrbit.center.z);
+  }
+
+  // =========================================================================
+  // LOBBY DRONE STRIKE — Simple animated 3D drone, NO FPV system
+  // Camera stays in lobby orbit, drone flies as visual effect only
+  // =========================================================================
+  launchMissileStrike(onImpactCallback) {
+    this._launchLobbyDrone(onImpactCallback);
+  }
+
+  launch3DMissile(targetPos, onImpactCallback) {
+    this._launchLobbyDrone(onImpactCallback);
+  }
+
+  _launchLobbyDrone(onImpactCallback) {
+    // Create a small drone mesh for the lobby animation
+    const droneGroup = new THREE.Group();
+
+    // Body
+    const bodyGeo = new THREE.BoxGeometry(0.3, 0.08, 0.3);
+    const bodyMat = new THREE.MeshStandardMaterial({ color: 0x222222, metalness: 0.7, roughness: 0.3 });
+    const body = new THREE.Mesh(bodyGeo, bodyMat);
+    droneGroup.add(body);
+
+    // Arms + rotors
+    const armPositions = [
+      [0.2, 0, 0.2], [-0.2, 0, 0.2], [0.2, 0, -0.2], [-0.2, 0, -0.2]
+    ];
+    const rotors = [];
+    armPositions.forEach(pos => {
+      const arm = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.015, 0.015, 0.25),
+        new THREE.MeshStandardMaterial({ color: 0x333333 })
+      );
+      arm.rotation.z = Math.PI / 4 * (pos[0] > 0 ? 1 : -1);
+      arm.rotation.x = Math.PI / 4 * (pos[2] > 0 ? 1 : -1);
+      arm.position.set(pos[0] * 0.5, 0, pos[2] * 0.5);
+      droneGroup.add(arm);
+
+      const rotor = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.12, 0.12, 0.01, 8),
+        new THREE.MeshStandardMaterial({ color: 0x555555, transparent: true, opacity: 0.6 })
+      );
+      rotor.position.set(pos[0], 0.04, pos[2]);
+      droneGroup.add(rotor);
+      rotors.push(rotor);
+    });
+
+    // Launch from boat
+    const startX = this.boatModel ? this.boatModel.position.x : 0;
+    const startZ = this.boatModel ? this.boatModel.position.z : 0;
+    const startY = this.boatBaseY + 1.5;
+
+    // Target: enemy ship or default position
+    const targetPos = this.enemyShip
+      ? this.enemyShip.position.clone()
+      : new THREE.Vector3(38, -0.6, -75);
+
+    droneGroup.position.set(startX, startY, startZ);
+    this.scene.add(droneGroup);
+
+    // Play launch sound
+    if (window.tacticalAudio) {
+      window.tacticalAudio.playMissileLaunch();
+    }
+
+    // Animate as an active missile entry (matches animation loop format)
+    this.activeMissiles.push({
+      mesh: droneGroup,
+      propellers: rotors,
+      startPos: new THREE.Vector3(startX, startY, startZ),
+      liftOffPos: new THREE.Vector3(startX, startY + 4.0, startZ),
+      targetPos: targetPos.clone().setY(targetPos.y + 2.0),
+      progress: 0,
+      duration: 3.0,  // ~3 seconds flight
+      onImpact: () => {
+        // Explosion is already called by the animation loop (line ~2079)
+        // Just run the game callback safely
+        try {
+          if (onImpactCallback) onImpactCallback();
+        } catch (e) {
+          console.error('Lobby drone impact callback error:', e);
+        }
+      }
+    });
+  }
+
   triggerShipExplosion() {
-    // Big explosion on the target warship
     const shipPos = this.enemyShip ? this.enemyShip.position.clone() : new THREE.Vector3(38, -0.6, -75);
     this.create3DExplosion(shipPos);
-    // Create secondary explosions
     setTimeout(() => this.create3DExplosion(shipPos.clone().add(new THREE.Vector3(3, 2, -5))), 200);
     setTimeout(() => this.create3DExplosion(shipPos.clone().add(new THREE.Vector3(-4, 1, 3))), 400);
   }
 
   create3DExplosion(pos) {
-    window.tacticalAudio.playExplosion();
+    if (window.tacticalAudio) window.tacticalAudio.playExplosion();
 
-    // Trigger burning on warship
     this.isEnemyBurning = true;
 
-    // Flash light (reuse single light)
     if (!this._blastLight) {
       this._blastLight = new THREE.PointLight(0xffaa22, 0, 50, 1.2);
       this.scene.add(this._blastLight);
     }
     this._blastLight.position.copy(pos);
     this._blastLight.position.y += 3;
-    this._blastLight.intensity = 12.0;
+    this._blastLight.intensity = 14.0;
     setTimeout(() => { if (this._blastLight) this._blastLight.intensity = 0; }, 500);
 
-    // Blast particles from pool
-    for (let i = 0; i < 28; i++) {
+    for (let i = 0; i < 32; i++) {
       const p = this._acquireFromPool(this._explosionPool);
       if (!p) break;
       p.visible = true;
@@ -700,11 +1412,11 @@ class Barracuda3DEngine {
       p.scale.set(1, 1, 1);
       p.material.color.setHex(Math.random() > 0.4 ? 0xff4400 : 0xffcc00);
       p.material.opacity = 0.95;
-      p.userData.vx = (Math.random() - 0.5) * 35;
-      p.userData.vy = Math.random() * 25 + 8;
-      p.userData.vz = (Math.random() - 0.5) * 35;
+      p.userData.vx = (Math.random() - 0.5) * 40;
+      p.userData.vy = Math.random() * 30 + 10;
+      p.userData.vz = (Math.random() - 0.5) * 40;
       p.userData.life = 0;
-      p.userData.maxLife = 0.9 + Math.random() * 0.6;
+      p.userData.maxLife = 1.0 + Math.random() * 0.6;
     }
   }
 
@@ -799,11 +1511,11 @@ class Barracuda3DEngine {
   }
 
   // =========================================================================
-  // LOAD GLB MODEL & HARDPOINT SETUP
+  // LOAD GLB MODEL & HIGH-TECH BOAT SHADERS
   // =========================================================================
   loadGLBModel() {
     if (typeof THREE.GLTFLoader === 'undefined') {
-      console.warn('[BARRACUDA 3D] GLTFLoader undefined, creating procedural boat hull.');
+      console.warn('[BARRACUDA 3D] GLTFLoader undefined, creating sleek procedural boat.');
       this.createProceduralBoat();
       return;
     }
@@ -827,7 +1539,6 @@ class Barracuda3DEngine {
           const targetSize = 5.2;
           const scale = targetSize / maxDim;
 
-          // Store scale for module positioning
           this.modelScale = scale;
           this.modelBBox = { min: box.min.clone(), max: box.max.clone(), size: size.clone(), center: center.clone() };
 
@@ -843,22 +1554,14 @@ class Barracuda3DEngine {
           this.scene.add(this.boatModel);
           this.boatBaseY = this.boatModel.position.y;
 
-          console.log('[BARRACUDA 3D] Model loaded. Scale:', scale.toFixed(4), 'BBox size:', size.x.toFixed(2), size.y.toFixed(2), size.z.toFixed(2));
-
+          // Preserve and enhance original PBR materials without texture corruption
           this.boatModel.traverse((child) => {
             if (child.isMesh) {
               child.castShadow = true;
               child.receiveShadow = true;
               if (child.material) {
-                if (child.material.color) {
-                  const c = child.material.color;
-                  child.material.color.setRGB(c.r * 0.70, c.g * 0.70, c.b * 0.72);
-                }
-                child.material.roughness = Math.max(0.2, (child.material.roughness || 0.5) * 0.85);
-                child.material.metalness = Math.min(0.85, (child.material.metalness || 0.5) + 0.15);
-                if (child.material.map && child.material.map.image) {
-                  this.cleanTexture(child);
-                }
+                child.material.roughness = Math.max(0.15, (child.material.roughness !== undefined ? child.material.roughness : 0.4) * 0.9);
+                child.material.metalness = Math.min(0.9, (child.material.metalness !== undefined ? child.material.metalness : 0.6) + 0.1);
                 child.material.needsUpdate = true;
               }
             }
@@ -885,85 +1588,90 @@ class Barracuda3DEngine {
     if (this.boatModel) return;
     this.boatModel = new THREE.Group();
 
-    const hullMat = new THREE.MeshStandardMaterial({ color: 0x222a30, roughness: 0.35, metalness: 0.8 });
-    const deckMat = new THREE.MeshStandardMaterial({ color: 0x141a20, roughness: 0.4, metalness: 0.7 });
-    const glowMat = new THREE.MeshBasicMaterial({ color: 0x00ff88 });
-    const opticMat = new THREE.MeshBasicMaterial({ color: 0x00f0ff });
+    // High-tech stealth materials
+    const stealthCarbonMat = new THREE.MeshStandardMaterial({
+      color: 0x12171c,
+      roughness: 0.25,
+      metalness: 0.85
+    });
+    const deckMat = new THREE.MeshStandardMaterial({
+      color: 0x182028,
+      roughness: 0.35,
+      metalness: 0.75
+    });
+    const trimMat = new THREE.MeshStandardMaterial({
+      color: 0x2a333d,
+      roughness: 0.2,
+      metalness: 0.9
+    });
+    const glassSensorMat = new THREE.MeshStandardMaterial({
+      color: 0x051d28,
+      roughness: 0.05,
+      metalness: 0.98,
+      emissive: 0x00e5ff,
+      emissiveIntensity: 0.4
+    });
+    const ledGlowMat = new THREE.MeshBasicMaterial({ color: 0x00ff88 });
 
-    // Main stealth hull
-    const hull = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.55, 4.4), hullMat);
-    hull.position.y = 0.28;
+    // 1. Multi-chine Hydrodynamic V-Hull
+    const hullGeom = new THREE.CylinderGeometry(0.7, 0.9, 4.4, 6);
+    hullGeom.rotateX(Math.PI / 2);
+    const hull = new THREE.Mesh(hullGeom, stealthCarbonMat);
+    hull.position.set(0, 0.25, 0);
     this.boatModel.add(hull);
 
-    // Bow pointed wedge
-    const bow = new THREE.Mesh(new THREE.ConeGeometry(0.8, 1.8, 4), hullMat);
-    bow.rotation.x = -Math.PI / 2;
-    bow.rotation.y = Math.PI / 4;
-    bow.position.set(0, 0.28, 3.1);
+    // 2. Piercing Wave-Cutter Bow (Angular stealth nose)
+    const bowGeom = new THREE.ConeGeometry(0.7, 2.2, 5);
+    bowGeom.rotateX(-Math.PI / 2);
+    const bow = new THREE.Mesh(bowGeom, stealthCarbonMat);
+    bow.position.set(0, 0.25, 3.1);
     this.boatModel.add(bow);
 
-    // Stealth cockpit / payload deck
-    const cab = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.45, 1.8), deckMat);
-    cab.position.set(0, 0.75, -0.2);
-    this.boatModel.add(cab);
+    // 3. Faceted Low-RCS Superstructure & Payload Deck
+    const deckGeom = new THREE.BoxGeometry(1.25, 0.35, 2.4);
+    const deck = new THREE.Mesh(deckGeom, deckMat);
+    deck.position.set(0, 0.55, -0.2);
+    this.boatModel.add(deck);
 
-    // Satcom Dome
-    const dome = new THREE.Mesh(new THREE.SphereGeometry(0.28, 16, 12), new THREE.MeshStandardMaterial({ color: 0x00e5ff, emissive: 0x004466, roughness: 0.1 }));
-    dome.position.set(0, 1.1, -0.2);
-    this.boatModel.add(dome);
+    // 4. Flat Starlink / Satcom Phased Array Dome
+    const satcomBase = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.4, 0.1, 16), trimMat);
+    satcomBase.position.set(0, 0.75, -0.6);
+    const satcomDome = new THREE.Mesh(new THREE.SphereGeometry(0.32, 16, 12, 0, Math.PI * 2, 0, Math.PI / 2.2), glassSensorMat);
+    satcomDome.position.set(0, 0.78, -0.6);
+    this.boatModel.add(satcomBase);
+    this.boatModel.add(satcomDome);
 
-    // FLIR Sensor Turret
-    const flir = new THREE.Mesh(new THREE.SphereGeometry(0.12, 12, 8), opticMat);
-    flir.position.set(0, 0.85, 1.4);
-    this.boatModel.add(flir);
+    // 5. Gyro-stabilized Electro-Optical FLIR Turret (Bow)
+    const flirBase = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.22, 0.15, 12), trimMat);
+    flirBase.position.set(0, 0.65, 1.3);
+    const flirBall = new THREE.Mesh(new THREE.SphereGeometry(0.16, 16, 12), stealthCarbonMat);
+    flirBall.position.set(0, 0.8, 1.3);
+    const flirLens = new THREE.Mesh(new THREE.CircleGeometry(0.07, 12), glassSensorMat);
+    flirLens.position.set(0, 0.8, 1.45);
+    this.boatModel.add(flirBase);
+    this.boatModel.add(flirBall);
+    this.boatModel.add(flirLens);
 
-    // Green Port/Starboard Navigation LED Strips
-    [-0.82, 0.82].forEach(x => {
-      const led = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.04, 2.8), glowMat);
-      led.position.set(x, 0.45, 0.2);
-      this.boatModel.add(led);
-    });
+    // 6. Dual High-Thrust Waterjet Nozzles (Stern)
+    const jetGeom = new THREE.CylinderGeometry(0.12, 0.16, 0.45, 12);
+    jetGeom.rotateX(Math.PI / 2);
+    const jetL = new THREE.Mesh(jetGeom, trimMat);
+    jetL.position.set(-0.35, 0.15, -2.35);
+    const jetR = jetL.clone();
+    jetR.position.x = 0.35;
+    this.boatModel.add(jetL);
+    this.boatModel.add(jetR);
+
+    // 7. Tactical Green Neon Hull Accent Lines
+    const stripL = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.04, 3.4), ledGlowMat);
+    stripL.position.set(-0.75, 0.42, 0.2);
+    const stripR = stripL.clone();
+    stripR.position.x = 0.75;
+    this.boatModel.add(stripL);
+    this.boatModel.add(stripR);
 
     this.scene.add(this.boatModel);
     this.boatBaseY = 0.0;
-  }
-
-  cleanTexture(meshChild) {
-    try {
-      const oldTex = meshChild.material.map;
-      if (!oldTex) return;
-      const img = oldTex.image;
-      if (!img || !img.width || !img.height) return;
-
-      const canvas = document.createElement('canvas');
-      canvas.width = img.width;
-      canvas.height = img.height;
-      const ctx = canvas.getContext('2d');
-      ctx.drawImage(img, 0, 0);
-
-      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const data = imageData.data;
-      for (let i = 0; i < data.length; i += 4) {
-        const brightness = (data[i] + data[i + 1] + data[i + 2]) / 3;
-        if (brightness > 160) {
-          data[i] = Math.floor(data[i] * 0.2);
-          data[i + 1] = Math.floor(data[i + 1] * 0.2);
-          data[i + 2] = Math.floor(data[i + 2] * 0.2);
-        }
-      }
-      ctx.putImageData(imageData, 0, 0);
-
-      const fs = Math.floor(canvas.width * 0.035);
-      ctx.font = `italic 900 ${fs}px Arial, sans-serif`;
-      ctx.fillStyle = 'rgba(0, 150, 80, 0.7)';
-      ctx.fillText('BARRACUDA', canvas.width * 0.32, canvas.height * 0.48);
-
-      const newTex = new THREE.CanvasTexture(canvas);
-      newTex.flipY = oldTex.flipY;
-      meshChild.material.map = newTex;
-    } catch (e) {
-      console.warn('cleanTexture skipped:', e);
-    }
   }
 
   syncActiveUpgrades(hw, cyber) {
@@ -1194,43 +1902,75 @@ class Barracuda3DEngine {
   // =========================================================================
   animate() {
     requestAnimationFrame(() => this.animate());
+    try {
     const t = this.clock.getElapsedTime();
     const dt = 0.016;
 
-    // Camera orbit, Chase-cam for Piloting, or FLIR scope mode
-    if (this.pilotMode && this.boatModel) {
-      // Dynamic chase camera with damped tracking
-      const camDist = this.pilotBoost ? 12.5 : 10.0;
-      const camHeight = this.pilotBoost ? 4.8 : 4.2;
-      const targetCamX = this.pilotBoatPos.x - Math.sin(this.pilotHeading) * camDist;
-      const targetCamZ = this.pilotBoatPos.z - Math.cos(this.pilotHeading) * camDist;
-      const targetCamY = this.boatBaseY + camHeight;
+    // Camera Mode Switching: Cinematic Orbit, FPV 1st-person, Boat Chase, FLIR, or Base Orbit
+    if (this.cameraMode === 'cinematic_orbit') {
+      this.updateCinematicOrbit(dt);
+    } else if (this.cameraMode === 'fpv' && this.fpvFlightActive) {
+      // Handled dynamically in updateFpvFlight
+    } else if (this.pilotMode && this.boatModel) {
+      // =========================================================================
+      // 3RD-PERSON CHASE CAMERA — BOAT PILOTING IN MISSIONS
+      // =========================================================================
+      const forwardX = Math.sin(this.pilotHeading);
+      const forwardZ = Math.cos(this.pilotHeading);
+      const waveJitter = Math.sin(t * 2.5) * 0.03;
 
-      // Smooth camera position interpolation
-      this.camera.position.lerp(new THREE.Vector3(targetCamX, targetCamY, targetCamZ), 0.07);
+      // Camera behind and above the boat
+      const chaseDist = 8.0;
+      const chaseHeight = 3.5;
+      const camX = this.pilotBoatPos.x - forwardX * chaseDist;
+      const camZ = this.pilotBoatPos.z - forwardZ * chaseDist;
+      const camY = this.boatBaseY + chaseHeight + waveJitter;
 
-      // Smooth look-ahead target (eliminates jerking and camera snapping)
+      const targetCamPos = new THREE.Vector3(camX, camY, camZ);
+      this.camera.position.lerp(targetCamPos, 0.12);
+
+      // Look at a point ahead of the boat
+      const lookAheadDist = 12.0;
       const rawLookTarget = new THREE.Vector3(
-        this.pilotBoatPos.x + Math.sin(this.pilotHeading) * 8.0,
-        this.boatBaseY + 1.0,
-        this.pilotBoatPos.z + Math.cos(this.pilotHeading) * 8.0
+        this.pilotBoatPos.x + forwardX * lookAheadDist,
+        this.boatBaseY + 0.8,
+        this.pilotBoatPos.z + forwardZ * lookAheadDist
       );
-      this.smoothLookTarget.lerp(rawLookTarget, 0.08);
+      this.smoothLookTarget.lerp(rawLookTarget, 0.15);
       this.camera.lookAt(this.smoothLookTarget);
+
+      // Keep camera upright — no roll
+      this.camera.up.set(0, 1, 0);
     } else if (this.cameraMode === 'flir') {
       // Look directly through thermal FLIR optic towards enemy ship
       const shipPos = this.enemyShip ? this.enemyShip.position : new THREE.Vector3(38, 2, -75);
       this.camera.position.set(0, 2.2, 2.5);
       this.camera.lookAt(shipPos.x, shipPos.y + 3, shipPos.z);
     } else {
+      // =========================================================================
+      // LOBBY / BASE: SMOOTH ORBIT CAMERA TRACKING AUTONOMOUS DRONE CRUISE
+      // =========================================================================
       this.currentRotation.x += (this.targetRotation.x - this.currentRotation.x) * 0.08;
       this.currentRotation.y += (this.targetRotation.y - this.currentRotation.y) * 0.08;
-      const R = 10.5;
-      this.camera.position.x = R * Math.sin(this.currentRotation.y) * Math.cos(this.currentRotation.x);
-      this.camera.position.z = R * Math.cos(this.currentRotation.y) * Math.cos(this.currentRotation.x);
-      this.camera.position.y = R * Math.sin(this.currentRotation.x);
-      this.camera.lookAt(0, 0.25, 0);
+
+      const trackCenter = this.boatModel ? this.boatModel.position : new THREE.Vector3(0, 0, 0);
+      const R = 11.5;
+      const camX = trackCenter.x + R * Math.sin(this.currentRotation.y) * Math.cos(this.currentRotation.x);
+      const camZ = trackCenter.z + R * Math.cos(this.currentRotation.y) * Math.cos(this.currentRotation.x);
+      const camY = Math.max(1.2, R * Math.sin(this.currentRotation.x));
+
+      this.camera.position.lerp(new THREE.Vector3(camX, camY, camZ), 0.15);
+      this.camera.lookAt(trackCenter.x, trackCenter.y + 0.35, trackCenter.z);
     }
+
+    // Update FPV Flight Physics & Drone controls
+    this.updateFpvFlight(dt, t);
+
+    // Update CIWS Anti-Air Flak
+    this.updateCiwsFlak(dt, t);
+
+    // Update Enemy Warship Sinking & Chain Explosions
+    this.updateEnemyShipSinking(dt, t);
 
     // Lightning
     this.updateLightning(dt);
@@ -1244,8 +1984,8 @@ class Barracuda3DEngine {
     }
 
     // Water
-    if (this.water) {
-      this.water.material.uniforms['time'].value += 0.16 / 60.0;
+    if (this.water && this.water.material && this.water.material.uniforms['time']) {
+      this.water.material.uniforms['time'].value += dt * 0.9;
     }
 
     // Enemy Warship animation & searchlight sweep
@@ -1462,25 +2202,48 @@ class Barracuda3DEngine {
       // Update Mission Objects & Collisions:
       this.updateMissionWorld(dt, t);
     } else if (this.boatModel) {
-      // Idle base wave simulation
-      const heave = Math.sin(t * 1.6) * 0.035 + Math.cos(t * 1.1) * 0.015;
-      const pitch = Math.sin(t * 1.4) * 0.010;
-      const roll = Math.cos(t * 1.0) * 0.008;
+      // =========================================================================
+      // AUTONOMOUS LIVING LOBBY CRUISE (ДРОН ЛЕТИТ / ПЛЫВЁТ САМ В ЛОББИ)
+      // =========================================================================
+      const cruiseR = 14.0;
+      const cruiseSpeed = 0.28;
+      const cruiseAngle = t * cruiseSpeed;
+      const lobbyX = Math.sin(cruiseAngle) * cruiseR;
+      const lobbyZ = Math.cos(cruiseAngle * 0.8) * (cruiseR * 0.85);
 
-      this.boatModel.position.set(0, this.boatBaseY + heave - (this.bounceImpulse * 0.05), 0);
-      this.boatModel.rotation.set(pitch + (this.bounceImpulse * 0.012), 0, roll);
+      // Instantaneous tangent heading
+      const nextX = Math.sin(cruiseAngle + 0.04) * cruiseR;
+      const nextZ = Math.cos((cruiseAngle + 0.04) * 0.8) * (cruiseR * 0.85);
+      const lobbyHeading = Math.atan2(nextX - lobbyX, nextZ - lobbyZ);
 
-      // Module position sync (modules are scene objects, follow boat)
+      const lobbyHeave = Math.sin(t * 2.2) * 0.05 + Math.cos(t * 1.4) * 0.02;
+      const lobbyPitch = 0.04 + Math.sin(t * 1.8) * 0.02;
+      const lobbyRoll = -Math.sin(cruiseAngle) * 0.12;
+
+      this.boatModel.position.set(lobbyX, this.boatBaseY + lobbyHeave - (this.bounceImpulse * 0.05), lobbyZ);
+      this.boatModel.rotation.set(lobbyPitch + (this.bounceImpulse * 0.012), lobbyHeading, lobbyRoll);
+
+      // Waterjet spray in lobby
+      if (Math.random() > 0.35) {
+        const sternDist = 2.2;
+        const wakeX = lobbyX - Math.sin(lobbyHeading) * sternDist;
+        const wakeZ = lobbyZ - Math.cos(lobbyHeading) * sternDist;
+        this.emitWakeParticle(wakeX - Math.cos(lobbyHeading) * 0.35, wakeZ + Math.sin(lobbyHeading) * 0.35, 1.4);
+        this.emitWakeParticle(wakeX + Math.cos(lobbyHeading) * 0.35, wakeZ - Math.sin(lobbyHeading) * 0.35, 1.4);
+      }
+
+      // Module position sync (modules follow moving boat in lobby)
       for (const [id, mod] of Object.entries(this.moduleObjects)) {
         if (mod.userData && mod.userData.modOffset) {
           const off = mod.userData.modOffset;
+          const rotOffX = off.x * Math.cos(lobbyHeading) + off.z * Math.sin(lobbyHeading);
+          const rotOffZ = -off.x * Math.sin(lobbyHeading) + off.z * Math.cos(lobbyHeading);
           mod.position.set(
-            this.boatModel.position.x + off.x,
+            this.boatModel.position.x + rotOffX,
             this.boatModel.position.y + off.y,
-            this.boatModel.position.z + off.z
+            this.boatModel.position.z + rotOffZ
           );
-          mod.rotation.x = this.boatModel.rotation.x;
-          mod.rotation.z = this.boatModel.rotation.z;
+          mod.rotation.set(lobbyPitch, lobbyHeading, lobbyRoll);
         }
 
         if (id === 'autosiphon') {
@@ -1489,36 +2252,24 @@ class Barracuda3DEngine {
         }
       }
 
-      // Swarm escorts follow in formation
+      // Swarm escorts follow moving boat
       this.swarmDrones.forEach((d) => {
         const offX = d.userData.offsetX;
         const offZ = d.userData.offsetZ;
         const escHeave = Math.sin(t * 1.6 + d.userData.index) * 0.03;
+        const rotOffX = offX * Math.cos(lobbyHeading) + offZ * Math.sin(lobbyHeading);
+        const rotOffZ = -offX * Math.sin(lobbyHeading) + offZ * Math.cos(lobbyHeading);
         d.position.set(
-          this.boatModel.position.x + offX,
+          this.boatModel.position.x + rotOffX,
           this.boatModel.position.y + escHeave,
-          this.boatModel.position.z + offZ
+          this.boatModel.position.z + rotOffZ
         );
-        d.rotation.x = pitch;
-        d.rotation.z = roll;
+        d.rotation.set(lobbyPitch, lobbyHeading, lobbyRoll);
 
         if (Math.random() > 0.5) {
           this.emitWakeParticle(d.position.x, d.position.z - 0.8, 0.7);
         }
       });
-
-      // Emit waterjet foam wake if waterjets equipped — enhanced spray
-      if (this.moduleObjects['waterjets'] && Math.random() > 0.3) {
-        this.emitWakeParticle(this.boatModel.position.x - 0.2, this.boatModel.position.z - 1.8);
-        this.emitWakeParticle(this.boatModel.position.x + 0.2, this.boatModel.position.z - 1.8);
-        if (Math.random() > 0.6) {
-          this.emitWakeParticle(this.boatModel.position.x - 0.5, this.boatModel.position.z - 1.2, 1.3);
-          this.emitWakeParticle(this.boatModel.position.x + 0.5, this.boatModel.position.z - 1.2, 1.3);
-        }
-      }
-      if (Math.random() > 0.7) {
-        this.emitWakeParticle(this.boatModel.position.x + (Math.random() - 0.5) * 0.3, this.boatModel.position.z + 1.5, 0.5);
-      }
 
       if (this.bounceImpulse > 0) {
         this.bounceImpulse *= 0.90;
@@ -1563,6 +2314,9 @@ class Barracuda3DEngine {
     }
 
     this.renderer.render(this.scene, this.camera);
+    } catch (e) {
+      console.error('Animate error:', e);
+    }
   }
 
   // =========================================================================
@@ -1741,19 +2495,21 @@ class Barracuda3DEngine {
     this.missionWaypoints.forEach(w => this.scene.remove(w));
     this.missionWaypoints = [];
 
-    // Remove tracers
-    this.missionTracers.forEach(tr => this.scene.remove(tr.mesh));
-    this.missionTracers = [];
+    // Remove patrol boats
+    if (this.missionPatrolBoats) {
+      this.missionPatrolBoats.forEach(b => this.scene.remove(b));
+      this.missionPatrolBoats = [];
+    }
   }
 
   setupMissionWorld(config) {
-    const type = config.type || 'patrol';
+    const type = config.type || 'sortie';
 
     // 1. Spawning Floating Naval Mines
     const mineCount = config.mineCount !== undefined ? config.mineCount : 6;
     for (let i = 0; i < mineCount; i++) {
-      const dist = 35 + Math.random() * 80;
-      const angle = (i / mineCount) * Math.PI * 1.5 - 0.4 + (Math.random() - 0.5) * 0.4;
+      const dist = 25 + Math.random() * 55;
+      const angle = (i / mineCount) * Math.PI * 1.2 - 0.6 + (Math.random() - 0.5) * 0.3;
       const mx = Math.sin(angle) * dist;
       const mz = Math.cos(angle) * dist;
       this.create3DMine(mx, mz);
@@ -1764,8 +2520,8 @@ class Barracuda3DEngine {
     this.missionStats.totalCrates = crateCount;
     const lootPool = config.lootPool || ['Микрочип GaN', 'Титановый сплав', 'Чёрный ящик'];
     for (let i = 0; i < crateCount; i++) {
-      const dist = 30 + (i + 1) * 28 + (Math.random() - 0.5) * 10;
-      const angle = (Math.random() - 0.5) * 1.2;
+      const dist = 22 + (i + 1) * 20 + (Math.random() - 0.5) * 6;
+      const angle = (Math.random() - 0.5) * 0.9;
       const cx = Math.sin(angle) * dist;
       const cz = Math.cos(angle) * dist;
       this.create3DCrate(cx, cz, lootPool[i % lootPool.length]);
@@ -1774,23 +2530,55 @@ class Barracuda3DEngine {
     // 3. Spawning Coastal Searchlights
     const searchlightCount = config.searchlightCount !== undefined ? config.searchlightCount : 2;
     for (let i = 0; i < searchlightCount; i++) {
-      const sx = (i === 0 ? -45 : 45) + (Math.random() - 0.5) * 10;
-      const sz = 60 + i * 40;
+      const sx = (i === 0 ? -35 : 35) + (Math.random() - 0.5) * 8;
+      const sz = 45 + i * 30;
       this.create3DSearchlight(sx, sz, 45, 0.6 + i * 0.3);
     }
 
-    // 4. Spawning Extraction / Strike Waypoint
-    const targetDist = config.targetDist || 140;
+    // 4. Spawning Objective Strike Waypoint & Enemy Warship (85m ahead, clearly visible)
+    const targetDist = config.targetDist || 85;
     const targetAngle = config.targetAngle || 0;
     const wx = Math.sin(targetAngle) * targetDist;
     const wz = Math.cos(targetAngle) * targetDist;
-    this.create3DWaypoint(wx, wz, 15, config.targetLabel || 'ЗОНА ПУСКА FPV');
+    this.create3DWaypoint(wx, wz, 16, config.targetLabel || '🎯 ЦЕЛЬ: БОЕВОЙ КОРАБЛЬ');
 
-    // Position enemy warship at the objective point
+    // Position enemy warship right at the objective point with its laser pillar
     if (this.enemyShip) {
-      this.enemyShip.position.set(wx, -0.6, wz + 12);
+      this.enemyShip.visible = true;
+      this.enemyShip.position.set(wx, -0.6, wz);
       this.enemyShip.lookAt(0, -0.6, 0);
+      // Scale up for operations — massive warship
+      this.enemyShip.scale.setScalar(2.5);
     }
+
+    // 5. Spawn 2 Enemy Patrol Escort Boats flanking the warship
+    if (!this.missionPatrolBoats) this.missionPatrolBoats = [];
+    [-18, 18].forEach((offsetX, idx) => {
+      const pBoat = new THREE.Group();
+      const pMat = new THREE.MeshStandardMaterial({ color: 0x222a30, roughness: 0.4, metalness: 0.7 });
+      const pGlow = new THREE.MeshBasicMaterial({ color: 0xff3300 });
+
+      const pHull = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.8, 6.5), pMat);
+      pHull.position.y = 0.4;
+      pBoat.add(pHull);
+
+      const pCab = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.6, 2.2), pMat);
+      pCab.position.set(0, 0.9, -0.4);
+      pBoat.add(pCab);
+
+      const pBeacon = new THREE.Mesh(new THREE.SphereGeometry(0.2, 6, 6), pGlow);
+      pBeacon.position.set(0, 1.4, -0.4);
+      pBoat.add(pBeacon);
+
+      const pLight = new THREE.PointLight(0xff2200, 2.0, 15);
+      pLight.position.set(0, 1.5, -0.4);
+      pBoat.add(pLight);
+
+      pBoat.position.set(wx + offsetX, 0, wz - 18 + (idx * 6));
+      pBoat.lookAt(0, 0, 0);
+      this.scene.add(pBoat);
+      this.missionPatrolBoats.push(pBoat);
+    });
   }
 
   create3DMine(x, z) {
@@ -2104,6 +2892,60 @@ class Barracuda3DEngine {
   }
 
   getPilotTelemetry() {
+    if (this.fpvFlightActive) {
+      const distToWarship = this.enemyShip ? Math.round(this.fpvPos.distanceTo(this.enemyShip.position)) : 0;
+      const speedKmh = Math.round(this.fpvVel.length() * 3.6);
+      const altM = Math.max(0, this.fpvPos.y).toFixed(1);
+      const pitchDeg = Math.round((-this.fpvPitch * (180 / Math.PI)));
+      const rollDeg = Math.round((this.fpvRoll * (180 / Math.PI)));
+      const headingDeg = Math.round(((this.fpvYaw * (180 / Math.PI)) % 360 + 360) % 360);
+
+      // Lock on nearest subsystem
+      let lockTargetInfo = null;
+      if (this.fpvLockTarget) {
+        lockTargetInfo = {
+          name: this.fpvLockTarget.name,
+          subName: this.fpvLockTarget.subName,
+          dist: this.fpvLockTarget.dist,
+          bonus: this.fpvLockTarget.damageBonus
+        };
+      }
+
+      // Compute bearing arrow: angle from drone heading to enemy ship
+      let bearingArrow = '';
+      if (this.enemyShip) {
+        const toShipX = this.enemyShip.position.x - this.fpvPos.x;
+        const toShipZ = this.enemyShip.position.z - this.fpvPos.z;
+        const targetBearing = Math.atan2(toShipX, toShipZ);
+        let relAngle = ((targetBearing - this.fpvYaw) * (180 / Math.PI) + 360) % 360;
+        if (relAngle > 180) relAngle -= 360;
+        if (Math.abs(relAngle) < 15) bearingArrow = '⬆️ ПРЯМО';
+        else if (relAngle > 0 && relAngle < 60) bearingArrow = '↗️ ПРАВЕЕ';
+        else if (relAngle >= 60) bearingArrow = '➡️ РЕЗКО ВПРАВО';
+        else if (relAngle < 0 && relAngle > -60) bearingArrow = '↖️ ЛЕВЕЕ';
+        else bearingArrow = '⬅️ РЕЗКО ВЛЕВО';
+      }
+
+      return {
+        isFpv: true,
+        speedKmh: speedKmh,
+        altM: altM,
+        pitchDeg: pitchDeg,
+        rollDeg: rollDeg,
+        headingDeg: headingDeg,
+        batteryVolts: this.fpvBattery.toFixed(1),
+        batteryPct: Math.round(Math.max(0, Math.min(100, (this.fpvBattery - 20.0) / (25.2 - 20.0) * 100))),
+        fpvHP: Math.round(this.fpvHP),
+        distToTarget: distToWarship,
+        lockTarget: lockTargetInfo,
+        ciwsActive: distToWarship < 120,
+        boostActive: this.fpvBoost,
+        glitchAmount: this.fpvGlitchAmount,
+        bearingArrow: bearingArrow
+      };
+    }
+
+    // Default: USV Boat Piloting Telemetry
     let targetX = 0, targetZ = 140;
     if (this.missionCrates.length > 0) {
       targetX = this.missionCrates[0].position.x;
@@ -2117,7 +2959,19 @@ class Barracuda3DEngine {
     const speedKnots = Math.abs(Math.round(this.pilotSpeed * 1.852));
     const headingDeg = Math.round(((this.pilotHeading * (180 / Math.PI)) % 360 + 360) % 360);
 
+    // Compute bearing arrow for boat toward target
+    let boatBearing = '';
+    const targetBearingAngle = Math.atan2(targetX - this.pilotBoatPos.x, targetZ - this.pilotBoatPos.z);
+    let boatRelAngle = ((targetBearingAngle - this.pilotHeading) * (180 / Math.PI) + 360) % 360;
+    if (boatRelAngle > 180) boatRelAngle -= 360;
+    if (Math.abs(boatRelAngle) < 15) boatBearing = '⬆️ ПРЯМО';
+    else if (boatRelAngle > 0 && boatRelAngle < 60) boatBearing = '↗️ ПРАВЕЕ';
+    else if (boatRelAngle >= 60) boatBearing = '➡️ РЕЗКО ВПРАВО';
+    else if (boatRelAngle < 0 && boatRelAngle > -60) boatBearing = '↖️ ЛЕВЕЕ';
+    else boatBearing = '⬅️ РЕЗКО ВЛЕВО';
+
     return {
+      isFpv: false,
       speedKnots: speedKnots,
       headingDeg: headingDeg,
       x: Math.round(this.pilotBoatPos.x),
@@ -2127,7 +2981,8 @@ class Barracuda3DEngine {
       distToTarget: Math.round(distToTarget),
       cratesCollected: this.missionStats.cratesCollected,
       totalCrates: this.missionStats.totalCrates,
-      boostActive: this.pilotBoost
+      boostActive: this.pilotBoost,
+      bearingArrow: boatBearing
     };
   }
 }
