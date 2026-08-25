@@ -700,11 +700,38 @@ class Barracuda3DEngine {
     shipWarningLight.position.set(0, 14, 0);
     this.enemyShip.add(shipWarningLight);
 
-    // Position enemy warship (lobby size — normal scale)
+    // Position enemy warship (default lobby scale)
     this.enemyShip.position.set(25, -0.6, -65);
     this.enemyShip.rotation.y = THREE.MathUtils.degToRad(-135);
-    this.enemyShip.scale.setScalar(1.1);
+    this.enemyShip.scale.setScalar(0.5);  // Start small, updated by level
     this.scene.add(this.enemyShip);
+  }
+
+  // Scale enemy ship model based on shipLevel progression
+  updateEnemyShipForLevel(level) {
+    if (!this.enemyShip) return;
+
+    // Ship class progression by level
+    let scale, className;
+    if (level <= 2) {
+      scale = 0.5;     // Small patrol boat
+      className = 'ПАТРУЛЬНЫЙ КАТЕР';
+    } else if (level <= 5) {
+      scale = 0.75;    // Cutter / large patrol
+      className = 'СТОРОЖЕВОЙ КАТЕР';
+    } else if (level <= 9) {
+      scale = 1.1;     // Corvette
+      className = 'КОРВЕТ';
+    } else if (level <= 15) {
+      scale = 1.5;     // Frigate
+      className = 'ФРЕГАТ';
+    } else {
+      scale = 2.0;     // Heavy destroyer
+      className = 'ЭСМИНЕЦ';
+    }
+
+    this.enemyShip.scale.setScalar(scale);
+    this._enemyShipClass = className;
   }
 
   // =========================================================================

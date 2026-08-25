@@ -1946,6 +1946,7 @@ class BarracudaGame {
       if (this.tech.ecm_suite) this.weaponCooldownMax = Math.max(0.5, 1.5 * 0.5);
       if (this.tech.swarmAI && this.engine3D) this.engine3D.updateSwarmEscorts(true);
       if (this.engine3D) this.engine3D.setDronePrototype(this.selectedPrototype);
+      if (this.engine3D) this.engine3D.updateEnemyShipForLevel(this.shipLevel);
     } catch (e) {
       console.warn('Load failed:', e);
     }
@@ -2255,6 +2256,11 @@ class BarracudaGame {
       });
     } catch (e) {
       console.error('[BARRACUDA 3D] Engine initialization error:', e);
+    }
+
+    // Scale enemy ship to match current level
+    if (this.engine3D) {
+      this.engine3D.updateEnemyShipForLevel(this.shipLevel || 1);
     }
   }
 
@@ -4064,6 +4070,13 @@ class BarracudaGame {
       // Spawn new ship with more HP
       this.shipMaxHP = Math.floor(100 * Math.pow(1.6, this.shipLevel - 1));
       this.shipHP = this.shipMaxHP;
+
+      // Update 3D ship model size for new level
+      if (this.engine3D) {
+        this.engine3D.updateEnemyShipForLevel(this.shipLevel);
+        this.engine3D.isEnemyBurning = false;  // Reset fire for new ship
+      }
+
       this.checkAllAchievements();
       this.saveGame();
     }
