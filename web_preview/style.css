@@ -3569,57 +3569,641 @@ body {
   box-shadow: 0 0 35px rgba(0, 255, 136, 0.8);
 }
 
-/* Responsive adjustment for Mobile Cockpit */
-@media (max-width: 768px) {
-  .virtual-joystick-container {
-    display: block; /* Enable touch joystick on mobile */
-  }
+/* =========================================================================
+   1ST-PERSON FPV KAMIKAZE DRONE OSD HUD OVERLAY
+   ========================================================================= */
 
-  .mission-pc-hints {
-    display: none;
-  }
-
-  .mission-top-header {
-    padding: 6px 10px;
-    gap: 6px;
-  }
-  .mission-badge { font-size: 11px; }
-  .mission-timer { font-size: 11px; padding: 2px 5px; }
-  .mission-obj-item { font-size: 11px; }
-  .btn-abort-mission { font-size: 9px; padding: 4px 8px; }
-
-  .mission-bottom-left {
-    position: absolute;
-    top: 65px;
-    left: 12px;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 6px;
-  }
-
-  .mission-speed-dial {
-    padding: 4px 8px;
-  }
-  .speed-number { font-size: 18px; }
-  .speed-unit { font-size: 7.5px; }
-
-  .mission-hull-widget {
-    min-width: 120px;
-    padding: 4px 8px;
-  }
-  .hull-label { font-size: 9px; }
-
-  .mission-bottom-right {
-    position: absolute;
-    bottom: 24px;
-    right: 16px;
-    flex-direction: column;
-  }
-  .btn-mission-action {
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-  }
+#fpv-flight-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 2100;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: max(12px, env(safe-area-inset-top)) 18px max(14px, env(safe-area-inset-bottom)) 18px;
+  pointer-events: none;
+  box-sizing: border-box;
+  overflow: hidden;
+  font-family: 'Share Tech Mono', monospace;
+  transition: opacity 0.2s ease;
 }
 
+#fpv-flight-overlay.mission-hud-hidden {
+  opacity: 0;
+  pointer-events: none;
+  display: none !important;
+}
 
+/* CRT Scanlines & Analog Noise */
+.fpv-scanlines {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.35) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+  background-size: 100% 3px, 6px 100%;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.85;
+}
+
+.fpv-vignette {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  box-shadow: inset 0 0 120px rgba(0, 0, 0, 0.85);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.fpv-glitch-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 50, 50, 0.25);
+  mix-blend-mode: color-dodge;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 3;
+  transition: opacity 0.08s ease;
+}
+.fpv-glitched {
+  opacity: 1 !important;
+  animation: fpvGlitchNoise 0.15s infinite;
+}
+
+@keyframes fpvGlitchNoise {
+  0% { transform: translate(2px, -1px); filter: contrast(200%); }
+  50% { transform: translate(-3px, 2px); filter: invert(30%); }
+  100% { transform: translate(1px, 1px); filter: contrast(150%); }
+}
+
+/* Top OSD Bar */
+.fpv-top-osd {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  background: rgba(0, 0, 0, 0.65);
+  border: 1px solid rgba(0, 255, 136, 0.4);
+  border-radius: 6px;
+  padding: 6px 14px;
+  backdrop-filter: blur(8px);
+  text-shadow: 0 0 5px #00ff88;
+}
+
+.fpv-osd-chip {
+  font-size: 12px;
+  color: #00ff88;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+}
+
+/* Center Pitch Ladder & Artificial Horizon */
+.fpv-center-osd {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 320px;
+  height: 240px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.fpv-pitch-ladder {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  color: rgba(0, 255, 136, 0.7);
+  font-size: 11px;
+  transition: transform 0.05s linear;
+}
+
+.pitch-horizon {
+  font-weight: 900;
+  font-size: 14px;
+  color: #00ff88;
+  letter-spacing: 4px;
+}
+
+.fpv-crosshair {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.fpv-reticle-box {
+  width: 24px;
+  height: 24px;
+  border: 1.5px solid rgba(0, 255, 136, 0.9);
+  border-radius: 3px;
+  box-shadow: 0 0 10px rgba(0, 255, 136, 0.6);
+}
+
+.fpv-reticle-dot {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: #ff3300;
+  border-radius: 50%;
+  box-shadow: 0 0 6px #ff3300;
+}
+
+/* Target Lock Bracket */
+.fpv-target-bracket {
+  position: absolute;
+  top: 30px;
+  right: -50px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border: 1.5px dashed #00f0ff;
+  border-radius: 4px;
+  padding: 4px 8px;
+  background: rgba(0, 240, 255, 0.12);
+  box-shadow: 0 0 15px rgba(0, 240, 255, 0.4);
+  animation: fpvLockPulse 1.2s infinite alternate;
+}
+
+@keyframes fpvLockPulse {
+  0% { transform: scale(0.96); border-color: #00f0ff; }
+  100% { transform: scale(1.04); border-color: #ffcc00; }
+}
+
+.target-bracket-tag {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 11px;
+  font-weight: 800;
+  color: #00f0ff;
+  letter-spacing: 0.5px;
+}
+
+.fpv-ciws-alert {
+  position: absolute;
+  bottom: -45px;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 12px;
+  font-weight: 800;
+  color: #ff3333;
+  background: rgba(255, 0, 0, 0.18);
+  border: 1px solid #ff3333;
+  padding: 4px 12px;
+  border-radius: 4px;
+  letter-spacing: 1px;
+  animation: fpvAlertBlink 0.6s infinite alternate;
+  display: none;
+}
+
+@keyframes fpvAlertBlink {
+  0% { opacity: 0.4; }
+  100% { opacity: 1.0; }
+}
+
+/* Left & Right Telemetry Panels */
+.fpv-left-telemetry {
+  position: absolute;
+  left: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(0, 0, 0, 0.6);
+  border-left: 3px solid #00f0ff;
+  padding: 8px 12px;
+  border-radius: 0 6px 6px 0;
+  z-index: 10;
+}
+
+.fpv-right-telemetry {
+  position: absolute;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(0, 0, 0, 0.6);
+  border-right: 3px solid #00ff88;
+  padding: 8px 12px;
+  border-radius: 6px 0 0 6px;
+  text-align: right;
+  z-index: 10;
+}
+
+.fpv-telem-label {
+  font-size: 9px;
+  color: #88aacc;
+  letter-spacing: 0.5px;
+}
+
+.fpv-telem-value {
+  font-size: 20px;
+  font-weight: 900;
+  line-height: 1.1;
+  text-shadow: 0 0 8px currentColor;
+}
+
+.fpv-telem-unit {
+  font-size: 8.5px;
+  color: #7ab8cc;
+  margin-bottom: 6px;
+}
+
+.fpv-telem-divider {
+  width: 100%;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.15);
+  margin: 6px 0;
+}
+
+/* FPV Touch Flight Controls */
+.fpv-joy {
+  bottom: 24px !important;
+  left: 24px !important;
+}
+
+.fpv-bottom-actions {
+  position: absolute;
+  bottom: 24px;
+  right: 24px;
+  display: flex;
+  gap: 12px;
+  pointer-events: auto;
+  z-index: 15;
+}
+
+.btn-fpv-boost, .btn-fpv-detonate {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  border: 2px solid #00ffcc;
+  background: rgba(0, 255, 204, 0.15);
+  color: #00ffcc;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 0 20px rgba(0, 255, 204, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  transition: all 0.15s ease;
+}
+
+.btn-fpv-boost.active, .btn-fpv-boost:active {
+  background: #00ffcc;
+  color: #000;
+  transform: scale(0.95);
+  box-shadow: 0 0 30px rgba(0, 255, 204, 0.8);
+}
+
+.btn-fpv-detonate {
+  border-color: #ff4400;
+  color: #ff4400;
+  background: rgba(255, 68, 0, 0.18);
+  box-shadow: 0 0 20px rgba(255, 68, 0, 0.4);
+}
+.btn-fpv-detonate:active {
+  background: #ff4400;
+  color: #fff;
+  transform: scale(0.95);
+}
+
+.fpv-pc-hints {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 16px;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 11px;
+  color: #7ab8cc;
+  background: rgba(0, 0, 0, 0.7);
+  padding: 4px 16px;
+  border-radius: 15px;
+  border: 1px solid rgba(0, 255, 136, 0.2);
+  z-index: 10;
+}
+.fpv-pc-hints b { color: #00ff88; }
+
+/* =========================================================================
+   CINEMATIC GAME OVER / THE END MODAL
+   ========================================================================= */
+
+.gameover-card {
+  max-width: 500px !important;
+  border: 1.5px solid rgba(255, 50, 50, 0.6) !important;
+  box-shadow: 0 10px 50px rgba(0, 0, 0, 0.95), 0 0 40px rgba(255, 50, 50, 0.3) !important;
+  background: linear-gradient(180deg, #18080a 0%, #0c0406 100%) !important;
+  animation: gameoverShake 0.4s ease;
+}
+
+@keyframes gameoverShake {
+  0% { transform: translate(0, 0); }
+  20% { transform: translate(-6px, 4px); }
+  40% { transform: translate(6px, -4px); }
+  60% { transform: translate(-3px, 2px); }
+  100% { transform: translate(0, 0); }
+}
+
+.gameover-header {
+  text-align: center;
+  margin-bottom: 12px;
+}
+
+.gameover-skull-icon {
+  font-size: 40px;
+  margin-bottom: 4px;
+  animation: pulseSkull 1.5s infinite alternate;
+}
+
+@keyframes pulseSkull {
+  0% { transform: scale(0.95); opacity: 0.8; }
+  100% { transform: scale(1.1); opacity: 1.0; text-shadow: 0 0 20px #ff0000; }
+}
+
+.gameover-subtitle {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px;
+  color: #ff7777;
+  letter-spacing: 2px;
+  margin-top: 4px;
+}
+
+.gameover-reason-box {
+  background: rgba(40, 10, 15, 0.8);
+  border: 1px solid rgba(255, 68, 68, 0.4);
+  border-radius: 6px;
+  padding: 10px 14px;
+  margin: 12px 0;
+  text-align: center;
+}
+
+.reason-label {
+  font-size: 10px;
+  font-weight: 800;
+  color: #ff9999;
+  letter-spacing: 1px;
+  margin-bottom: 3px;
+}
+
+.reason-text {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.gameover-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.btn-gameover-retry {
+  flex: 1.2;
+  height: 46px;
+  border-radius: 8px;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 13px;
+  font-weight: 800;
+  background: linear-gradient(135deg, #ff4400, #ff0055);
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  box-shadow: 0 0 25px rgba(255, 68, 0, 0.5);
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.btn-gameover-retry:hover {
+  transform: scale(1.03);
+  box-shadow: 0 0 35px rgba(255, 68, 0, 0.8);
+}
+
+.btn-gameover-base {
+  flex: 1;
+  height: 46px;
+  border-radius: 8px;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 13px;
+  font-weight: 800;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #ccc;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.btn-gameover-base:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+}
+
+/* =========================================================================
+   CINEMATIC VICTORY TRIUMPH MODAL
+   ========================================================================= */
+
+.victory-card {
+  max-width: 520px !important;
+  border: 1.5px solid rgba(0, 255, 136, 0.6) !important;
+  box-shadow: 0 10px 50px rgba(0, 0, 0, 0.95), 0 0 40px rgba(0, 255, 136, 0.35) !important;
+  background: linear-gradient(180deg, #051a14 0%, #030d0a 100%) !important;
+}
+
+.victory-header {
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.victory-medal-icon {
+  font-size: 42px;
+  margin-bottom: 4px;
+  animation: pulseMedal 1.8s infinite alternate;
+}
+
+@keyframes pulseMedal {
+  0% { transform: scale(0.95); }
+  100% { transform: scale(1.12); text-shadow: 0 0 25px #00ff88; }
+}
+
+.victory-rank-badge {
+  display: inline-block;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 13px;
+  font-weight: 900;
+  color: #000;
+  background: linear-gradient(90deg, #ffcc00, #00ff88);
+  padding: 3px 14px;
+  border-radius: 12px;
+  letter-spacing: 1.5px;
+  margin-top: 6px;
+  box-shadow: 0 0 15px rgba(0, 255, 136, 0.6);
+}
+
+.victory-hit-box {
+  background: rgba(0, 255, 136, 0.08);
+  border: 1px solid rgba(0, 255, 136, 0.35);
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin: 10px 0;
+  text-align: center;
+}
+
+.hit-sub-label {
+  font-size: 10px;
+  color: #7ab8cc;
+  margin-bottom: 2px;
+}
+
+.hit-sub-title {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 1px;
+}
+
+.victory-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.btn-victory-retry {
+  flex: 1;
+  height: 46px;
+  border-radius: 8px;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 13px;
+  font-weight: 800;
+  background: rgba(0, 240, 255, 0.12);
+  border: 1px solid rgba(0, 240, 255, 0.4);
+  color: #00f0ff;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.btn-victory-retry:hover {
+  background: rgba(0, 240, 255, 0.25);
+  box-shadow: 0 0 20px rgba(0, 240, 255, 0.4);
+}
+
+.btn-victory-claim {
+  flex: 1.4;
+  height: 46px;
+  border-radius: 8px;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 13px;
+  font-weight: 800;
+  background: linear-gradient(135deg, #00ff88, #00f0ff);
+  border: none;
+  color: #000;
+  cursor: pointer;
+  box-shadow: 0 0 25px rgba(0, 255, 136, 0.5);
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.btn-victory-claim:hover {
+  transform: scale(1.02);
+  box-shadow: 0 0 35px rgba(0, 255, 136, 0.8);
+}
+
+/* =========================================================================
+   MOBILE TOUCH DEVICE OPTIMIZATIONS
+   ========================================================================= */
+@media (pointer: coarse), (hover: none), (max-width: 768px) {
+  /* Show virtual joysticks on touch devices */
+  .virtual-joystick-container {
+    display: block !important;
+  }
+
+  /* Bigger touch targets for buttons */
+  .combat-quick-btn {
+    min-width: 52px;
+    min-height: 52px;
+    padding: 10px 14px;
+    font-size: 11px;
+  }
+
+  .combat-quick-btn .cq-icon { font-size: 20px; }
+  .combat-quick-btn .cq-text { font-size: 9px; }
+
+  /* Larger joystick for easier control */
+  .virtual-joystick-container {
+    width: 140px;
+    height: 140px;
+    bottom: 16px;
+    left: 16px;
+  }
+  .virtual-joystick-container.fpv-joy {
+    right: 16px;
+    left: auto;
+  }
+  .joystick-thumb {
+    width: 54px;
+    height: 54px;
+  }
+
+  /* Mission cockpit HUD responsive */
+  .mission-cockpit-overlay {
+    font-size: 11px;
+  }
+
+  /* FPV OSD bigger text for mobile */
+  .fpv-osd-panel {
+    font-size: 12px;
+    padding: 6px 10px;
+  }
+
+  /* FLIR touch targets bigger */
+  .flir-lock-point {
+    padding: 14px 18px;
+    font-size: 13px;
+    min-height: 48px;
+  }
+
+  .btn-flir-exit {
+    padding: 14px 24px;
+    font-size: 14px;
+    min-height: 48px;
+  }
+
+  /* Bigger click area for main taps */
+  .center-interact-zone {
+    min-height: 200px;
+  }
+
+  /* Bottom panel scroll fix */
+  .bottom-panel {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}

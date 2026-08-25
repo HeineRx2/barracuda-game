@@ -946,6 +946,106 @@ class TacticalAudioEngine {
     osc.start(now);
     osc.stop(now + 0.28);
   }
+
+  // =========================================================================
+  // FPV FLIGHT MOTOR & CIWS CANNON SOUNDS
+  // =========================================================================
+  startFpvMotorSound() {
+    this.init();
+    if (this._fpvMotorOsc) return;
+    try {
+      const now = this.ctx.currentTime;
+      this._fpvMotorOsc = this.ctx.createOscillator();
+      this._fpvMotorGain = this.ctx.createGain();
+
+      this._fpvMotorOsc.type = 'sawtooth';
+      this._fpvMotorOsc.frequency.setValueAtTime(140, now);
+      this._fpvMotorGain.gain.setValueAtTime(0.08, now);
+
+      // Lowpass filter to muffle harsh harmonics
+      this._fpvMotorFilter = this.ctx.createBiquadFilter();
+      this._fpvMotorFilter.type = 'lowpass';
+      this._fpvMotorFilter.frequency.value = 1800;
+
+      this._fpvMotorOsc.connect(this._fpvMotorFilter);
+      this._fpvMotorFilter.connect(this._fpvMotorGain);
+      this._fpvMotorGain.connect(this.masterGain);
+
+      this._fpvMotorOsc.start(now);
+    } catch (e) {}
+  }
+
+  updateFpvMotorSound(speedRatio = 0.5, boost = false) {
+    if (!this._fpvMotorOsc || !this.ctx) return;
+    try {
+      const now = this.ctx.currentTime;
+      const targetFreq = 160 + speedRatio * 320 + (boost ? 140 : 0);
+      const targetGain = 0.06 + speedRatio * 0.08 + (boost ? 0.05 : 0);
+      this._fpvMotorOsc.frequency.setTargetAtTime(targetFreq, now, 0.05);
+      this._fpvMotorGain.gain.setTargetAtTime(Math.min(0.2, targetGain), now, 0.05);
+    } catch (e) {}
+  }
+
+  stopFpvMotorSound() {
+    if (this._fpvMotorOsc) {
+      try {
+        const now = this.ctx.currentTime;
+        this._fpvMotorGain.gain.setTargetAtTime(0.001, now, 0.1);
+        setTimeout(() => {
+          if (this._fpvMotorOsc) {
+            this._fpvMotorOsc.stop();
+            this._fpvMotorOsc.disconnect();
+            this._fpvMotorOsc = null;
+            this._fpvMotorGain = null;
+            this._fpvMotorFilter = null;
+          }
+        }, 150);
+      } catch (e) {
+        this._fpvMotorOsc = null;
+      }
+    }
+  }
+
+  playCiwsBurst() {
+    this.init();
+    const now = this.ctx.currentTime;
+    // Rapid 3-round flak burst
+    for (let i = 0; i < 3; i++) {
+      const shotTime = now + i * 0.06;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(320, shotTime);
+      osc.frequency.exponentialRampToValueAtTime(60, shotTime + 0.05);
+
+      gain.gain.setValueAtTime(0.2, shotTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, shotTime + 0.05);
+
+      osc.connect(gain);
+      gain.connect(this.masterGain);
+      osc.start(shotTime);
+      osc.stop(shotTime + 0.05);
+    }
+  }
+
+  playGlitchStatic() {
+    this.init();
+    const now = this.ctx.currentTime;
+    const noise = this.ctx.createBufferSource();
+    noise.buffer = this.createNoiseBuffer(0.25);
+    const filter = this.ctx.createBiquadFilter();
+    filter.type = 'bandpass';
+    filter.frequency.value = 2400;
+    const gain = this.ctx.createGain();
+    gain.gain.setValueAtTime(0.35, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+
+    noise.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.masterGain);
+    noise.start(now);
+    noise.stop(now + 0.25);
+  }
 }
 
 window.tacticalAudio = new TacticalAudioEngine();
