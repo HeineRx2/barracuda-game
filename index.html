@@ -1,0 +1,1677 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>BARRACUDA // Автономный Ударный Дрон</title>
+  <meta name="description" content="Тактический симулятор боевого надводного дрона Барракуда с реалистичной 3D-моделью.">
+  <link rel="stylesheet" href="style.css?v=3.5.0_naval_tactics">
+
+  <!-- Global Error Handler Overlay -->
+  <script>
+    window.addEventListener('error', function(e) {
+      console.error('[GLOBAL ERROR]', e);
+      var b = document.getElementById('debug-error-banner');
+      if (!b) {
+        b = document.createElement('div');
+        b.id = 'debug-error-banner';
+        b.style.cssText = 'position:fixed; top:20px; left:20px; right:20px; z-index:999999; background:rgba(220,20,20,0.95); color:#fff; font-family:monospace; padding:15px; font-size:13px; border:2px solid #ffcc00; border-radius:6px; box-shadow:0 0 20px rgba(0,0,0,0.8);';
+        document.addEventListener('DOMContentLoaded', function() { document.body.appendChild(b); });
+      }
+      b.innerHTML += '<div style="margin-bottom:6px;">⚠️ <b>JS ОШИБКА:</b> ' + (e.message || e) + '<br><small style="color:#ffcccc;">Файл: ' + (e.filename ? e.filename.split('/').pop() : 'script') + ' : строка ' + e.lineno + '</small></div>';
+    });
+  </script>
+
+  <!-- Three.js Core + Extensions (100% Local Offline Bundles) -->
+  <script src="libs/three.min.js"></script>
+  <script src="libs/GLTFLoader.js"></script>
+  <script src="libs/Water.js"></script>
+  <script src="libs/Sky.js"></script>
+</head>
+<body>
+
+  <!-- 3D Drone & Ocean Viewport Container -->
+  <div id="drone-3d-viewport"></div>
+
+  <!-- Central Interaction Click Target Zone -->
+  <div class="center-interact-zone"></div>
+
+  <!-- FLIR Thermal Optics Fullscreen Overlay -->
+  <div id="flir-overlay" class="flir-thermal-view">
+    <div class="flir-crosshair"></div>
+    <div class="flir-scan-line"></div>
+    <div class="flir-telemetry-box">
+      <div>РЕЖИМ: ТЕПЛОВИЗОР FLIR (LWIR)</div>
+      <div>СЕНСОР: КРИО-МАТРИЦА 640x512</div>
+      <div>СПЕКТР: 8-14 мкм // УСИЛЕНИЕ x4</div>
+      <div id="flir-target-status" style="color:#ffcc00; margin-top:4px;">ЦЕЛЬ: ВРАЖЕСКИЙ КОРАБЛЬ [ЗАХВАТ]</div>
+    </div>
+    <div class="flir-weakspots-container">
+      <button class="flir-lock-point" data-target="radar" title="Радарный комплекс (Крит x4)">
+        <span class="lock-bracket">🎯 РАДАРНЫЙ ПОСТ [x4 КРИТ]</span>
+      </button>
+      <button class="flir-lock-point" data-target="missile" title="Ракетные шахты (Крит x4)">
+        <span class="lock-bracket">🎯 ПУСКОВЫЕ ШАХТЫ [x4 КРИТ]</span>
+      </button>
+      <button class="flir-lock-point" data-target="engine" title="Машинное отделение (Крит x4)">
+        <span class="lock-bracket">🎯 МАШИННОЕ ОТДЕЛЕНИЕ [x4 КРИТ]</span>
+      </button>
+    </div>
+    <button id="btn-exit-flir" class="btn-flir-exit">✕ ВЫХОД ИЗ ПРИЦЕЛА</button>
+  </div>
+
+  <!-- Screen Flash for Kinetic Strike -->
+  <div id="screen-flash"></div>
+
+  <!-- Main Military HUD Frame -->
+  <div id="game-frame">
+
+    <!-- TOP BAR: Controls, Balances, Booster, Mini-Radar -->
+    <header class="top-hud-bar">
+      <!-- Row 1: Nav Bar -->
+      <div class="top-nav-row">
+        <button class="btn-tactical-pause" id="btn-toggle-tma" title="Скрыть/Показать HUD">👁️</button>
+        <button class="btn-dossier-pill btn-nav-campaign" id="btn-open-campaign" title="Сюжетная кампания" style="border-color:rgba(0,255,136,0.6); background:rgba(0,255,136,0.15); color:#00ff88;">
+          <span class="dossier-pill-icon">⚔️</span>
+          <span class="dossier-pill-text">ОПЕРАЦИИ</span>
+        </button>
+        <button class="btn-dossier-pill btn-nav-hangar" id="btn-open-hangar" title="Ангар и крафт" style="border-color:rgba(0,240,255,0.6); background:rgba(0,240,255,0.12); color:#00f0ff;">
+          <span class="dossier-pill-icon">⚓</span>
+          <span class="dossier-pill-text">АНГАР</span>
+        </button>
+        <button class="btn-dossier-pill btn-nav-tactical" id="btn-open-tactical-hub" title="Тактический арсенал и испытания v3.5" style="border-color:rgba(0,255,200,0.8); background:rgba(0,255,200,0.18); color:#00ffcc; font-weight:700;">
+          <span class="dossier-pill-icon">🛰️</span>
+          <span class="dossier-pill-text">ТАКТИКА</span>
+        </button>
+        <button class="btn-dossier-pill" id="btn-toggle-dossier" title="Секретное досье">
+          <span class="dossier-pill-icon">📁</span>
+          <span class="dossier-pill-text">ДОСЬЕ</span>
+          <span class="dossier-unread-dot" id="dossier-unread-beacon"></span>
+        </button>
+        <button class="btn-sector-pill" id="btn-open-map" title="Карта спецопераций">
+          <span class="sector-badge-icon">🗺️</span>
+          <span id="label-current-sector" class="sector-badge-name">О. ЗМЕИНЫЙ</span>
+        </button>
+        <button class="btn-help-pill" id="btn-open-help" title="Справка">
+          <span class="help-pill-icon">❓</span>
+          <span class="help-pill-text">СПРАВКА</span>
+        </button>
+        <button class="btn-help-pill" id="btn-open-settings" title="Настройки">
+          <span class="help-pill-icon">⚙️</span>
+          <span class="help-pill-text">ОПЦИИ</span>
+        </button>
+      </div>
+
+      <!-- Row 2: Telemetry Strip -->
+      <div class="top-stats-row">
+        <div class="balance-pill credits-pill">
+          <span class="pill-label">КРЕДИТЫ $</span>
+          <span class="pill-value" id="val-credits">$500</span>
+        </div>
+        <div class="balance-pill buffer-pill">
+          <span class="pill-label">БУФЕР</span>
+          <span class="pill-value" id="val-buffer">0.0 / 5.0 ГБ</span>
+        </div>
+        <div id="booster-widget" class="booster-floating-widget" title="Тактический разгон мощности">
+          <div class="booster-inner-btn" id="btn-overclock">
+            <span class="booster-icon">⚡</span>
+            <div class="booster-info">
+              <span class="booster-title" id="booster-status-title">РАЗГОН +200%</span>
+              <span class="booster-sub" id="booster-status-sub">ГОТОВ</span>
+            </div>
+          </div>
+        </div>
+        <div class="mini-radar-box" id="mini-radar" title="Радарный сканер">
+          <div class="radar-sweep-cone"></div>
+          <div class="radar-drone-blip"></div>
+        </div>
+      </div>
+    </header>
+
+    <!-- QUICK COMBAT ACTIONS BAR (FLIR, SIGINT РЭБ, ПУСК FPV, СОНАР, ROV, ТЕСТ VSA) -->
+    <div class="quick-combat-actions-bar">
+      <button class="combat-quick-btn flir-btn" id="btn-open-flir" title="Включить оптический тепловизор FLIR">
+        <span class="cq-icon">🎯</span>
+        <span class="cq-text">FLIR</span>
+      </button>
+      <button class="combat-quick-btn reb-btn" id="btn-open-cyber" title="Взлом радиочастот РЭБ">
+        <span class="cq-icon">📡</span>
+        <span class="cq-text">ВЗЛОМ РЭБ</span>
+      </button>
+      <button class="combat-quick-btn missile-btn" id="btn-direct-missile" title="Пуск боевого FPV-дрона по судну">
+        <span class="cq-icon">🛸</span>
+        <span class="cq-text">ПУСК FPV</span>
+      </button>
+      <button class="combat-quick-btn sonar-btn" id="btn-quick-sonar" title="Открыть 3D-сонар бокового обзора">
+        <span class="cq-icon">📡</span>
+        <span class="cq-text">СОНАР 3D</span>
+      </button>
+      <button class="combat-quick-btn rov-btn" id="btn-quick-rov" title="Спустить подводный микро-ROV">
+        <span class="cq-icon">🔮</span>
+        <span class="cq-text">МИКРО-ROV</span>
+      </button>
+      <button class="combat-quick-btn boat-btn" id="btn-quick-boat" title="Тест-драйв катера (VSA / Дрифт)">
+        <span class="cq-icon">🚤</span>
+        <span class="cq-text">ТЕСТ VSA</span>
+      </button>
+    </div>
+
+    <!-- MIDDLE: Left Collapsible Dossier + Right Action Rings -->
+    <main class="middle-arena">
+
+      <!-- Collapsible Dossier Card / Modal Sheet -->
+      <section class="concept-dossier-card collapsed" id="panel-dossier">
+        <div class="concept-dossier-header">
+          <div class="dossier-header-left">
+            <span class="dossier-badge-text">TOP-SECRET DOSSIER: DECODED</span>
+            <span id="dossier-timestamp" class="dossier-time-tag">03:14:22Z</span>
+          </div>
+          <button class="btn-close-dossier" id="btn-close-dossier" title="Свернуть досье">✕</button>
+        </div>
+        <div class="dossier-inner-layout">
+          <div class="dossier-terminal-text" id="dossier-body">Инициализация защищённого канала телеметрии...</div>
+          <div class="dossier-world-map">
+            <div class="map-grid-lines"></div>
+            <div class="map-target-box"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Right / Bottom-dock Action Ring Buttons -->
+      <nav class="concept-action-rings" id="main-nav-dock">
+        <button class="ring-action-btn" data-panel="panel-vessel">
+          <div class="ring-circle-icon">⚡</div>
+          <span class="ring-label">СТЕЛС-ДРОН</span>
+        </button>
+        <button class="ring-action-btn" data-panel="panel-modules">
+          <div class="ring-circle-icon">⚙️</div>
+          <span class="ring-label">МОДУЛИ</span>
+        </button>
+        <button class="ring-action-btn" data-panel="panel-weapons">
+          <div class="ring-circle-icon">🎯</div>
+          <span class="ring-label">ВООРУЖЕНИЕ</span>
+        </button>
+        <button class="ring-action-btn" data-panel="panel-contracts">
+          <div class="ring-circle-icon">📜</div>
+          <span class="ring-label">КОНТРАКТЫ</span>
+        </button>
+        <button class="ring-action-btn" id="btn-open-techtree">
+          <div class="ring-circle-icon">🔬</div>
+          <span class="ring-label">ДЕРЕВО ТЕХНОЛОГИЙ</span>
+        </button>
+      </nav>
+
+      <!-- Slide-out Drawer Panels -->
+
+      <div class="concept-slide-panel" id="panel-vessel">
+        <div class="panel-header-title">
+          <span>⚡ СТЕЛС-ДРОН // ТЕЛЕМЕТРИЯ</span>
+          <button class="btn-buy-action btn-close-panel">✕</button>
+        </div>
+        <div class="upgrade-list-scroll">
+          <div class="upgrade-item-card">
+            <div>
+              <div class="item-card-title">СИЛА КЛИКА</div>
+              <div class="item-card-sub text-green" id="val-click">+1.0 МБ/клк</div>
+            </div>
+            <button id="btn-quick-sell" class="btn-buy-action">СБРОС 10 МБ ➔ $</button>
+          </div>
+          <div class="upgrade-item-card">
+            <div>
+              <div class="item-card-title">ПАССИВНЫЙ ДОХОД</div>
+              <div class="item-card-sub text-cyan" id="val-passive-usd">+$25/с</div>
+            </div>
+            <span class="item-card-extra" id="val-passive">+0.0 МБ/с</span>
+          </div>
+          <div class="upgrade-item-card">
+            <div>
+              <div class="item-card-title text-yellow">ЧЕРТЕЖИ ПРЕСТИЖА</div>
+              <div class="item-card-sub text-yellow" id="val-multiplier">x1.0 [0 ЧЖ]</div>
+            </div>
+            <span class="item-card-extra" id="val-total-data">ВСЕГО: 0 МБ</span>
+          </div>
+          <div class="upgrade-item-card">
+            <div>
+              <div class="item-card-title text-cyan">ПОТОПЛЕНО КОРАБЛЕЙ</div>
+              <div class="item-card-sub text-green" id="val-sunken-count">0 ВЫМПЕЛОВ</div>
+            </div>
+            <span class="item-card-extra" id="val-kills-status">РАНГ: ОПЕРАТОР БПА</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="concept-slide-panel" id="panel-modules">
+        <div class="panel-header-title">
+          <span>⚙️ МОДУЛИ ОБОРУДОВАНИЯ</span>
+          <button class="btn-buy-action btn-close-panel">✕</button>
+        </div>
+        <div class="upgrade-list-scroll">
+          <div class="upgrade-item-card">
+            <div>
+              <div class="item-card-title">1. АНТЕННА SATCOM</div>
+              <div class="item-card-sub text-green" id="tier-hw-satcom">МК 1 // +2.0 МБ/клк</div>
+            </div>
+            <button class="btn-buy-action" data-buy-hw="satcom" id="cost-hw-satcom">15 МБ</button>
+          </div>
+          <div class="upgrade-item-card">
+            <div>
+              <div class="item-card-title">2. ОПТИКА FLIR (ТУРЕЛЬ)</div>
+              <div class="item-card-sub text-green" id="tier-hw-optics">МК 1 // +4.0 МБ/клк</div>
+            </div>
+            <button class="btn-buy-action" data-buy-hw="optics" id="cost-hw-optics">45 МБ</button>
+          </div>
+          <div class="upgrade-item-card">
+            <div>
+              <div class="item-card-title">3. БРОНЕПЛИТЫ КОРПУСА</div>
+              <div class="item-card-sub text-green" id="tier-hw-armor">МК 1 // +1.5 МБ/с</div>
+            </div>
+            <button class="btn-buy-action" data-buy-hw="armor" id="cost-hw-armor">80 МБ</button>
+          </div>
+          <div class="upgrade-item-card">
+            <div>
+              <div class="item-card-title">4. ВОДОМЁТНЫЕ ДВИГАТЕЛИ</div>
+              <div class="item-card-sub text-green" id="tier-hw-waterjets">МК 1 // +3.0 МБ/с</div>
+            </div>
+            <button class="btn-buy-action" data-buy-hw="waterjets" id="cost-hw-waterjets">150 МБ</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="concept-slide-panel" id="panel-weapons">
+        <div class="panel-header-title">
+          <span>🎯 ВООРУЖЕНИЕ И КИБЕРСИСТЕМЫ</span>
+          <button class="btn-buy-action btn-close-panel">✕</button>
+        </div>
+        <div class="upgrade-list-scroll">
+          <div class="upgrade-item-card">
+            <div>
+              <div class="item-card-title text-yellow">СТАПЕЛИ FPV-ДРОНОВ</div>
+              <div class="item-card-sub text-green" id="tier-hw-missiles">МК 1 // +50% к удару</div>
+            </div>
+            <button class="btn-buy-action" data-buy-hw="missiles" id="cost-hw-missiles">300 МБ</button>
+          </div>
+          <div class="upgrade-item-card">
+            <div>
+              <div class="item-card-title">СНИФФЕР ПАКЕТОВ (РЭБ)</div>
+              <div class="item-card-sub text-cyan" id="tier-cyber-sniffer">V.1 // +2.5 МБ/с</div>
+            </div>
+            <button class="btn-buy-action" data-buy-cyber="sniffer" id="cost-cyber-sniffer">30 МБ</button>
+          </div>
+          <div class="upgrade-item-card">
+            <div>
+              <div class="item-card-title">КВАНТОВЫЙ ДЕШИФРАТОР</div>
+              <div class="item-card-sub text-yellow" id="tier-cyber-quantum">V.1 // +12% Крит (x5)</div>
+            </div>
+            <button class="btn-buy-action" data-buy-cyber="quantum" id="cost-cyber-quantum">100 МБ</button>
+          </div>
+          <div class="upgrade-item-card">
+            <div>
+              <div class="item-card-title">АВТО-СИФОН ДАННЫХ</div>
+              <div class="item-card-sub text-cyan" id="tier-cyber-autosiphon">V.1 // +$75/с</div>
+            </div>
+            <button class="btn-buy-action" data-buy-cyber="autosiphon" id="cost-cyber-autosiphon">200 МБ</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="concept-slide-panel" id="panel-contracts">
+        <div class="panel-header-title">
+          <span>📜 КОНТРАКТЫ И СПЕЦОПЕРАЦИИ</span>
+          <button class="btn-buy-action btn-close-panel">✕</button>
+        </div>
+        <div class="upgrade-list-scroll">
+          <div class="upgrade-item-card">
+            <div>
+              <div class="item-card-title text-cyan">ОП: ПОДВОДНЫЙ КАБЕЛЬ</div>
+              <div class="item-card-sub text-dim-cyan">+$1,500 // +80 МБ</div>
+              <div class="contract-bar-track">
+                <div id="prog-contract-c1" class="contract-bar-fill"></div>
+              </div>
+            </div>
+            <button class="btn-buy-action" data-start-contract="c1">СТАРТ</button>
+          </div>
+          <div class="upgrade-item-card">
+            <div>
+              <div class="item-card-title text-cyan">ОП: РАДАРНАЯ ЛОВУШКА</div>
+              <div class="item-card-sub text-dim-cyan">+$6,000 // +300 МБ</div>
+              <div class="contract-bar-track">
+                <div id="prog-contract-c2" class="contract-bar-fill"></div>
+              </div>
+            </div>
+            <button class="btn-buy-action" data-start-contract="c2">СТАРТ</button>
+          </div>
+          <div class="upgrade-item-card">
+            <div>
+              <div class="item-card-title text-yellow">ИИ РОЕВОГО УПРАВЛЕНИЯ</div>
+              <div class="item-card-sub text-dim-gray">Формация ведомых дронов + Удвоение пассива</div>
+            </div>
+            <button class="btn-buy-action" data-buy-tech="swarmAI" data-cost-bp="1">1 ЧЖ</button>
+          </div>
+        </div>
+      </div>
+
+    </main>
+
+    <!-- BOTTOM: Telemetry Gauges & Assault Button -->
+    <footer class="bottom-concept-bar">
+      <div class="telemetry-dual-gauges">
+        <div class="gauge-group">
+          <div class="gauge-header-label">
+            <span>ЗАРЯД FPV:</span>
+            <span id="label-energy-percent" class="text-green">0%</span>
+          </div>
+          <div class="concept-bar-track">
+            <div class="concept-bar-fill" id="progress-bar-fill"></div>
+          </div>
+        </div>
+        <div class="gauge-group">
+          <div class="gauge-header-label">
+            <span id="ship-hp-label" style="color:#ff4444;">ЦЕЛЬ [Ур.1]: 100 / 100 HP</span>
+          </div>
+          <div class="concept-bar-track">
+            <div class="concept-bar-fill" id="ship-hp-fill" style="width:100%; background:#ff4444;"></div>
+          </div>
+        </div>
+        <div class="gauge-group">
+          <div class="gauge-header-label">
+            <span style="color:#ffcc00;">ПЕРЕЗАРЯДКА FPV:</span>
+          </div>
+          <div class="concept-bar-track" style="height:4px;">
+            <div class="concept-bar-fill" id="cooldown-fill" style="width:100%; background:#ffcc00;"></div>
+          </div>
+        </div>
+      </div>
+      <div class="bottom-mission-subrow">
+        <span class="mission-tag">СТЕХ-УДАР: FPV-ДРОН ВЫСОКОЙ ДАЛЬНОСТИ</span>
+        <button id="btn-assault" class="btn-concept-strike">ЗАПУСК FPV-ШТУРМА</button>
+      </div>
+    </footer>
+
+  </div>
+
+  <!-- =========================================================================
+       3D REAL-TIME MISSION COCKPIT HUD (Sortie Boat Mode)
+       ========================================================================= -->
+  <div id="mission-cockpit-overlay" class="mission-hud-hidden">
+    <!-- Top Mission Status Bar -->
+    <header class="mission-top-header">
+      <div class="mission-header-left">
+        <div class="mission-badge" id="hud-mission-code">ОПЕРАЦИЯ: «НОЧНОЙ ПРОРЫВ»</div>
+        <div class="mission-timer" id="hud-mission-timer">⏱️ 01:45</div>
+      </div>
+      <div class="mission-objectives-box">
+        <div class="mission-obj-item" id="hud-obj-crates">📦 Контейнеры: <b id="hud-val-crates">0 / 3</b></div>
+        <div class="mission-obj-item" id="hud-obj-target">🎯 Дистанция: <b id="hud-val-target">140 м</b></div>
+      </div>
+      <button class="btn-abort-mission" id="btn-abort-sortie" title="Экстренная эвакуация на базу">✕ ЭВАКУАЦИЯ</button>
+    </header>
+
+    <!-- Center Compass & Reticle -->
+    <div class="mission-center-hud">
+      <div class="mission-compass-tape">
+        <span class="compass-marker">З</span>
+        <span class="compass-marker">СЗ</span>
+        <span class="compass-marker text-green" id="hud-compass-heading">▲ С (000°)</span>
+        <span class="compass-marker">СВ</span>
+        <span class="compass-marker">В</span>
+      </div>
+      <div class="mission-crosshair"></div>
+      <div class="mission-warning-banner" id="hud-warning-banner">⚠️ ВНИМАНИЕ: МИННОЕ ПОЛЕ // ЛУЧИ ПРОЖЕКТОРОВ</div>
+    </div>
+
+    <!-- Bottom Left: Speedometer & Hull HP & Depth Sounder -->
+    <div class="mission-bottom-left">
+      <div class="mission-speed-dial">
+        <div class="speed-number" id="hud-val-speed">0</div>
+        <div class="speed-unit">УЗЛОВ (KTS)</div>
+      </div>
+      <div class="mission-hull-widget">
+        <div class="hull-label">
+          <span>ЦЕЛОСТНОСТЬ КОРПУСА:</span>
+          <span id="hud-val-hp" class="text-green">100%</span>
+        </div>
+        <div class="hull-bar-track">
+          <div class="hull-bar-fill" id="hud-fill-hp" style="width:100%;"></div>
+        </div>
+      </div>
+      <!-- Echo Sounder / Bathymetry Depth Display -->
+      <div class="mission-depth-sounder" id="hud-depth-widget">
+        <span class="depth-icon">🌊</span>
+        <span class="depth-label">ЭХОЛОТ:</span>
+        <span class="depth-val text-cyan" id="hud-val-depth">12.4 м</span>
+        <span class="shallow-badge" id="hud-shallow-badge" style="display:none;">⚠️ МЕЛЬ</span>
+      </div>
+    </div>
+
+    <!-- Mobile Touch Joystick Area (Left Thumb) -->
+    <div id="virtual-joystick-zone" class="virtual-joystick-container">
+      <div class="joystick-base">
+        <div class="joystick-thumb" id="joystick-thumb-knob"></div>
+      </div>
+      <div class="joystick-label">🕹️ РУЛЬ & ГАЗ</div>
+    </div>
+
+    <!-- Bottom Right Controls: Boost, VSA, DPS, Sonar & FPV Strike -->
+    <div class="mission-bottom-right">
+      <div class="mission-tactical-toggles">
+        <button class="btn-tactical-toggle active" id="btn-mission-vsa" title="Курсовая устойчивость VSA (ВКЛ / ВЫКЛ: Режим дрифта)">
+          <span class="btn-tt-icon">🛡️</span>
+          <span class="btn-tt-text" id="hud-vsa-text">VSA: ВКЛ</span>
+        </button>
+        <button class="btn-tactical-toggle" id="btn-mission-dps" title="Система динамического позиционирования (Авто-удержание)">
+          <span class="btn-tt-icon">⚓</span>
+          <span class="btn-tt-text" id="hud-dps-text">DPS: ВЫКЛ</span>
+        </button>
+        <button class="btn-tactical-toggle" id="btn-mission-sonar" title="Гидроакустический сонар бокового обзора">
+          <span class="btn-tt-icon">📡</span>
+          <span class="btn-tt-text" id="hud-sonar-text">СОНАР</span>
+        </button>
+      </div>
+      <button class="btn-mission-action btn-mission-boost" id="btn-mission-boost">
+        <span class="btn-ma-icon">⚡</span>
+        <span class="btn-ma-text">ФОРСАЖ</span>
+      </button>
+      <button class="btn-mission-action btn-mission-strike pulse-ready" id="btn-mission-strike">
+        <span class="btn-ma-icon">🚀</span>
+        <span class="btn-ma-text">ПУСК FPV</span>
+      </button>
+    </div>
+
+    <!-- PC Keybind Hint Bar -->
+    <div class="mission-pc-hints">
+      <span><b>[W / S]</b> Газ / Реверс</span>
+      <span><b>[A / D]</b> Руль</span>
+      <span><b>[Shift]</b> Форсаж</span>
+      <span><b>[V]</b> VSA Дрифт</span>
+      <span><b>[H]</b> DPS Якорь</span>
+      <span><b>[X]</b> Сонар</span>
+      <span><b>[Пробел]</b> Пуск FPV</span>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       1ST-PERSON FPV KAMIKAZE DRONE OSD HUD OVERLAY
+       ========================================================================= -->
+  <div id="fpv-flight-overlay" class="mission-hud-hidden">
+    <!-- CRT Noise & Scanlines Overlay -->
+    <div class="fpv-scanlines"></div>
+    <div class="fpv-vignette"></div>
+    <div class="fpv-glitch-layer" id="fpv-glitch-layer"></div>
+
+    <!-- Top FPV OSD Bar -->
+    <header class="fpv-top-osd">
+      <div class="fpv-osd-chip">VTX: 5.8GHz R-8</div>
+      <div class="fpv-osd-chip" id="fpv-osd-bat">🔋 25.2V (6S) 100%</div>
+      <div class="fpv-osd-chip" id="fpv-osd-rssi">📶 RSSI: -42dBm (98%)</div>
+      <div class="fpv-osd-chip" id="fpv-osd-timer">⏱️ 00:00</div>
+    </header>
+
+    <!-- Center Pitch Ladder & Artificial Horizon -->
+    <div class="fpv-center-osd">
+      <div class="fpv-pitch-ladder" id="fpv-pitch-ladder">
+        <div class="pitch-line pitch-up">+20</div>
+        <div class="pitch-line pitch-up">+10</div>
+        <div class="pitch-horizon">───  ───</div>
+        <div class="pitch-line pitch-down">-10</div>
+        <div class="pitch-line pitch-down">-20</div>
+      </div>
+
+      <!-- FPV Crosshair Reticle -->
+      <div class="fpv-crosshair" id="fpv-main-crosshair">
+        <div class="fpv-reticle-box"></div>
+        <div class="fpv-reticle-dot"></div>
+      </div>
+
+      <!-- Lock-On Target Box (Tracks Subsystems) -->
+      <div class="fpv-target-bracket" id="fpv-target-bracket">
+        <div class="target-bracket-corners"></div>
+        <div class="target-bracket-tag" id="fpv-target-tag">🎯 [МОСТИК] 85м</div>
+      </div>
+
+      <!-- RECONNAISSANCE 3D WAYPOINT HUD (Follows targets in 3D screen space) -->
+      <div class="recon-hud-overlay" id="recon-hud-overlay" style="display:none;">
+        <div class="recon-objective-banner" id="recon-objective-banner">
+          🔭 ЗАДАЧА: Подлетите к светящемуся маркеру (&lt;45м) и сделайте снимок [ПРОБЕЛ]
+        </div>
+        <div class="recon-waypoint-reticle" id="recon-waypoint-reticle" style="display:none;">
+          <div class="wp-corner wp-tl"></div>
+          <div class="wp-corner wp-tr"></div>
+          <div class="wp-corner wp-bl"></div>
+          <div class="wp-corner wp-br"></div>
+          <div class="wp-tag-pill" id="wp-target-tag">🎯 ЗРК "ТОР" // 65м</div>
+        </div>
+        <button class="btn-recon-snap" id="btn-recon-snap">
+          📸 ЗАФИКСИРОВАТЬ ЦЕЛЬ [ПРОБЕЛ]
+        </button>
+        <div class="recon-photo-card" id="recon-photo-card">
+          <div class="photo-thumb">📸</div>
+          <div class="photo-meta">
+            <div class="photo-title" id="photo-last-name">ЗРК «ТОР-М2»</div>
+            <div class="photo-status">✓ ЗАФИКСИРОВАНО</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CIWS Anti-Air Flak Alert Banner -->
+      <div class="fpv-ciws-alert" id="fpv-ciws-alert">
+        ⚡ ВНИМАНИЕ: ЗЕНИТНЫЙ ОГОНЬ CIWS // МАНЕВРИРУЙТЕ!
+      </div>
+    </div>
+
+    <!-- Left: Flight Speed (km/h) -->
+    <div class="fpv-left-telemetry">
+      <div class="fpv-telem-label">СКОРОСТЬ</div>
+      <div class="fpv-telem-value text-cyan" id="fpv-val-spd">120</div>
+      <div class="fpv-telem-unit">КМ/Ч</div>
+    </div>
+
+    <!-- Right: Flight Altitude (m) & Distance -->
+    <div class="fpv-right-telemetry">
+      <div class="fpv-telem-label">ВЫСОТА</div>
+      <div class="fpv-telem-value text-green" id="fpv-val-alt">14.2</div>
+      <div class="fpv-telem-unit">МЕТРОВ</div>
+      <div class="fpv-telem-divider"></div>
+      <div class="fpv-telem-label">ДО ЦЕЛИ</div>
+      <div class="fpv-telem-value text-yellow" id="fpv-val-dist">85</div>
+      <div class="fpv-telem-unit">МЕТРОВ</div>
+    </div>
+
+    <!-- Bottom Mobile Controls: Flight Joystick & Turbo -->
+    <div id="fpv-joystick-zone" class="virtual-joystick-container fpv-joy">
+      <div class="joystick-base">
+        <div class="joystick-thumb" id="fpv-joystick-thumb"></div>
+      </div>
+      <div class="joystick-label">🕹️ ТАНГАЖ & КРЕН</div>
+    </div>
+
+    <div class="fpv-bottom-actions">
+      <button class="btn-fpv-boost" id="btn-fpv-hover" style="background:rgba(0,200,255,0.2);border-color:rgba(0,200,255,0.6);">
+        <span>🚁 HOVER</span>
+      </button>
+      <button class="btn-fpv-boost" id="btn-fpv-photo" style="background:rgba(0,255,136,0.2);border-color:rgba(0,255,136,0.6);">
+        <span>📸 ФОТО</span>
+      </button>
+      <button class="btn-fpv-boost" id="btn-fpv-boost">
+        <span>⚡ ФОРСАЖ</span>
+      </button>
+      <button class="btn-fpv-detonate" id="btn-fpv-detonate">
+        <span>💥 ДЕТОНАЦИЯ</span>
+      </button>
+    </div>
+
+    <!-- PC Key Hints -->
+    <div class="fpv-pc-hints">
+      <span><b>[W / S]</b> Тангаж (Пикирование / Подъём)</span>
+      <span><b>[A / D]</b> Крен и курс</span>
+      <span><b>[H]</b> Зависание</span>
+      <span><b>[Shift]</b> Форсаж</span>
+      <span><b>[Пробел]</b> Фото / Удар</span>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       GAME OVER / MISSION FAILED MODAL (THE END)
+       ========================================================================= -->
+  <div id="mission-gameover-modal" class="tactical-modal-overlay">
+    <div class="tactical-modal-card gameover-card">
+      <div class="modal-card-header gameover-header">
+        <div class="gameover-skull-icon">💀</div>
+        <h2 class="modal-card-title text-red" id="gameover-title">СВЯЗЬ ПОТЕРЯНА // THE END</h2>
+        <div class="gameover-subtitle">[СИГНАЛ БОРТОВОЙ ТЕЛЕМЕТРИИ ПРЕРВАН]</div>
+      </div>
+      
+      <div class="gameover-reason-box">
+        <div class="reason-label">ПРИЧИНА ПОТЕРИ:</div>
+        <div class="reason-text" id="gameover-reason">Корпус катера уничтожен детонацией морской мины</div>
+      </div>
+
+      <div class="debrief-stats-grid" id="gameover-stats">
+        <!-- Injected dynamically -->
+      </div>
+
+      <div class="gameover-actions">
+        <button class="btn-gameover-retry" id="btn-gameover-retry">
+          <span class="btn-icon">🔄</span> ПОПРОБОВАТЬ СНОВА (RETRY)
+        </button>
+        <button class="btn-gameover-base" id="btn-gameover-base">
+          <span class="btn-icon">⚓</span> ЭВАКУАЦИЯ В ШТАБ
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       MISSION VICTORY / TRIUMPH MODAL
+       ========================================================================= -->
+  <div id="mission-victory-modal" class="tactical-modal-overlay">
+    <div class="tactical-modal-card victory-card">
+      <div class="modal-card-header victory-header">
+        <div class="victory-medal-icon">🏆</div>
+        <h2 class="modal-card-title text-green" id="victory-title">ОПЕРАЦИЯ ЗАВЕРШЕНА // ТРИУМФ</h2>
+        <div class="victory-rank-badge" id="victory-rank-badge">РАНГ: S (ИДЕАЛЬНО)</div>
+      </div>
+
+      <div class="victory-hit-box" id="victory-hit-box">
+        <div class="hit-sub-label">🎯 ПОРАЖЁННЫЙ УЗЕЛ:</div>
+        <div class="hit-sub-title text-yellow" id="victory-hit-sub">ХОДОВОЙ МОСТИК (CRITICAL KILL x2.0)</div>
+      </div>
+
+      <p class="modal-card-desc" id="victory-desc">Корабль противника уничтожен точным ударом FPV-штурмовика «Барракуда» и затонул в море!</p>
+
+      <div class="debrief-stats-grid" id="victory-stats">
+        <!-- Injected dynamically -->
+      </div>
+
+      <div class="victory-actions">
+        <button class="btn-victory-retry" id="btn-victory-retry">
+          <span class="btn-icon">🔄</span> ПОВТОРИТЬ ВЫЛАЗКУ
+        </button>
+        <button class="btn-victory-claim" id="btn-victory-claim">
+          <span class="btn-icon">⚓</span> ЗАБРАТЬ КУШ И В ШТАБ
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Global Tactical Operations Map Modal -->
+  <div id="map-modal" class="tactical-modal-overlay">
+    <div class="tactical-modal-card">
+      <div class="modal-card-header">
+        <h2 class="modal-card-title">🗺️ ТЕАТР БОЕВЫХ ДЕЙСТВИЙ // ЧЁРНОЕ МОРЕ</h2>
+        <button class="btn-close-modal" id="btn-close-map">✕</button>
+      </div>
+      <p class="modal-card-desc">Выберите сектор развёртывания. Каждый район меняет погоду 3D-океана, вражеские корабли и множители наград.</p>
+      <div class="sector-cards-grid">
+        <div class="sector-choice-card active" data-sector="sector-1">
+          <div class="sector-choice-title">1. ОСТРОВ ЗМЕИНЫЙ</div>
+          <div class="sector-choice-sub">Шторм // Разведка и патруль</div>
+          <div class="sector-choice-reward">НАГРАДЫ: x1.0 // СЛОЖНОСТЬ: НОРМА</div>
+        </div>
+        <div class="sector-choice-card" data-sector="sector-2">
+          <div class="sector-choice-title">2. СЕВАСТОПОЛЬСКАЯ БУХТА</div>
+          <div class="sector-choice-sub">Ночной рейд // Прорыв бонов и ПВО</div>
+          <div class="sector-choice-reward">НАГРАДЫ: x1.8 // СЛОЖНОСТЬ: ВЫСОКАЯ</div>
+        </div>
+        <div class="sector-choice-card" data-sector="sector-3">
+          <div class="sector-choice-title">3. НОВОРОССИЙСКИЙ ТЕРМИНАЛ</div>
+          <div class="sector-choice-sub">Закат // Охота на радарный фрегат</div>
+          <div class="sector-choice-reward">НАГРАДЫ: x2.5 // СЛОЖНОСТЬ: ЭЛИТА</div>
+        </div>
+        <div class="sector-choice-card" data-sector="sector-4">
+          <div class="sector-choice-title">4. ДЕЛЬТА ДНЕПРА</div>
+          <div class="sector-choice-sub">Рассветный туман // Плавни и протоки</div>
+          <div class="sector-choice-reward">НАГРАДЫ: x3.2 // СЛОЖНОСТЬ: МАКСИМУМ</div>
+        </div>
+        <div class="sector-choice-card" data-sector="sector-5">
+          <div class="sector-choice-title" style="color:#00ffcc;">5. КИНБУРНСКАЯ КОСА</div>
+          <div class="sector-choice-sub">Закат над лиманом // Песчаные отмели и эхолот</div>
+          <div class="sector-choice-reward">НАГРАДЫ: x4.0 // СЛОЖНОСТЬ: МЕЛКОВОДЬЕ</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SIGINT Cyber Spectrum Hack Minigame Modal -->
+  <div id="cyber-modal" class="tactical-modal-overlay">
+    <div class="tactical-modal-card cyber-card">
+      <div class="modal-card-header">
+        <h2 class="modal-card-title">📡 РЭБ // ДЕШИФРОВКА РАДИОСПЕКТРА</h2>
+        <button class="btn-close-modal" id="btn-close-cyber">✕</button>
+      </div>
+      <p class="modal-card-desc">Совместите частоту перехвата с несущей волной вражеского радара для извлечения разведданных. <strong>Время ограничено!</strong></p>
+      <p id="cyber-timer-label" class="cyber-timer-display">ТАЙМЕР: 30с</p>
+      
+      <canvas id="cyber-wave-canvas" width="600" height="220"></canvas>
+      
+      <div class="cyber-controls-row">
+        <div class="cyber-slider-group">
+          <label>ЧАСТОТА (МГц): <span id="cyber-freq-val">142.5</span></label>
+          <input type="range" id="cyber-slider-freq" min="50" max="250" value="100" class="cyber-range-input">
+        </div>
+        <div class="cyber-slider-group">
+          <label>АМПЛИТУДА: <span id="cyber-amp-val">1.0</span></label>
+          <input type="range" id="cyber-slider-amp" min="0.2" max="2.0" step="0.1" value="0.5" class="cyber-range-input">
+        </div>
+      </div>
+
+      <div class="cyber-action-row">
+        <div id="cyber-match-status" class="cyber-match-label">СОВПАДЕНИЕ СПЕКТРА: 0%</div>
+        <button id="btn-cyber-submit" class="btn-buy-action">ВЗЛОМАТЬ КАНАЛ (+$2,000 / +50 МБ)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- FPV Assault Minigame Modal -->
+  <div id="assault-modal" role="dialog" aria-modal="true" aria-label="FPV-Штурм">
+    <div style="text-align: center;">
+      <h1 class="modal-main-title">🚀 FPV-ШТУРМ // ПРОРЫВ ПВО</h1>
+      <p id="modal-timer" class="modal-sub-timer">ВРЕМЯ: 15.0с</p>
+    </div>
+    <canvas id="fpv-canvas" width="900" height="500"></canvas>
+    <div class="modal-action-box">
+      <div class="modal-lock-track">
+        <div id="lock-bar-fill" class="modal-lock-fill"></div>
+      </div>
+      <p id="lock-status-label" class="modal-status-text">НАЖМИ [ПРОБЕЛ] ИЛИ КОСНИСЬ ЭКРАНА ДЛЯ ВЗЛЁТА</p>
+    </div>
+  </div>
+
+  <!-- Random Event Banner -->
+  <div id="event-banner" class="event-banner-overlay">
+    <div class="event-banner-inner">
+      <div class="event-banner-icon">⚠</div>
+      <div class="event-banner-content">
+        <div class="event-banner-title-text" id="event-banner-title">СОБЫТИЕ</div>
+        <div class="event-banner-desc-text" id="event-banner-desc">Описание события</div>
+        <div class="event-banner-progress-text" id="event-banner-progress"></div>
+      </div>
+      <div class="event-banner-right">
+        <span class="event-banner-countdown" id="event-banner-timer">12с</span>
+        <button class="btn-event-action" id="event-banner-action" style="display:none;">🎯 ДЕЙСТВИЕ</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notification Container -->
+  <div id="notification-container"></div>
+
+  <!-- HELP / TACTICAL MANUAL MODAL -->
+  <div id="help-modal" class="help-modal-overlay">
+    <div class="help-modal-content">
+      <button class="help-close-btn" id="btn-close-help" title="Закрыть руководство">✕</button>
+      
+      <div class="help-header">
+        <div class="help-badge">ИНСТРУКЦИЯ ОПЕРАТОРА // СЕКРЕТНО</div>
+        <h2 class="help-title">📖 ТАКТИЧЕСКИЙ СПРАВОЧНИК «БАРРАКУДА»</h2>
+        <p class="help-subtitle">Боевое руководство по управлению автономным морским ударным дроном</p>
+      </div>
+
+      <div class="help-sections-grid">
+        <!-- Section 1 -->
+        <div class="help-card">
+          <div class="help-card-icon">📡</div>
+          <h3 class="help-card-title">1. РАДИОРАЗВЕДКА И ДОБЫЧА (SIGINT)</h3>
+          <p class="help-card-text">
+            Тапы по 3D-дрону перехватывают зашифрованную радио-телеметрию врага. Каждый клик генерирует <strong>МБ разведданных</strong> и <strong>$ финансовые кредиты</strong>, а также накапливает заряд боевой батареи FPV-штурма.
+          </p>
+        </div>
+
+        <!-- Section 2 -->
+        <div class="help-card">
+          <div class="help-card-icon">🚀</div>
+          <h3 class="help-card-title">2. FPV-ШТУРМ И УДАР ПО КОРАБЛЯМ</h3>
+          <p class="help-card-text">
+            Корабли противника уничтожаются кинетическими ударами! По накоплению шкалы нажмите <strong>«FPV-ШТУРМ»</strong>: управляйте штурмовым дроном, обходите зоны ПВО и поражайте флагманы, зарабатывая редкие трофеи и чертежи престижа.
+          </p>
+        </div>
+
+        <!-- Section 3 -->
+        <div class="help-card">
+          <div class="help-card-icon">🗺️</div>
+          <h3 class="help-card-title">3. СЮЖЕТНАЯ КАМПАНИЯ (4 АКТА)</h3>
+          <p class="help-card-text">
+            Проходите боевые операции: <em>«Тень над Змеиным»</em> $\rightarrow$ <em>«Прорыв Севастопольских бонов»</em> $\rightarrow$ <em>«Охота на Новороссийский терминал»</em> $\rightarrow$ <em>«Ликвидация супер-флагмана Левиафан»</em> с диалогами штаба и офицеров РЭБ.
+          </p>
+        </div>
+
+        <!-- Section 4 -->
+        <div class="help-card">
+          <div class="help-card-icon">🛠️</div>
+          <h3 class="help-card-title">4. АНГАР КОРПУСОВ И КУЗНИЦА</h3>
+          <p class="help-card-text">
+            Открывайте новые прототипы: <strong>Phantom</strong> (стелс), <strong>Strike</strong> (ракетоносец), <strong>Aegis</strong> (флагман РЭБ с роем). Создавайте в Кузнице модули из трофеев: <em>Броня «Титан-М»</em>, <em>Квантовый дешифратор</em>, <em>Боеголовка X-9</em> и <em>Ведомый рой</em>.
+          </p>
+        </div>
+
+        <!-- Section 5 -->
+        <div class="help-card">
+          <div class="help-card-icon">📻</div>
+          <h3 class="help-card-title">5. РЭБ И СКАНИРОВАНИЕ ЧАСТОТ</h3>
+          <p class="help-card-text">
+            Взламывайте радары противника в мини-игре РЭБ: сопоставьте частоту и амплитуду волны с сигналом вражеского корабля для перехвата данных и отключения систем помех.
+          </p>
+        </div>
+
+        <!-- Section 6 -->
+        <div class="help-card">
+          <div class="help-card-icon">🧬</div>
+          <h3 class="help-card-title">6. НИОКР И ДЕРЕВО ТЕХНОЛОГИЙ</h3>
+          <p class="help-card-text">
+            Инвестируйте терабайты данных в 13 уникальных ветвей НИОКР: открывайте автономную добычу, квантовое ускорение, роевой искусственный интеллект и безлимитный накопитель Nexus.
+          </p>
+        </div>
+      </div>
+
+      <div class="help-footer-row">
+        <button class="btn-buy-action" id="btn-help-understood" style="max-width: 280px; margin: 0 auto;">ПРИНЯТО В РАБОТУ ⚓</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TECH TREE MODAL (TACTICAL R&D MATRIX) -->
+  <div id="techtree-modal" class="help-modal-overlay">
+    <div class="help-modal-content tt-modal-container">
+      <button class="help-close-btn" id="btn-close-techtree" title="Закрыть НИОКР">✕</button>
+      
+      <!-- Tech Tree Top Header -->
+      <div class="tt-top-header">
+        <div class="tt-header-badge">
+          <span class="tt-badge-pulse"></span>
+          <span>CYBERNETICS // R&D MATRIX v2.4</span>
+        </div>
+        <h2 class="tt-title">🧬 ДЕРЕВО ТЕХНОЛОГИЙ «БАРАКУДА»</h2>
+        <div class="tt-telemetry-row">
+          <div class="tt-telemetry-pill">
+            <span class="tt-telemetry-label">ДОСТУПНО ДАННЫХ:</span>
+            <span class="tt-telemetry-val text-green" id="tt-user-data">0.0 МБ</span>
+          </div>
+          <div class="tt-telemetry-pill">
+            <span class="tt-telemetry-label">ИЗУЧЕНО УЗЛОВ:</span>
+            <span class="tt-telemetry-val text-cyan" id="tt-global-progress">0 / 13 [0%]</span>
+          </div>
+        </div>
+
+        <!-- Filter Branch Tabs -->
+        <div class="tt-filter-tabs">
+          <button class="tt-tab-btn active" data-filter="all">ВСЕ ВЕТВИ (13)</button>
+          <button class="tt-tab-btn" data-filter="stealth">🕵️ СТЕЛС / РЭБ (4)</button>
+          <button class="tt-tab-btn" data-filter="firepower">🎯 ОГНЕВАЯ МОЩЬ (4)</button>
+          <button class="tt-tab-btn" data-filter="engineering">⚙️ ИНЖЕНЕРИЯ (5)</button>
+        </div>
+      </div>
+
+      <!-- Tech Tree Branches Grid -->
+      <div id="techtree-grid" class="tt-matrix-grid">
+        
+        <!-- Branch 1: СТЕЛС / РЭБ -->
+        <div class="tt-branch tt-branch-stealth" data-branch="stealth">
+          <div class="tt-branch-header">
+            <div class="tt-branch-icon">🕵️</div>
+            <div class="tt-branch-info">
+              <div class="tt-branch-title">СТЕЛС & КИБЕР-РЭБ</div>
+              <div class="tt-branch-sub">Маскировка, перехват и дешифровка</div>
+            </div>
+            <div class="tt-branch-counter" id="tt-count-stealth">0/4</div>
+          </div>
+
+          <div class="tt-node" data-tt="sniffer" data-tt-req="" data-tt-cost="500" data-tier="1">
+            <div class="tt-node-tier">T-1</div>
+            <div class="tt-node-icon-wrap"><span class="tt-node-icon">📡</span></div>
+            <div class="tt-node-body">
+              <div class="tt-node-name">СНИФФЕР ПАКЕТОВ</div>
+              <div class="tt-node-desc">+2.5 МБ/с пассивно</div>
+            </div>
+            <div class="tt-node-cost-badge">500 МБ</div>
+          </div>
+
+          <div class="tt-conduit"><div class="tt-conduit-pulse"></div></div>
+
+          <div class="tt-node" data-tt="quantum" data-tt-req="sniffer" data-tt-cost="5000" data-tier="2">
+            <div class="tt-node-tier">T-2</div>
+            <div class="tt-node-icon-wrap"><span class="tt-node-icon">🔮</span></div>
+            <div class="tt-node-body">
+              <div class="tt-node-name">КВАНТОВЫЙ ДЕШИФРАТОР</div>
+              <div class="tt-node-desc">+12% шанс крита (x5)</div>
+            </div>
+            <div class="tt-node-cost-badge">5,000 МБ</div>
+          </div>
+
+          <div class="tt-conduit"><div class="tt-conduit-pulse"></div></div>
+
+          <div class="tt-node" data-tt="ghost_protocol" data-tt-req="quantum" data-tt-cost="50000" data-tier="3">
+            <div class="tt-node-tier">T-3</div>
+            <div class="tt-node-icon-wrap"><span class="tt-node-icon">👻</span></div>
+            <div class="tt-node-body">
+              <div class="tt-node-name">ПРОТОКОЛ «ПРИЗРАК»</div>
+              <div class="tt-node-desc">-40% препятствий в FPV</div>
+            </div>
+            <div class="tt-node-cost-badge">50,000 МБ</div>
+          </div>
+
+          <div class="tt-conduit"><div class="tt-conduit-pulse"></div></div>
+
+          <div class="tt-node" data-tt="ecm_suite" data-tt-req="ghost_protocol" data-tt-cost="250000" data-tier="4">
+            <div class="tt-node-tier">T-4</div>
+            <div class="tt-node-icon-wrap"><span class="tt-node-icon">🛡️</span></div>
+            <div class="tt-node-body">
+              <div class="tt-node-name">РЭБ КОМПЛЕКС</div>
+              <div class="tt-node-desc">-50% кулдаун пуска FPV</div>
+            </div>
+            <div class="tt-node-cost-badge">250,000 МБ</div>
+          </div>
+        </div>
+
+        <!-- Branch 2: ОГНЕВАЯ МОЩЬ -->
+        <div class="tt-branch tt-branch-firepower" data-branch="firepower">
+          <div class="tt-branch-header">
+            <div class="tt-branch-icon">🎯</div>
+            <div class="tt-branch-info">
+              <div class="tt-branch-title">ОГНЕВАЯ МОЩЬ</div>
+              <div class="tt-branch-sub">Ударные комплексы и дроны-камикадзе</div>
+            </div>
+            <div class="tt-branch-counter" id="tt-count-firepower">0/4</div>
+          </div>
+
+          <div class="tt-node" data-tt="optics" data-tt-req="" data-tt-cost="800" data-tier="1">
+            <div class="tt-node-tier">T-1</div>
+            <div class="tt-node-icon-wrap"><span class="tt-node-icon">🔭</span></div>
+            <div class="tt-node-body">
+              <div class="tt-node-name">ОПТИКА FLIR</div>
+              <div class="tt-node-desc">+4.0 МБ/клик</div>
+            </div>
+            <div class="tt-node-cost-badge">800 МБ</div>
+          </div>
+
+          <div class="tt-conduit"><div class="tt-conduit-pulse"></div></div>
+
+          <div class="tt-node" data-tt="missiles" data-tt-req="optics" data-tt-cost="8000" data-tier="2">
+            <div class="tt-node-tier">T-2</div>
+            <div class="tt-node-icon-wrap"><span class="tt-node-icon">🚀</span></div>
+            <div class="tt-node-body">
+              <div class="tt-node-name">СТАПЕЛИ FPV-ДРОНОВ</div>
+              <div class="tt-node-desc">+50% сила удара дрона</div>
+            </div>
+            <div class="tt-node-cost-badge">8,000 МБ</div>
+          </div>
+
+          <div class="tt-conduit"><div class="tt-conduit-pulse"></div></div>
+
+          <div class="tt-node" data-tt="plasma_warhead" data-tt-req="missiles" data-tt-cost="80000" data-tier="3">
+            <div class="tt-node-tier">T-3</div>
+            <div class="tt-node-icon-wrap"><span class="tt-node-icon">💥</span></div>
+            <div class="tt-node-body">
+              <div class="tt-node-name">ПЛАЗМЕННАЯ БЧ</div>
+              <div class="tt-node-desc">+100% скорость заряда штурма</div>
+            </div>
+            <div class="tt-node-cost-badge">80,000 МБ</div>
+          </div>
+
+          <div class="tt-conduit"><div class="tt-conduit-pulse"></div></div>
+
+          <div class="tt-node" data-tt="swarm_ai" data-tt-req="plasma_warhead" data-tt-cost="500000" data-tier="4">
+            <div class="tt-node-tier">T-4</div>
+            <div class="tt-node-icon-wrap"><span class="tt-node-icon">🤖</span></div>
+            <div class="tt-node-body">
+              <div class="tt-node-name">РОЙ ИИ</div>
+              <div class="tt-node-desc">Рой эскорта + x2 урон флоту</div>
+            </div>
+            <div class="tt-node-cost-badge">500,000 МБ</div>
+          </div>
+        </div>
+
+        <!-- Branch 3: ИНЖЕНЕРИЯ -->
+        <div class="tt-branch tt-branch-engineering" data-branch="engineering">
+          <div class="tt-branch-header">
+            <div class="tt-branch-icon">⚙️</div>
+            <div class="tt-branch-info">
+              <div class="tt-branch-title">ИНЖЕНЕРИЯ & БАЗА</div>
+              <div class="tt-branch-sub">Энергетика, спутники и инфраструктура</div>
+            </div>
+            <div class="tt-branch-counter" id="tt-count-engineering">0/5</div>
+          </div>
+
+          <div class="tt-node" data-tt="satcom" data-tt-req="" data-tt-cost="300" data-tier="1">
+            <div class="tt-node-tier">T-1</div>
+            <div class="tt-node-icon-wrap"><span class="tt-node-icon">📡</span></div>
+            <div class="tt-node-body">
+              <div class="tt-node-name">АНТЕННА SATCOM</div>
+              <div class="tt-node-desc">+2.0 МБ/клик</div>
+            </div>
+            <div class="tt-node-cost-badge">300 МБ</div>
+          </div>
+
+          <div class="tt-conduit"><div class="tt-conduit-pulse"></div></div>
+
+          <div class="tt-node" data-tt="armor" data-tt-req="satcom" data-tt-cost="3000" data-tier="2">
+            <div class="tt-node-tier">T-2</div>
+            <div class="tt-node-icon-wrap"><span class="tt-node-icon">🛡️</span></div>
+            <div class="tt-node-body">
+              <div class="tt-node-name">БРОНЕПЛИТЫ КОРПУСА</div>
+              <div class="tt-node-desc">+1 жизнь в FPV, +1.5 МБ/с</div>
+            </div>
+            <div class="tt-node-cost-badge">3,000 МБ</div>
+          </div>
+
+          <div class="tt-conduit"><div class="tt-conduit-pulse"></div></div>
+
+          <div class="tt-node" data-tt="waterjets" data-tt-req="armor" data-tt-cost="15000" data-tier="3">
+            <div class="tt-node-tier">T-3</div>
+            <div class="tt-node-icon-wrap"><span class="tt-node-icon">💨</span></div>
+            <div class="tt-node-body">
+              <div class="tt-node-name">ВОДОМЁТНЫЕ ДВИГАТЕЛИ</div>
+              <div class="tt-node-desc">+3.0 МБ/с + кильватерный след</div>
+            </div>
+            <div class="tt-node-cost-badge">15,000 МБ</div>
+          </div>
+
+          <div class="tt-conduit"><div class="tt-conduit-pulse"></div></div>
+
+          <div class="tt-node" data-tt="autosiphon" data-tt-req="waterjets" data-tt-cost="75000" data-tier="4">
+            <div class="tt-node-tier">T-4</div>
+            <div class="tt-node-icon-wrap"><span class="tt-node-icon">💰</span></div>
+            <div class="tt-node-body">
+              <div class="tt-node-name">АВТО-СИФОН ДАННЫХ</div>
+              <div class="tt-node-desc">+$75/с пассивных кредитов</div>
+            </div>
+            <div class="tt-node-cost-badge">75,000 МБ</div>
+          </div>
+
+          <div class="tt-conduit"><div class="tt-conduit-pulse"></div></div>
+
+          <div class="tt-node" data-tt="data_nexus" data-tt-req="autosiphon" data-tt-cost="400000" data-tier="5">
+            <div class="tt-node-tier">T-5</div>
+            <div class="tt-node-icon-wrap"><span class="tt-node-icon">🌐</span></div>
+            <div class="tt-node-body">
+              <div class="tt-node-name">ДАТА-НЕКСУС</div>
+              <div class="tt-node-desc">x2 ко всему пассивному доходу</div>
+            </div>
+            <div class="tt-node-cost-badge">400,000 МБ</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Advanced Tactical Inspector Terminal -->
+      <div class="tt-inspector-terminal" id="tt-detail">
+        <div class="tt-inspector-left">
+          <div class="tt-inspector-blueprint">
+            <div class="tt-blueprint-reticle"></div>
+            <div class="tt-blueprint-icon" id="tt-detail-icon">🔬</div>
+            <div class="tt-blueprint-tier" id="tt-detail-tier">TIER 1</div>
+          </div>
+          <div class="tt-inspector-info">
+            <div class="tt-inspector-header">
+              <span class="tt-inspector-branch" id="tt-detail-branch">НИОКР КОРПУСА</span>
+              <h3 class="tt-inspector-name" id="tt-detail-name">ВЫБЕРИТЕ УЗЕЛ ТЕХНОЛОГИЙ</h3>
+            </div>
+            <p class="tt-inspector-desc" id="tt-detail-desc">Нажмите на любой модуль в матрице исследований выше, чтобы изучить подробные тактико-технические характеристики и активировать модернизацию.</p>
+            <div class="tt-inspector-metrics" id="tt-detail-stats"></div>
+          </div>
+        </div>
+
+        <div class="tt-inspector-right">
+          <div id="tt-detail-status-wrap">
+            <div class="tt-status-pill ready">◉ ВЫБЕРИТЕ ТЕХНОЛОГИЮ</div>
+          </div>
+          <button id="tt-btn-action-buy" class="tt-btn-action-research">ИЗУЧИТЬ МОДУЛЬ</button>
+          
+          <div class="tt-carousel-nav">
+            <button id="tt-nav-prev" title="Предыдущая технология">◄ ПРЕДЫДУЩАЯ</button>
+            <button id="tt-nav-next" title="Следующая технология">СЛЕДУЮЩАЯ ►</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="help-modal" class="help-modal-overlay">
+    <div class="help-modal-content">
+      <div class="help-modal-header">
+        <h2>📖 ТАКТИЧЕСКОЕ РУКОВОДСТВО — BARRACUDA</h2>
+        <button class="btn-close-help" id="btn-close-help">✕</button>
+      </div>
+      <div class="help-modal-body">
+
+        <div class="help-section">
+          <h3>🎮 ОБЗОР ИГРЫ</h3>
+          <p>Вы управляете боевым морским дроном <strong>«Баракуда»</strong> — тактическим беспилотным катером для разведки и ударных операций. Собирайте <strong>разведданные (МБ)</strong>, зарабатывайте <strong>кредиты ($)</strong>, улучшайте корабль и выполняйте миссии.</p>
+        </div>
+
+        <div class="help-section">
+          <h3>💰 РЕСУРСЫ</h3>
+          <div class="help-grid">
+            <div class="help-item">
+              <span class="help-icon">📊</span>
+              <div><strong>Буфер (МБ)</strong> — разведданные. Заполни буфер кликами и пассивным доходом. Когда буфер полон — можно запускать FPV-штурм.</div>
+            </div>
+            <div class="help-item">
+              <span class="help-icon">💵</span>
+              <div><strong>Кредиты ($)</strong> — валюта для покупки улучшений. Зарабатывается от пассивного дохода, контрактов и мини-игр.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="help-section">
+          <h3>🖱️ ОСНОВНЫЕ ДЕЙСТВИЯ</h3>
+          <div class="help-grid">
+            <div class="help-item">
+              <span class="help-icon">👆</span>
+              <div><strong>Клик по дрону</strong> — основной способ сбора данных. Каждый клик = +МБ в буфер. Бывают <em>критические удары</em> (x2 урон, зелёная вспышка).</div>
+            </div>
+            <div class="help-item">
+              <span class="help-icon">⚡</span>
+              <div><strong>Разгон</strong> — временный буст (x2.5 к пассиву на 8 секунд). Кнопка внизу экрана. Кулдаун 25 секунд.</div>
+            </div>
+            <div class="help-item">
+              <span class="help-icon">🚀</span>
+              <div><strong>FPV-Штурм</strong> — главная мини-игра. Доступна когда буфер заполнен на 100%. Поражение = потеря данных.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="help-section">
+          <h3>🚀 FPV-ШТУРМ (Мини-игра)</h3>
+          <p>Мини-игра из 5 фаз:</p>
+          <div class="help-grid">
+            <div class="help-item">
+              <span class="help-icon">1️⃣</span>
+              <div><strong>Катапульта</strong> — нажмите <kbd>ПРОБЕЛ</kbd> когда маркер в зелёной зоне. Попадание в центр = «Идеальный запуск» (бонус).</div>
+            </div>
+            <div class="help-item">
+              <span class="help-icon">2️⃣</span>
+              <div><strong>Прорыв ПВО</strong> — жмите <kbd>ПРОБЕЛ</kbd> для подъёма дрона. Уклоняйтесь от стен, радарных лучей и ракет-перехватчиков. Собирайте 💠 данные.</div>
+            </div>
+            <div class="help-item">
+              <span class="help-icon">3️⃣</span>
+              <div><strong>Термальный захват</strong> — наведите мышь на корабль-цель и удерживайте прицел 2 секунды для захвата.</div>
+            </div>
+            <div class="help-item">
+              <span class="help-icon">4️⃣</span>
+              <div><strong>Взрыв</strong> — кинематическая сцена поражения цели.</div>
+            </div>
+            <div class="help-item">
+              <span class="help-icon">5️⃣</span>
+              <div><strong>Рейтинг S/A/B/C</strong> — оценка по скорости, точности и бонусам. S = x2 награды!</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="help-section">
+          <h3>📡 ВЗЛОМ РЭБ (SIGINT)</h3>
+          <p>Совместите <strong>частоту</strong> и <strong>амплитуду</strong> волны с вражеским сигналом. Есть <strong>30 секунд</strong> на каждый канал. Всего 3 канала — каждый следующий сложнее. Остерегайтесь <em>помех</em>!</p>
+        </div>
+
+        <div class="help-section">
+          <h3>🛠️ УЛУЧШЕНИЯ</h3>
+          <p>Панель слева — кнопка <strong>ДОСЬЕ</strong>. Там два раздела:</p>
+          <div class="help-grid">
+            <div class="help-item">
+              <span class="help-icon">⚙️</span>
+              <div><strong>Вооружение</strong> — ракеты, оптика, броня, водомёты. Каждое улучшение отображается на 3D-модели корабля.</div>
+            </div>
+            <div class="help-item">
+              <span class="help-icon">💻</span>
+              <div><strong>Кибер-модули</strong> — SATCOM, анализатор, квантовый процессор, авто-сифон. Улучшают пассивный доход и сбор данных.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="help-section">
+          <h3>🗺️ СЕКТОРЫ</h3>
+          <p>4 сектора с уникальной погодой и бонусами. Разблокируются за кредиты:</p>
+          <div class="help-grid">
+            <div class="help-item">
+              <span class="help-icon">🌊</span>
+              <div><strong>О. Змеиный</strong> — шторм, начальный сектор. Бонус: +10% к данным.</div>
+            </div>
+            <div class="help-item">
+              <span class="help-icon">🌙</span>
+              <div><strong>Севастополь</strong> — ночь. Бонус: +15% к кредитам.</div>
+            </div>
+            <div class="help-item">
+              <span class="help-icon">🌅</span>
+              <div><strong>Новороссийск</strong> — закат. Бонус: +20% к пассиву.</div>
+            </div>
+            <div class="help-item">
+              <span class="help-icon">🌄</span>
+              <div><strong>Керчь</strong> — рассвет. Бонус: +25% ко всему.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="help-section">
+          <h3>📐 ПРЕСТИЖ (Чертежи)</h3>
+          <p>Когда заполните <strong>10 кораблей</strong> (потопите 10 целей) — можно сделать <strong>Престиж</strong>. Это сбросит прогресс, но даст <strong>Чертёж</strong> — постоянный множитель ко всему. Каждый престиж делает игру сложнее, но награднее.</p>
+        </div>
+
+        <div class="help-section">
+          <h3>⚡ СЛУЧАЙНЫЕ СОБЫТИЯ</h3>
+          <p>Каждые 30–75 секунд может случиться случайное событие:</p>
+          <div class="help-grid">
+            <div class="help-item">
+              <span class="help-icon">⚠️</span>
+              <div><strong>Вражеский патруль</strong> — кликните 20 раз за 12 секунд или потеряете данные!</div>
+            </div>
+            <div class="help-item">
+              <span class="help-icon">📡</span>
+              <div><strong>Подводный кабель</strong> — бесплатные данные и кредиты.</div>
+            </div>
+            <div class="help-item">
+              <span class="help-icon">⚡</span>
+              <div><strong>ЭМ-помеха</strong> — пассив отключится, затем усилится в 3 раза.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="help-section">
+          <h3>🏆 ДОСТИЖЕНИЯ</h3>
+          <p>15 достижений за различные действия. Уведомления появляются в правом верхнем углу. Прогресс сохраняется автоматически.</p>
+        </div>
+
+        <div class="help-section help-tips">
+          <h3>💡 СОВЕТЫ</h3>
+          <ul>
+            <li>Кликайте быстрее во время <strong>Разгона</strong> — эффект суммируется!</li>
+            <li>В FPV-штурме собирайте <strong>💠 дата-пакеты</strong> — они дают МБ-бонус</li>
+            <li>Взлом РЭБ — <strong>3 канала подряд</strong> дают x3 награду</li>
+            <li>Контракты — <strong>пассивный заработок</strong>, запускайте всегда когда возможно</li>
+            <li>Прогресс <strong>автосохраняется</strong> каждые 30 секунд</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SETTINGS MODAL -->
+  <div id="settings-modal" class="help-modal-overlay">
+    <div class="help-modal-content" style="max-width: 480px;">
+      <div class="help-modal-header">
+        <h2>⚙️ НАСТРОЙКИ СИСТЕМЫ</h2>
+        <button class="btn-close-help" id="btn-close-settings">✕</button>
+      </div>
+      <div class="help-modal-body">
+        <div class="help-section">
+          <h3>🔊 АУДИО И СВЯЗЬ</h3>
+          <div style="display:flex; gap:12px; align-items:center; margin-bottom:14px;">
+            <button id="setting-sound" class="btn-buy-action" style="flex:1;">🔊 ЗВУК: ВКЛ</button>
+          </div>
+          <div style="font-size:12px; color:#8da4af; margin-bottom:6px;">ГРОМКОСТЬ ТАКТИЧЕСКИХ СИГНАЛОВ:</div>
+          <input type="range" id="setting-volume" min="0" max="100" value="70" style="width:100%;">
+        </div>
+        <div class="help-section">
+          <h3>💾 УПРАВЛЕНИЕ ДАННЫМИ</h3>
+          <button id="btn-new-game" class="btn-buy-action" style="background:rgba(255,40,40,0.2); border-color:#ff4444; color:#ff6666; width:100%;">⚠️ СБРОСИТЬ ПРОГРЕСС / НОВАЯ ИГРА</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TACTICAL RADIO COMMS TERMINAL (HUD OVERLAY) -->
+  <div id="comms-terminal-modal">
+    <div class="comms-top-bar">
+      <div class="comms-status-wrap">
+        <span class="comms-live-dot"></span>
+        <span id="comms-channel-tag">SECURE COMMS // CH-12 [ENCRYPTED]</span>
+      </div>
+      <button class="comms-close-btn" id="btn-close-comms" title="Свернуть радиоканал">✕</button>
+    </div>
+    <div class="comms-main-content">
+      <div class="comms-avatar-box" id="comms-avatar-icon">
+        📡
+        <span class="comms-avatar-badge" id="comms-speaker-role">HQ</span>
+      </div>
+      <div class="comms-text-pane">
+        <div class="comms-speaker-name" id="comms-speaker-title">ШТАБ [МАЯК]</div>
+        <div class="comms-callsign-sub" id="comms-speaker-sub">ГЕНЕРАЛЬНЫЙ ОПЕРАТИВНЫЙ ЦЕНТР // ЧЁРНОЕ МОРЕ</div>
+        <div class="comms-dialogue-body" id="comms-dialogue-text">Инициализация защищённого канала телеметрии...</div>
+      </div>
+    </div>
+    <div class="comms-choices-tray" id="comms-choices-container">
+      <!-- Injected choices -->
+    </div>
+  </div>
+
+  <!-- CAMPAIGN STORY OPERATIONS MODAL -->
+  <div id="campaign-modal" class="help-modal-overlay">
+    <div class="help-modal-content campaign-modal-container">
+      <button class="help-close-btn" id="btn-close-campaign" title="Закрыть операции">✕</button>
+      
+      <div style="text-align:center; margin-bottom:16px;">
+        <div style="font-family:'Rajdhani',monospace; font-size:11px; color:#00ff88; letter-spacing:2px;">OPERATIONAL COMMAND // DNIPRO RIVER THEATER</div>
+        <h2 style="font-family:'Rajdhani',sans-serif; font-size:24px; font-weight:800; color:#fff; margin:4px 0;">⚔️ БОЕВЫЕ ОПЕРАЦИИ «ХЕРСОНСКИЙ РУБЕЖ»</h2>
+        <p style="color:#8da4af; font-size:12px;">Тактические операции на Днепре: разведка, РЭБ-саботаж, FPV-удар и ликвидация объектов.</p>
+      </div>
+
+      <!-- Acts Navigation Tabs -->
+      <div class="campaign-acts-nav">
+        <div class="campaign-act-tab active" data-act="1">
+          <div class="campaign-act-tag">АКТ I</div>
+          <div class="campaign-act-title">🌉 ТЕНЬ АНТОНОВСКОГО</div>
+        </div>
+        <div class="campaign-act-tab" data-act="2">
+          <div class="campaign-act-tag">АКТ II</div>
+          <div class="campaign-act-title">🌙 НОЧЬ НАД КАХОВКОЙ</div>
+        </div>
+        <div class="campaign-act-tab" data-act="3">
+          <div class="campaign-act-tag">АКТ III</div>
+          <div class="campaign-act-title">⚓ ХЕРСОНСКИЙ РУБЕЖ</div>
+        </div>
+        <div class="campaign-act-tab" data-act="4">
+          <div class="campaign-act-tag">АКТ IV // ФИНАЛ</div>
+          <div class="campaign-act-title">💀 ДЕЛЬТА РАССВЕТА</div>
+        </div>
+      </div>
+
+      <!-- Missions Grid for Selected Act -->
+      <div class="campaign-mission-grid" id="campaign-missions-list">
+        <!-- Injected via JS -->
+      </div>
+
+    </div>
+  </div>
+
+  <!-- DRONE HANGAR & SALVAGE/CRAFTING FORGE MODAL -->
+  <div id="hangar-modal" class="help-modal-overlay">
+    <div class="help-modal-content hangar-modal-container">
+      <button class="help-close-btn" id="btn-close-hangar" title="Закрыть ангар">✕</button>
+
+      <div style="text-align:center; margin-bottom:18px;">
+        <div style="font-family:'Rajdhani',monospace; font-size:11px; color:#00f0ff; letter-spacing:2px;">NAVAL DRONE YARD // PROTOYPE HANGAR</div>
+        <h2 style="font-family:'Rajdhani',sans-serif; font-size:24px; font-weight:800; color:#fff; margin:4px 0;">⚓ АНГАР ПРОТОТИПОВ И ЦЕХ КРАФТА</h2>
+        <p style="color:#8da4af; font-size:12px;">Выбирайте специализированные 3D-корпуса катеров и создавайте военные модули из трофейного лута.</p>
+      </div>
+
+      <!-- Prototypes Cards Grid -->
+      <div class="hangar-prototype-grid">
+        <!-- MK1 PHANTOM -->
+        <div class="proto-card selected" data-proto="phantom">
+          <div>
+            <span class="proto-badge">MK-1 // СТЕЛС</span>
+            <div class="proto-title">BARRACUDA «PHANTOM»</div>
+            <div class="proto-role">Разведывательно-диверсионная платформа</div>
+            <div class="proto-stats-list">
+              <div class="proto-stat-item"><span>Стелс-маскировка:</span><span class="proto-stat-val text-green">95% (-40% препятствий)</span></div>
+              <div class="proto-stat-item"><span>Сбор разведданных:</span><span class="proto-stat-val text-cyan">+50% к МБ</span></div>
+              <div class="proto-stat-item"><span>Скорость взлома РЭБ:</span><span class="proto-stat-val text-yellow">+30% времени</span></div>
+            </div>
+          </div>
+          <button class="btn-launch-mission btn-proto-select" data-select-proto="phantom" style="background:#00ff88;">ВЫБРАН КОРПУС</button>
+        </div>
+
+        <!-- MK2 STRIKE -->
+        <div class="proto-card" data-proto="strike">
+          <div>
+            <span class="proto-badge" style="color:#ff5555; background:rgba(255,85,85,0.15); border-color:#ff5555;">MK-2 // ШТУРМОВИК</span>
+            <div class="proto-title">BARRACUDA «STRIKE»</div>
+            <div class="proto-role">Тяжёлый ударный ракетоносец</div>
+            <div class="proto-stats-list">
+              <div class="proto-stat-item"><span>Урон FPV-удара:</span><span class="proto-stat-val text-green">+100% (x2 урон)</span></div>
+              <div class="proto-stat-item"><span>Критический множитель:</span><span class="proto-stat-val text-yellow">До x12 Крит</span></div>
+              <div class="proto-stat-item"><span>Кулдаун пуска FPV:</span><span class="proto-stat-val text-cyan">-30% задержка</span></div>
+            </div>
+          </div>
+          <button class="btn-launch-mission btn-proto-select" data-select-proto="strike" style="background:rgba(255,255,255,0.15); color:#fff;">АКТИВИРОВАТЬ</button>
+        </div>
+
+        <!-- MK3 AEGIS -->
+        <div class="proto-card" data-proto="aegis">
+          <div>
+            <span class="proto-badge" style="color:#00f0ff; background:rgba(0,240,255,0.15); border-color:#00f0ff;">MK-3 // ФЛАГМАН РЭБ</span>
+            <div class="proto-title">BARRACUDA «AEGIS»</div>
+            <div class="proto-role">Комплекс радиоэлектронной борьбы и Рой ИИ</div>
+            <div class="proto-stats-list">
+              <div class="proto-stat-item"><span>Авто-подавление РЭБ:</span><span class="proto-stat-val text-cyan">Пассивный взлом</span></div>
+              <div class="proto-stat-item"><span>Рой ведомых дронов:</span><span class="proto-stat-val text-green">+100% пассивный $</span></div>
+              <div class="proto-stat-item"><span>Защита от ПВО:</span><span class="proto-stat-val text-yellow">+2 Доп. Жизни в FPV</span></div>
+            </div>
+          </div>
+          <button class="btn-launch-mission btn-proto-select" data-select-proto="aegis" style="background:rgba(255,255,255,0.15); color:#fff;">АКТИВИРОВАТЬ</button>
+        </div>
+
+        <!-- MK4 COAXIAL VTOL -->
+        <div class="proto-card" data-proto="coaxial_vtol">
+          <div>
+            <span class="proto-badge" style="color:#ffbb00; background:rgba(255,187,0,0.15); border-color:#ffbb00;">MK-4 // ТЯЖЕЛЫЙ VTOL</span>
+            <div class="proto-title">BARRACUDA «COAXIAL-VTOL»</div>
+            <div class="proto-role">Соосный тяжелый ракетоносец прорыва</div>
+            <div class="proto-stats-list">
+              <div class="proto-stat-item"><span>Бронепробитие БЧ:</span><span class="proto-stat-val text-yellow">+220% урон по кораблям</span></div>
+              <div class="proto-stat-item"><span>Штормовой взлет (VTOL):</span><span class="proto-stat-val text-green">Иммунитет к качке</span></div>
+              <div class="proto-stat-item"><span>ИИ-терминал NPU:</span><span class="proto-stat-val text-cyan">Оптический автозахват</span></div>
+            </div>
+          </div>
+          <button class="btn-launch-mission btn-proto-select" data-select-proto="coaxial_vtol" style="background:rgba(255,255,255,0.15); color:#fff;">АКТИВИРОВАТЬ</button>
+        </div>
+      </div>
+
+      <!-- FPV Avionics & PID Flight Controller Firmware Panel -->
+      <div class="avionics-pid-section">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+          <h3 style="font-family:'Rajdhani',sans-serif; font-size:16px; color:#00f0ff; margin:0;">🕹️ АВИОНИКА FPV & PID-РЕГУЛЯТОРЫ (STM32 FIRMWARE)</h3>
+          <span style="font-size:11px; color:#8da4af;">Индивидуальная калибровка динамики штурмового дрона</span>
+        </div>
+        <div class="pid-controls-grid">
+          <div class="pid-card">
+            <div class="pid-header">
+              <span>P-GAIN (МАНЕВРЕННОСТЬ)</span>
+              <b class="text-green" id="val-pid-p">1.0x</b>
+            </div>
+            <input type="range" class="pid-slider" id="slider-pid-p" min="0.5" max="2.0" step="0.1" value="1.0">
+            <div class="pid-hint">Выше — резче уклонение от зениток CIWS, ниже — плавный прицел.</div>
+          </div>
+          <div class="pid-card">
+            <div class="pid-header">
+              <span>D-GAIN (ДЕМПФИРОВАНИЕ ВЕТРА)</span>
+              <b class="text-cyan" id="val-pid-d">1.0x</b>
+            </div>
+            <input type="range" class="pid-slider" id="slider-pid-d" min="0.5" max="2.0" step="0.1" value="1.0">
+            <div class="pid-hint">Гасит рывки от штормовых порывов и сглаживает стабилизацию.</div>
+          </div>
+          <div class="pid-card">
+            <div class="pid-header">
+              <span>STICK EXPO (ЭКСПОНЕНТА)</span>
+              <b class="text-yellow" id="val-pid-expo">1.0x</b>
+            </div>
+            <input type="range" class="pid-slider" id="slider-pid-expo" min="1.0" max="2.5" step="0.1" value="1.0">
+            <div class="pid-hint">Мягкий центр для точного наведения на мостик + агрессивный край.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Salvage Inventory & Crafting Forge -->
+      <div class="salvage-forge-section">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+          <h3 style="font-family:'Rajdhani',sans-serif; font-size:16px; color:#ffcc00; margin:0;">💠 ТРОФЕИ И ЦЕХ МОДЕРНИЗАЦИИ (SALVAGE FORGE)</h3>
+          <span style="font-size:11px; color:#8da4af;">Добывается при потоплении кораблей и в S-рангах FPV</span>
+        </div>
+
+        <div class="salvage-inventory-bar">
+          <div class="salvage-inv-pill">
+            <span class="salvage-inv-icon">📦</span>
+            <div>
+              <div class="salvage-inv-label">ЧЁРНЫЕ ЯЩИКИ:</div>
+              <div class="salvage-inv-val" id="val-salvage-box">0 шт</div>
+            </div>
+          </div>
+          <div class="salvage-inv-pill">
+            <span class="salvage-inv-icon">💎</span>
+            <div>
+              <div class="salvage-inv-label">МИКРОЧИПЫ GaN:</div>
+              <div class="salvage-inv-val" id="val-salvage-chips">0 шт</div>
+            </div>
+          </div>
+          <div class="salvage-inv-pill">
+            <span class="salvage-inv-icon">🛡️</span>
+            <div>
+              <div class="salvage-inv-label">ТИТАНОВЫЙ СПЛАВ:</div>
+              <div class="salvage-inv-val" id="val-salvage-titanium">0 шт</div>
+            </div>
+          </div>
+          <div class="salvage-inv-pill">
+            <span class="salvage-inv-icon">🔮</span>
+            <div>
+              <div class="salvage-inv-label">ИИ-ЯДРА «ЛЕВИАФАН»:</div>
+              <div class="salvage-inv-val" id="val-salvage-aicore">0 шт</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="crafting-grid" id="crafting-recipes-grid">
+          <!-- Crafting Recipes injected via JS -->
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       SIDE-SCAN SONAR WATERFALL DISPLAY MODAL
+       ========================================================================= -->
+  <div id="sonar-waterfall-panel" class="sonar-panel-modal" style="display:none;">
+    <div class="sonar-panel-inner">
+      <div class="sonar-panel-header">
+        <div class="sonar-header-title">
+          <span class="sonar-ping-icon">📡</span>
+          <span>ГИДРОАКУСТИЧЕСКИЙ СОНАР БОКОВОГО ОБЗОРА (SSS-500)</span>
+        </div>
+        <div class="sonar-header-status">
+          <span id="sonar-telemetry-depth">ГЛУБИНА: 12.4 м</span> // 
+          <span id="sonar-telemetry-freq">ЧАСТОТА: 450 кГц CHIRP</span>
+        </div>
+        <button class="btn-close-sonar" id="btn-close-sonar">✕ ЗАКРЫТЬ</button>
+      </div>
+      <div class="sonar-waterfall-viewport">
+        <canvas id="sonar-waterfall-canvas" width="600" height="260"></canvas>
+        <div class="sonar-center-track"></div>
+        <div class="sonar-grid-overlay"></div>
+      </div>
+      <div class="sonar-panel-footer">
+        <div class="sonar-legend">
+          <span>🟩 ДНО / БАТИМЕТРИЯ</span>
+          <span>🟨 АНОМАЛИИ / КАБЕЛИ</span>
+          <span>🟥 МИННЫЕ ПОСТАНОВКИ</span>
+        </div>
+        <div class="sonar-speed-alert" id="sonar-speed-alert">РЕЖИМ: ОПТИМАЛЬНАЯ СКОРОСТЬ СКАНИРОВАНИЯ (12 УЗЛОВ)</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       UNDERWATER MICRO-ROV & MAGNETOMETER SIPHON OVERLAY
+       ========================================================================= -->
+  <div id="rov-mission-overlay" class="rov-overlay-container" style="display:none;">
+    <div class="rov-water-vignette"></div>
+    <div class="rov-scan-lines"></div>
+
+    <header class="rov-top-hud">
+      <div class="rov-hud-chip">ТЕЛЕУПРАВЛЯЕМЫЙ МИКРО-ROV «СПРУТ-1»</div>
+      <div class="rov-hud-chip" id="rov-hud-depth">ГЛУБИНА: 6.8 м</div>
+      <div class="rov-hud-chip" id="rov-hud-tether">ТРОС: 24.5 м</div>
+      <button class="btn-abort-mission" id="btn-exit-rov">✕ ВСПЛЫТИЕ</button>
+    </header>
+
+    <div class="rov-center-hud">
+      <div class="rov-target-reticle">
+        <div class="rov-magnetometer-readout">
+          <div class="mag-label">МАГНИТОМЕТР (nT)</div>
+          <div class="mag-val text-yellow" id="rov-val-mag">48,250 nT</div>
+          <div class="mag-bar-track"><div class="mag-bar-fill" id="rov-fill-mag" style="width:50%;"></div></div>
+        </div>
+        <div class="rov-crosshair-bracket"></div>
+      </div>
+      <div class="rov-siphon-prompt" id="rov-siphon-prompt">
+        <button class="btn-siphon-action" id="btn-trigger-siphon">🔮 ПОДКЛЮЧИТЬ СИФОН ДАННЫХ</button>
+      </div>
+    </div>
+
+    <div class="rov-bottom-hud">
+      <div class="rov-siphon-progress-box">
+        <div class="siphon-label">СИНХРОНИЗАЦИЯ СИФОНА: <b id="rov-siphon-pct">0%</b></div>
+        <div class="siphon-bar-track"><div class="siphon-bar-fill" id="rov-siphon-fill" style="width:0%;"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       TACTICAL SYSTEMS HUB & TEST CENTER MODAL (v3.5.0)
+       ========================================================================= -->
+  <div class="help-modal-overlay" id="tactical-hub-modal">
+    <div class="tactical-hub-container">
+      <div class="tactical-hub-header">
+        <div class="tactical-hub-title">
+          <span class="th-badge">АРСЕНАЛ v3.5</span>
+          <h2>🛰️ ЦЕНТР ТАКТИЧЕСКИХ СИСТЕМ И ИСПЫТАНИЙ</h2>
+        </div>
+        <button class="btn-close-modal" id="btn-close-tactical-hub">✕</button>
+      </div>
+      <p class="tactical-hub-sub">Прямой доступ к новым тактическим модулям симулятора БПА «Барракуда». Протестируйте каждую систему в действии:</p>
+      
+      <div class="tactical-cards-grid">
+        <!-- 1. 3D Side-Scan Sonar -->
+        <div class="th-card">
+          <div class="th-card-header">
+            <span class="th-card-icon">📡</span>
+            <div>
+              <div class="th-card-badge text-green">ГИДРОАКУСТИКА</div>
+              <div class="th-card-title">3D-СОНАР БОКОВОГО ОБЗОРА</div>
+            </div>
+          </div>
+          <div class="th-card-desc">Водопадный дисплей эхолота сканирует профиль дна, подводные препятствия и минные поля. Качество отрисовки зависит от скорости хода.</div>
+          <div class="th-card-footer">
+            <span class="th-hotkey">ГОРЯЧАЯ КЛАВИША: [X]</span>
+            <button class="btn-th-action" id="btn-th-launch-sonar">▶ ЗАПУСТИТЬ СОНАР</button>
+          </div>
+        </div>
+
+        <!-- 2. Micro-ROV Submarine Drone -->
+        <div class="th-card">
+          <div class="th-card-header">
+            <span class="th-card-icon">🔮</span>
+            <div>
+              <div class="th-card-badge text-cyan">ПОДВОДНЫЙ ДИВЕРСАНТ</div>
+              <div class="th-card-title">ПРИВЯЗНОЙ МИКРО-ROV</div>
+            </div>
+          </div>
+          <div class="th-card-desc">Спуск телеуправляемого подводного дрона на кабель-тросе. Поиск коммуникаций по магнитометру (nT) и врезка «сифона данных».</div>
+          <div class="th-card-footer">
+            <span class="th-hotkey">РЕЖИМ: ДИВЕРСИЯ</span>
+            <button class="btn-th-action" id="btn-th-launch-rov">▶ СПУСТИТЬ ROV</button>
+          </div>
+        </div>
+
+        <!-- 3. VSA Stability & Hydrodynamic Drift -->
+        <div class="th-card">
+          <div class="th-card-header">
+            <span class="th-card-icon">🚤</span>
+            <div>
+              <div class="th-card-badge text-yellow">ГИДРОДИНАМИКА</div>
+              <div class="th-card-title">КУРСОВАЯ УСТОЙЧИВОСТЬ VSA & ДРИФТ</div>
+            </div>
+          </div>
+          <div class="th-card-desc">Тумблер VSA [STAB ON/OFF]. Отключение стабилизации позволяет пустить катер в управляемый занос на волнах для уклонения от ПВО.</div>
+          <div class="th-card-footer">
+            <span class="th-hotkey">ТУМБЛЕР: [V] // ЯКОРЬ: [H]</span>
+            <button class="btn-th-action" id="btn-th-launch-boat">▶ ТЕСТ-ДРАЙВ КАТЕРА</button>
+          </div>
+        </div>
+
+        <!-- 4. FPV Avionics & PID Tuning -->
+        <div class="th-card">
+          <div class="th-card-header">
+            <span class="th-card-icon">⚙️</span>
+            <div>
+              <div class="th-card-badge" style="color:#d070ff;border-color:#d070ff;">АВИОНИКА FPV</div>
+              <div class="th-card-title">PID-ТЮНИНГ & ИИ JETSON</div>
+            </div>
+          </div>
+          <div class="th-card-desc">Тонкая настройка P-Gain, D-Gain и экспоненты стиков, плюс оптический NPU терминального автозахвата цели в условиях РЭБ.</div>
+          <div class="th-card-footer">
+            <span class="th-hotkey">ПРОТОТИП: MK-4 COAXIAL</span>
+            <button class="btn-th-action" id="btn-th-open-pid">▶ НАСТРОИТЬ В АНГАРЕ</button>
+          </div>
+        </div>
+
+        <!-- 5. Kinburn Spit Shoals -->
+        <div class="th-card">
+          <div class="th-card-header">
+            <span class="th-card-icon">🏝️</span>
+            <div>
+              <div class="th-card-badge text-red">НОВАЯ КАРТА</div>
+              <div class="th-card-title">КИНБУРНСКАЯ КОСА (МЕЛИ)</div>
+            </div>
+          </div>
+          <div class="th-card-desc">Лабиринт песчаных кос Днепровско-Бугского лимана. Переменная глубина (0.4 – 15м) и риск кавитации на мелководье.</div>
+          <div class="th-card-footer">
+            <span class="th-hotkey">СЕКТОР 5 // x4.0 НАГРАДЫ</span>
+            <button class="btn-th-action" id="btn-th-launch-kinburn">▶ ПЕРЕЙТИ В СЕКТОР</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Audio, 3D Engine & Game Logic -->
+  <script src="audio.js?v=3.5.0_naval_tactics"></script>
+  <script src="drone3d.js?v=3.5.0_naval_tactics"></script>
+  <script src="game.js?v=3.5.0_naval_tactics"></script>
+</body>
+</html>
