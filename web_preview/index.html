@@ -79,6 +79,10 @@
           <span class="dossier-pill-icon">⚓</span>
           <span class="dossier-pill-text">АНГАР</span>
         </button>
+        <button class="btn-dossier-pill btn-nav-tactical" id="btn-open-tactical-hub" title="Тактический арсенал и испытания v3.5" style="border-color:rgba(0,255,200,0.8); background:rgba(0,255,200,0.18); color:#00ffcc; font-weight:700;">
+          <span class="dossier-pill-icon">🛰️</span>
+          <span class="dossier-pill-text">ТАКТИКА</span>
+        </button>
         <button class="btn-dossier-pill" id="btn-toggle-dossier" title="Секретное досье">
           <span class="dossier-pill-icon">📁</span>
           <span class="dossier-pill-text">ДОСЬЕ</span>
@@ -124,11 +128,11 @@
       </div>
     </header>
 
-    <!-- QUICK COMBAT ACTIONS BAR (FLIR, SIGINT РЭБ, ПУСК FPV) -->
+    <!-- QUICK COMBAT ACTIONS BAR (FLIR, SIGINT РЭБ, ПУСК FPV, СОНАР, ROV, ТЕСТ VSA) -->
     <div class="quick-combat-actions-bar">
       <button class="combat-quick-btn flir-btn" id="btn-open-flir" title="Включить оптический тепловизор FLIR">
         <span class="cq-icon">🎯</span>
-        <span class="cq-text">ТЕПЛОВИЗОР FLIR</span>
+        <span class="cq-text">FLIR</span>
       </button>
       <button class="combat-quick-btn reb-btn" id="btn-open-cyber" title="Взлом радиочастот РЭБ">
         <span class="cq-icon">📡</span>
@@ -137,6 +141,18 @@
       <button class="combat-quick-btn missile-btn" id="btn-direct-missile" title="Пуск боевого FPV-дрона по судну">
         <span class="cq-icon">🛸</span>
         <span class="cq-text">ПУСК FPV</span>
+      </button>
+      <button class="combat-quick-btn sonar-btn" id="btn-quick-sonar" title="Открыть 3D-сонар бокового обзора">
+        <span class="cq-icon">📡</span>
+        <span class="cq-text">СОНАР 3D</span>
+      </button>
+      <button class="combat-quick-btn rov-btn" id="btn-quick-rov" title="Спустить подводный микро-ROV">
+        <span class="cq-icon">🔮</span>
+        <span class="cq-text">МИКРО-ROV</span>
+      </button>
+      <button class="combat-quick-btn boat-btn" id="btn-quick-boat" title="Тест-драйв катера (VSA / Дрифт)">
+        <span class="cq-icon">🚤</span>
+        <span class="cq-text">ТЕСТ VSA</span>
       </button>
     </div>
 
@@ -501,7 +517,7 @@
       </div>
 
       <!-- FPV Crosshair Reticle -->
-      <div class="fpv-crosshair">
+      <div class="fpv-crosshair" id="fpv-main-crosshair">
         <div class="fpv-reticle-box"></div>
         <div class="fpv-reticle-dot"></div>
       </div>
@@ -510,6 +526,30 @@
       <div class="fpv-target-bracket" id="fpv-target-bracket">
         <div class="target-bracket-corners"></div>
         <div class="target-bracket-tag" id="fpv-target-tag">🎯 [МОСТИК] 85м</div>
+      </div>
+
+      <!-- RECONNAISSANCE 3D WAYPOINT HUD (Follows targets in 3D screen space) -->
+      <div class="recon-hud-overlay" id="recon-hud-overlay" style="display:none;">
+        <div class="recon-objective-banner" id="recon-objective-banner">
+          🔭 ЗАДАЧА: Подлетите к светящемуся маркеру (&lt;45м) и сделайте снимок [ПРОБЕЛ]
+        </div>
+        <div class="recon-waypoint-reticle" id="recon-waypoint-reticle" style="display:none;">
+          <div class="wp-corner wp-tl"></div>
+          <div class="wp-corner wp-tr"></div>
+          <div class="wp-corner wp-bl"></div>
+          <div class="wp-corner wp-br"></div>
+          <div class="wp-tag-pill" id="wp-target-tag">🎯 ЗРК "ТОР" // 65м</div>
+        </div>
+        <button class="btn-recon-snap" id="btn-recon-snap">
+          📸 ЗАФИКСИРОВАТЬ ЦЕЛЬ [ПРОБЕЛ]
+        </button>
+        <div class="recon-photo-card" id="recon-photo-card">
+          <div class="photo-thumb">📸</div>
+          <div class="photo-meta">
+            <div class="photo-title" id="photo-last-name">ЗРК «ТОР-М2»</div>
+            <div class="photo-status">✓ ЗАФИКСИРОВАНО</div>
+          </div>
+        </div>
       </div>
 
       <!-- CIWS Anti-Air Flak Alert Banner -->
@@ -658,9 +698,14 @@
           <div class="sector-choice-reward">НАГРАДЫ: x2.5 // СЛОЖНОСТЬ: ЭЛИТА</div>
         </div>
         <div class="sector-choice-card" data-sector="sector-4">
-          <div class="sector-choice-title">4. КЕРЧЕНСКИЙ ПРОЛИВ</div>
-          <div class="sector-choice-sub">Рассветный туман // Конвой снабжения</div>
+          <div class="sector-choice-title">4. ДЕЛЬТА ДНЕПРА</div>
+          <div class="sector-choice-sub">Рассветный туман // Плавни и протоки</div>
           <div class="sector-choice-reward">НАГРАДЫ: x3.2 // СЛОЖНОСТЬ: МАКСИМУМ</div>
+        </div>
+        <div class="sector-choice-card" data-sector="sector-5">
+          <div class="sector-choice-title" style="color:#00ffcc;">5. КИНБУРНСКАЯ КОСА</div>
+          <div class="sector-choice-sub">Закат над лиманом // Песчаные отмели и эхолот</div>
+          <div class="sector-choice-reward">НАГРАДЫ: x4.0 // СЛОЖНОСТЬ: МЕЛКОВОДЬЕ</div>
         </div>
       </div>
     </div>
@@ -1522,6 +1567,104 @@
       <div class="rov-siphon-progress-box">
         <div class="siphon-label">СИНХРОНИЗАЦИЯ СИФОНА: <b id="rov-siphon-pct">0%</b></div>
         <div class="siphon-bar-track"><div class="siphon-bar-fill" id="rov-siphon-fill" style="width:0%;"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       TACTICAL SYSTEMS HUB & TEST CENTER MODAL (v3.5.0)
+       ========================================================================= -->
+  <div class="help-modal-overlay" id="tactical-hub-modal">
+    <div class="tactical-hub-container">
+      <div class="tactical-hub-header">
+        <div class="tactical-hub-title">
+          <span class="th-badge">АРСЕНАЛ v3.5</span>
+          <h2>🛰️ ЦЕНТР ТАКТИЧЕСКИХ СИСТЕМ И ИСПЫТАНИЙ</h2>
+        </div>
+        <button class="btn-close-modal" id="btn-close-tactical-hub">✕</button>
+      </div>
+      <p class="tactical-hub-sub">Прямой доступ к новым тактическим модулям симулятора БПА «Барракуда». Протестируйте каждую систему в действии:</p>
+      
+      <div class="tactical-cards-grid">
+        <!-- 1. 3D Side-Scan Sonar -->
+        <div class="th-card">
+          <div class="th-card-header">
+            <span class="th-card-icon">📡</span>
+            <div>
+              <div class="th-card-badge text-green">ГИДРОАКУСТИКА</div>
+              <div class="th-card-title">3D-СОНАР БОКОВОГО ОБЗОРА</div>
+            </div>
+          </div>
+          <div class="th-card-desc">Водопадный дисплей эхолота сканирует профиль дна, подводные препятствия и минные поля. Качество отрисовки зависит от скорости хода.</div>
+          <div class="th-card-footer">
+            <span class="th-hotkey">ГОРЯЧАЯ КЛАВИША: [X]</span>
+            <button class="btn-th-action" id="btn-th-launch-sonar">▶ ЗАПУСТИТЬ СОНАР</button>
+          </div>
+        </div>
+
+        <!-- 2. Micro-ROV Submarine Drone -->
+        <div class="th-card">
+          <div class="th-card-header">
+            <span class="th-card-icon">🔮</span>
+            <div>
+              <div class="th-card-badge text-cyan">ПОДВОДНЫЙ ДИВЕРСАНТ</div>
+              <div class="th-card-title">ПРИВЯЗНОЙ МИКРО-ROV</div>
+            </div>
+          </div>
+          <div class="th-card-desc">Спуск телеуправляемого подводного дрона на кабель-тросе. Поиск коммуникаций по магнитометру (nT) и врезка «сифона данных».</div>
+          <div class="th-card-footer">
+            <span class="th-hotkey">РЕЖИМ: ДИВЕРСИЯ</span>
+            <button class="btn-th-action" id="btn-th-launch-rov">▶ СПУСТИТЬ ROV</button>
+          </div>
+        </div>
+
+        <!-- 3. VSA Stability & Hydrodynamic Drift -->
+        <div class="th-card">
+          <div class="th-card-header">
+            <span class="th-card-icon">🚤</span>
+            <div>
+              <div class="th-card-badge text-yellow">ГИДРОДИНАМИКА</div>
+              <div class="th-card-title">КУРСОВАЯ УСТОЙЧИВОСТЬ VSA & ДРИФТ</div>
+            </div>
+          </div>
+          <div class="th-card-desc">Тумблер VSA [STAB ON/OFF]. Отключение стабилизации позволяет пустить катер в управляемый занос на волнах для уклонения от ПВО.</div>
+          <div class="th-card-footer">
+            <span class="th-hotkey">ТУМБЛЕР: [V] // ЯКОРЬ: [H]</span>
+            <button class="btn-th-action" id="btn-th-launch-boat">▶ ТЕСТ-ДРАЙВ КАТЕРА</button>
+          </div>
+        </div>
+
+        <!-- 4. FPV Avionics & PID Tuning -->
+        <div class="th-card">
+          <div class="th-card-header">
+            <span class="th-card-icon">⚙️</span>
+            <div>
+              <div class="th-card-badge" style="color:#d070ff;border-color:#d070ff;">АВИОНИКА FPV</div>
+              <div class="th-card-title">PID-ТЮНИНГ & ИИ JETSON</div>
+            </div>
+          </div>
+          <div class="th-card-desc">Тонкая настройка P-Gain, D-Gain и экспоненты стиков, плюс оптический NPU терминального автозахвата цели в условиях РЭБ.</div>
+          <div class="th-card-footer">
+            <span class="th-hotkey">ПРОТОТИП: MK-4 COAXIAL</span>
+            <button class="btn-th-action" id="btn-th-open-pid">▶ НАСТРОИТЬ В АНГАРЕ</button>
+          </div>
+        </div>
+
+        <!-- 5. Kinburn Spit Shoals -->
+        <div class="th-card">
+          <div class="th-card-header">
+            <span class="th-card-icon">🏝️</span>
+            <div>
+              <div class="th-card-badge text-red">НОВАЯ КАРТА</div>
+              <div class="th-card-title">КИНБУРНСКАЯ КОСА (МЕЛИ)</div>
+            </div>
+          </div>
+          <div class="th-card-desc">Лабиринт песчаных кос Днепровско-Бугского лимана. Переменная глубина (0.4 – 15м) и риск кавитации на мелководье.</div>
+          <div class="th-card-footer">
+            <span class="th-hotkey">СЕКТОР 5 // x4.0 НАГРАДЫ</span>
+            <button class="btn-th-action" id="btn-th-launch-kinburn">▶ ПЕРЕЙТИ В СЕКТОР</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>

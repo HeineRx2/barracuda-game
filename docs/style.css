@@ -5327,10 +5327,291 @@ body {
   border-radius: 4px;
   overflow: hidden;
 }
-.siphon-bar-fill {
-  height: 100%;
-  background: #00ff88;
-  transition: width 0.2s ease;
+/* ==========================================================================
+   TACTICAL SYSTEMS CENTER (MODAL & CARDS v3.5.0)
+   ========================================================================== */
+.tactical-hub-container {
+  width: min(880px, 94vw);
+  max-height: 90vh;
+  background: rgba(3, 14, 22, 0.95);
+  border: 1px solid rgba(0, 255, 200, 0.5);
+  border-radius: 14px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.95), 0 0 35px rgba(0, 255, 200, 0.25);
+  padding: 20px;
+  backdrop-filter: blur(16px);
+  overflow-y: auto;
+  font-family: 'Rajdhani', sans-serif;
+  color: #e0e8ec;
 }
+.tactical-hub-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(0, 255, 200, 0.3);
+  padding-bottom: 12px;
+  margin-bottom: 12px;
+}
+.tactical-hub-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.tactical-hub-title h2 {
+  font-size: 18px;
+  margin: 0;
+  color: #00ffcc;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+.th-badge {
+  background: rgba(0, 255, 200, 0.2);
+  border: 1px solid #00ffcc;
+  color: #00ffcc;
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: 800;
+}
+.tactical-hub-sub {
+  font-size: 13px;
+  color: #8da4af;
+  margin-bottom: 16px;
+  line-height: 1.4;
+}
+.tactical-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 14px;
+}
+.th-card {
+  background: rgba(6, 24, 38, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: all 0.25s ease;
+}
+.th-card:hover {
+  border-color: rgba(0, 255, 200, 0.6);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6), 0 0 15px rgba(0, 255, 200, 0.2);
+}
+.th-card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.th-card-icon {
+  font-size: 22px;
+}
+.th-card-badge {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.th-card-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+}
+.th-card-desc {
+  font-size: 11px;
+  color: #9cb1bc;
+  line-height: 1.4;
+  margin: 8px 0 14px;
+}
+.th-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding-top: 10px;
+}
+.th-hotkey {
+  font-size: 10px;
+  color: #6a8290;
+  font-family: 'Share Tech Mono', monospace;
+}
+.btn-th-action {
+  background: linear-gradient(135deg, #00bb66, #00ff88);
+  border: none;
+  color: #021a10;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 6px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  letter-spacing: 0.5px;
+  transition: all 0.2s ease;
+}
+.btn-th-action:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 16px rgba(0, 255, 136, 0.5);
+}
+
+/* Quick Combat Buttons Extra Styles */
+.sonar-btn {
+  border-color: rgba(0, 255, 136, 0.4) !important;
+  color: #00ff88 !important;
+}
+.rov-btn {
+  border-color: rgba(0, 240, 255, 0.4) !important;
+  color: #00f0ff !important;
+}
+.boat-btn {
+  border-color: rgba(255, 200, 0, 0.4) !important;
+  color: #ffcc00 !important;
+}
+
+/* ==========================================================================
+   RECONNAISSANCE HUD & WAYPOINT OVERLAY
+   ========================================================================== */
+.recon-hud-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 150;
+}
+.recon-objective-banner {
+  position: absolute;
+  top: 48px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(3, 16, 26, 0.88);
+  border: 1px solid #00ffcc;
+  padding: 6px 16px;
+  border-radius: 8px;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: #00ffcc;
+  box-shadow: 0 0 20px rgba(0, 255, 200, 0.3);
+  text-align: center;
+  backdrop-filter: blur(8px);
+  letter-spacing: 0.5px;
+  pointer-events: auto;
+  animation: bannerGlow 1.5s infinite alternate;
+}
+@keyframes bannerGlow {
+  from { border-color: rgba(0, 255, 200, 0.4); box-shadow: 0 0 10px rgba(0, 255, 200, 0.2); }
+  to { border-color: rgba(0, 255, 200, 1.0); box-shadow: 0 0 25px rgba(0, 255, 200, 0.5); }
+}
+.recon-waypoint-reticle {
+  position: absolute;
+  width: 50px;
+  height: 50px;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  transition: all 0.05s linear;
+}
+.wp-corner {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-color: #00f0ff;
+  border-style: solid;
+}
+.wp-tl { top: 0; left: 0; border-width: 2px 0 0 2px; }
+.wp-tr { top: 0; right: 0; border-width: 2px 2px 0 0; }
+.wp-bl { bottom: 0; left: 0; border-width: 0 0 2px 2px; }
+.wp-br { bottom: 0; right: 0; border-width: 0 2px 2px 0; }
+
+.recon-waypoint-reticle.locked .wp-corner {
+  border-color: #00ff88;
+  animation: lockPulse 0.4s infinite alternate;
+}
+@keyframes lockPulse {
+  from { transform: scale(0.9); }
+  to { transform: scale(1.1); }
+}
+.wp-tag-pill {
+  position: absolute;
+  bottom: -22px;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  background: rgba(2, 10, 16, 0.85);
+  border: 1px solid #00f0ff;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  color: #00f0ff;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.4);
+}
+.recon-waypoint-reticle.locked .wp-tag-pill {
+  border-color: #00ff88;
+  color: #00ff88;
+  box-shadow: 0 0 15px rgba(0, 255, 136, 0.6);
+}
+.btn-recon-snap {
+  position: absolute;
+  bottom: 85px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, #00ff88, #00cc66);
+  border: 2px solid #ffffff;
+  color: #011810;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 16px;
+  font-weight: 900;
+  padding: 10px 24px;
+  border-radius: 10px;
+  cursor: pointer;
+  box-shadow: 0 0 30px rgba(0, 255, 136, 0.8), 0 4px 15px rgba(0, 0, 0, 0.7);
+  letter-spacing: 1px;
+  pointer-events: auto;
+  display: none;
+  animation: snapPulse 0.6s infinite alternate;
+}
+@keyframes snapPulse {
+  from { transform: translateX(-50%) scale(0.96); }
+  to { transform: translateX(-50%) scale(1.06); filter: brightness(1.2); }
+}
+.recon-photo-card {
+  position: absolute;
+  right: 20px;
+  bottom: 80px;
+  background: rgba(4, 20, 30, 0.92);
+  border: 1px solid #00ff88;
+  border-radius: 8px;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
+  font-family: 'Rajdhani', sans-serif;
+  opacity: 0;
+  transform: translateX(40px);
+  transition: all 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  pointer-events: none;
+}
+.recon-photo-card.show {
+  opacity: 1;
+  transform: translateX(0);
+}
+.photo-thumb {
+  font-size: 24px;
+}
+.photo-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+}
+.photo-status {
+  font-size: 10px;
+  color: #00ff88;
+  font-weight: 800;
+}
+
 
 

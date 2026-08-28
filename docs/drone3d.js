@@ -673,6 +673,8 @@ class Barracuda3DEngine {
   // =========================================================================
   // RECON TARGET 3D MARKERS — Glowing pillars of light over target positions
   // =========================================================================
+  // RECONNAISSANCE 3D TARGETS & SCREEN PROJECTION
+  // =========================================================================
   createReconTargetMarkers(targetPositions) {
     // Clear old markers
     this.reconMarkers.forEach(m => {
@@ -682,54 +684,85 @@ class Barracuda3DEngine {
 
     targetPositions.forEach((t, idx) => {
       const group = new THREE.Group();
-      group.userData = { targetIdx: idx };
+      group.userData = { targetIdx: idx, targetName: t.name, x: t.x, z: t.z };
 
-      // Vertical light beam (tall thin box)
-      const beamGeo = new THREE.CylinderGeometry(0.3, 0.3, 50, 6);
+      // 1. Soaring Tactical Light Beam (100m high beacon visible across the whole map)
+      const beamGeo = new THREE.CylinderGeometry(0.4, 0.8, 120, 8);
       const beamMat = new THREE.MeshBasicMaterial({
-        color: 0x00ccff,
+        color: 0x00ffff,
         transparent: true,
-        opacity: 0.25,
+        opacity: 0.4,
         side: THREE.DoubleSide
       });
       const beam = new THREE.Mesh(beamGeo, beamMat);
-      beam.position.set(0, 25, 0);
+      beam.position.set(0, 60, 0);
       group.add(beam);
 
-      // Pulsing ring at ground level
-      const ringGeo = new THREE.TorusGeometry(5, 0.3, 8, 24);
+      // 2. Pulsing Ground Landing Rings
+      const ringGeo = new THREE.TorusGeometry(6, 0.4, 8, 32);
       const ringMat = new THREE.MeshBasicMaterial({
         color: 0x00ff88,
         transparent: true,
-        opacity: 0.6
+        opacity: 0.75
       });
       const ring = new THREE.Mesh(ringGeo, ringMat);
       ring.rotation.x = -Math.PI / 2;
-      ring.position.y = 1;
+      ring.position.y = 0.5;
       group.add(ring);
 
-      // Second ring (larger, slower pulse)
-      const ring2Geo = new THREE.TorusGeometry(8, 0.2, 8, 24);
+      const ring2Geo = new THREE.TorusGeometry(10, 0.25, 8, 32);
       const ring2Mat = new THREE.MeshBasicMaterial({
-        color: 0xffcc00,
+        color: 0x00ccff,
         transparent: true,
-        opacity: 0.35
+        opacity: 0.45
       });
       const ring2 = new THREE.Mesh(ring2Geo, ring2Mat);
       ring2.rotation.x = -Math.PI / 2;
-      ring2.position.y = 1.5;
+      ring2.position.y = 1.0;
       group.add(ring2);
 
-      // Small diamond shape floating above
-      const diamondGeo = new THREE.OctahedronGeometry(1.2, 0);
+      // 3. Floating 3D Waypoint Hologram Diamond
+      const diamondGeo = new THREE.OctahedronGeometry(2.0, 0);
       const diamondMat = new THREE.MeshBasicMaterial({
-        color: 0x00ffcc,
-        transparent: true,
-        opacity: 0.8
+        color: 0x00f0ff,
+        wireframe: true
       });
       const diamond = new THREE.Mesh(diamondGeo, diamondMat);
-      diamond.position.y = 12;
+      diamond.position.y = 14;
       group.add(diamond);
+
+      // 4. Physical 3D Target Compound Model (Military Bunker & Radar Installation)
+      const compound = new THREE.Group();
+      
+      // Bunker concrete base
+      const bunkerGeo = new THREE.BoxGeometry(10, 3.5, 8);
+      const bunkerMat = new THREE.MeshStandardMaterial({ color: 0x334433, roughness: 0.8 });
+      const bunker = new THREE.Mesh(bunkerGeo, bunkerMat);
+      bunker.position.y = 1.75;
+      compound.add(bunker);
+
+      // Radar dish / missile canisters
+      const mastGeo = new THREE.CylinderGeometry(0.3, 0.3, 7, 6);
+      const mastMat = new THREE.MeshStandardMaterial({ color: 0x111111, metalness: 0.8 });
+      const mast = new THREE.Mesh(mastGeo, mastMat);
+      mast.position.set(0, 5.5, 0);
+      compound.add(mast);
+
+      const dishGeo = new THREE.SphereGeometry(2.2, 8, 8, 0, Math.PI);
+      const dishMat = new THREE.MeshStandardMaterial({ color: 0x00ff88, metalness: 0.5, wireframe: true });
+      const dish = new THREE.Mesh(dishGeo, dishMat);
+      dish.position.set(0, 8.5, 0);
+      dish.rotation.x = 0.4;
+      compound.add(dish);
+
+      // Camouflage net roof
+      const camoGeo = new THREE.BoxGeometry(12, 0.4, 10);
+      const camoMat = new THREE.MeshStandardMaterial({ color: 0x24301c, roughness: 0.9 });
+      const camo = new THREE.Mesh(camoGeo, camoMat);
+      camo.position.y = 3.7;
+      compound.add(camo);
+
+      group.add(compound);
 
       group.position.set(t.x, 0, t.z);
       this.scene.add(group);
@@ -740,14 +773,16 @@ class Barracuda3DEngine {
   removeReconMarker(idx) {
     if (this.reconMarkers[idx]) {
       const marker = this.reconMarkers[idx];
-      // Fade out animation
       const fadeOut = () => {
-        marker.children.forEach(child => {
+        let stillVisible = false;
+        marker.traverse(child => {
           if (child.material) {
-            child.material.opacity -= 0.05;
+            child.material.transparent = true;
+            child.material.opacity = (child.material.opacity || 1) - 0.08;
+            if (child.material.opacity > 0) stillVisible = true;
           }
         });
-        if (marker.children[0] && marker.children[0].material && marker.children[0].material.opacity > 0) {
+        if (stillVisible) {
           requestAnimationFrame(fadeOut);
         } else {
           if (marker.parent) marker.parent.remove(marker);
@@ -755,6 +790,38 @@ class Barracuda3DEngine {
       };
       fadeOut();
     }
+  }
+
+  getReconTargetsScreenInfo() {
+    if (!this.camera || !this.reconMarkers) return [];
+    const results = [];
+    const tempVec = new THREE.Vector3();
+
+    this.reconMarkers.forEach(m => {
+      if (!m.parent) return;
+      tempVec.set(m.position.x, 3, m.position.z);
+      const dist = this.fpvPos ? Math.hypot(this.fpvPos.x - m.position.x, this.fpvPos.z - m.position.z) : 999;
+      
+      // Project to 2D normalized device coords (-1 to +1)
+      tempVec.project(this.camera);
+
+      const inFront = tempVec.z < 1.0;
+      const screenX = (tempVec.x * 0.5 + 0.5) * window.innerWidth;
+      const screenY = (-(tempVec.y * 0.5) + 0.5) * window.innerHeight;
+
+      results.push({
+        idx: m.userData.targetIdx,
+        name: m.userData.targetName,
+        dist: Math.round(dist),
+        inFront: inFront,
+        screenX: screenX,
+        screenY: screenY,
+        rawX: tempVec.x,
+        rawY: tempVec.y
+      });
+    });
+
+    return results;
   }
 
   // =========================================================================

@@ -254,16 +254,16 @@ const CAMPAIGN_ACTS_DEF = [
         reqData: 40,
         reconTargets: 3,
         reconTimeLimit: 240,
-        phases: ['Запуск дрона', 'Поиск целей', 'Фото-фиксация', 'Возврат'],
-        reward: { usd: 3500, mb: 100, bp: 0, salvage: { box: 1, chips: 1 } },
+        phases: ['Запуск дрона', 'Поиск маркеров', 'Фото-фиксация', 'Возврат'],
+        reward: { usd: 4500, mb: 120, bp: 0, salvage: { box: 1, chips: 1 } },
         enemies: [
-          { type: 'patrol_boat', name: 'Патрульный катер', count: 2 },
+          { type: 'patrol_boat', name: 'Патрульный катер «Раптор»', count: 2 },
           { type: 'shore_mg', name: 'Береговой пулемёт ДШК', count: 3 }
         ],
         targetName: 'Позиции левого берега',
         commsIntro: {
           speaker: 'ШТАБ [МАЯК]', role: 'HQ',
-          text: 'Барракуда, говорит «Маяк». Нужна свежая разведка участка Днепра у Антоновского моста. Запустите дрон, найдите и зафиксируйте позиции противника. Не атаковать — только наблюдение!'
+          text: 'Барракуда, говорит «Маяк». Проведите аэроразведку! Летите к светящимся маркерам целей на северном берегу, подлетайте на расстояние <45м и делайте снимки на [ПРОБЕЛ].'
         }
       },
       {
@@ -284,7 +284,7 @@ const CAMPAIGN_ACTS_DEF = [
         targetName: 'Опорные пункты левого берега',
         commsIntro: {
           speaker: 'ЛЕЙТЕНАНТ [ВЕКТОР]', role: 'EW',
-          text: 'Данные разведки переданы! Координаты 3 опорников загружены в навигацию. Будьте осторожны — у них станция РЭБ «Поле-21», может подавить связь с дроном!'
+          text: 'Данные разведки получены! Координаты 3 опорников загружены в навигацию. Выдвигайтесь на штурм!'
         }
       },
       {
@@ -306,7 +306,23 @@ const CAMPAIGN_ACTS_DEF = [
         targetName: 'Бронекатер «Гром»',
         commsIntro: {
           speaker: 'АДМИРАЛ ВОРОНОВ', role: 'ENEMY',
-          text: 'Внимание всем бортам! В акватории обнаружен неопознанный надводный аппарат! Артиллерии — заградительный огонь по фарватеру!'
+          text: 'Внимание всем бортам! В акватории обнаружен неопознанный надводный аппарат! Артиллерии — огонь по фарватеру!'
+        }
+      },
+      {
+        id: 'm1_4',
+        code: 'OP-104 // ТАКТИКА: СИФОН КАБЕЛЯ',
+        title: 'Подводная диверсия микро-ROV',
+        desc: 'Спустите привязной подводный аппарат «Спрут-1», найдите оптоволоконный кабель связи по магнитометру и подключите сифон данных.',
+        missionType: 'rov',
+        reqData: 250,
+        phases: ['Спуск ROV', 'Сканирование (nT)', 'Подключение сифона', 'Перехват данных'],
+        reward: { usd: 25000, mb: 850, bp: 2, salvage: { box: 2, chips: 3, aicore: 1 } },
+        enemies: [],
+        targetName: 'Подводный кабель связи',
+        commsIntro: {
+          speaker: 'ШТАБ [МАЯК]', role: 'HQ',
+          text: 'Спецоперация! Подводный кабель противника лежит на дне русла. Спустите микро-ROV, ориентируйтесь по шкале магнитометра и активируйте сифон!'
         }
       }
     ]
@@ -336,7 +352,7 @@ const CAMPAIGN_ACTS_DEF = [
         targetName: 'Скрытые позиции у дамбы',
         commsIntro: {
           speaker: 'ШТАБ [МАЯК]', role: 'HQ',
-          text: 'Ночной режим. Переключите FLIR. В затопленной зоне у дамбы противник прячет артиллерию. Нужна точная маркировка — ночью они маскируются под руины.'
+          text: 'Ночной вылет. Ищите световые маркеры целей в затопленной зоне. Подлетайте вплотную и фиксируйте позиции!'
         }
       },
       {
@@ -358,7 +374,7 @@ const CAMPAIGN_ACTS_DEF = [
         targetName: 'Станция РЭБ «Поле-21»',
         commsIntro: {
           speaker: 'ЛЕЙТЕНАНТ [ВЕКТОР]', role: 'EW',
-          text: 'Перехватываю несущую частоту «Поле-21». Мощный передатчик! Нужно подавить 4 канала последовательно — следите за таймингом!'
+          text: 'Перехватываю частоты «Поле-21». Подавите 4 канала последовательно!'
         }
       },
       {
@@ -380,7 +396,25 @@ const CAMPAIGN_ACTS_DEF = [
         targetName: 'Десантная баржа «Волга»',
         commsIntro: {
           speaker: 'АДМИРАЛ ВОРОНОВ', role: 'ENEMY',
-          text: '«Волга», активировать зенитное прикрытие! Катерам — патрулирование по периметру в три эшелона!'
+          text: '«Волга», зенитный огонь! Не подпускать брандер к борту!'
+        }
+      },
+      {
+        id: 'm2_4',
+        code: 'OP-204 // ТАКТИКА: ПРОРЫВ ПО СОНАРУ',
+        title: 'Проход минного поля по эхолоту',
+        desc: 'Активируйте 3D-сонар бокового обзора [X], найдите безопасный фарватер сквозь якорные мины и поразите катер охраны.',
+        missionType: 'sonar',
+        reqData: 1200,
+        phases: ['Включение сонара', 'Проход минного поля', 'Сканирование дна', 'Удар по цели'],
+        reward: { usd: 50000, mb: 1800, bp: 3, salvage: { box: 3, titanium: 5 } },
+        enemies: [
+          { type: 'patrol_boat', name: 'Катер минного дозора', count: 2 }
+        ],
+        targetName: 'Минное поле фарватера',
+        commsIntro: {
+          speaker: 'ШТАБ [МАЯК]', role: 'HQ',
+          text: 'Фарватер заминирован! Включите 3D-сонар клавишей [X], держите умеренную скорость для чистого скана и обойдите красные отклики мин!'
         }
       }
     ]
@@ -405,13 +439,12 @@ const CAMPAIGN_ACTS_DEF = [
         enemies: [
           { type: 'shore_battery', name: 'ЗРК «Стрела-10» на причале', count: 2 },
           { type: 'patrol_boat', name: 'Катер портовой охраны', count: 3 },
-          { type: 'shore_mg', name: 'Пост наблюдения', count: 4 },
-          { type: 'supply_truck', name: 'Грузовик снабжения', count: 3 }
+          { type: 'shore_mg', name: 'Пост наблюдения', count: 4 }
         ],
         targetName: 'Портовая инфраструктура',
         commsIntro: {
           speaker: 'ШТАБ [МАЯК]', role: 'HQ',
-          text: 'Херсонский порт — ключевой узел логистики противника. Нужна полная картина: складские площади, зенитное прикрытие, количество техники. Фиксируйте всё!'
+          text: 'Херсонский порт — ключевой узел. Фиксируйте склады, краны и позиции ПВО!'
         }
       },
       {
@@ -427,14 +460,12 @@ const CAMPAIGN_ACTS_DEF = [
         enemies: [
           { type: 'supply_barge', name: 'Баржа-снаряд №1', count: 1 },
           { type: 'supply_barge', name: 'Баржа-снаряд №2', count: 1 },
-          { type: 'supply_barge', name: 'Баржа-снаряд №3', count: 1 },
-          { type: 'patrol_boat', name: 'Катер сопровождения', count: 2 },
-          { type: 'shore_battery', name: 'Батарея Д-30 на берегу', count: 1 }
+          { type: 'supply_barge', name: 'Баржа-снаряд №3', count: 1 }
         ],
         targetName: 'Речной конвой снабжения',
         commsIntro: {
           speaker: 'ЛЕЙТЕНАНТ [ВЕКТОР]', role: 'EW',
-          text: 'Перехватили радиообмен — конвой из трёх барж идёт вверх по течению! В каждой — до 40 тонн боеприпасов. Уничтожить все три!'
+          text: 'Конвой с боеприпасами на перехвате. Потопите все три баржи!'
         }
       },
       {
@@ -451,21 +482,37 @@ const CAMPAIGN_ACTS_DEF = [
         enemies: [
           { type: 'port_crane', name: 'Портовый кран [ГЛАВНАЯ ЦЕЛЬ]', count: 1 },
           { type: 'fuel_depot', name: 'Склад ГСМ', count: 1 },
-          { type: 'shore_battery', name: 'ЗРК «Бук-М1» мобильный', count: 2 },
-          { type: 'patrol_boat', name: 'Катер реагирования', count: 3 },
-          { type: 'ew_station', name: 'Станция РЭБ', count: 1 }
+          { type: 'shore_battery', name: 'ЗРК «Бук-М1» мобильный', count: 2 }
         ],
         targetName: 'Портовый комплекс',
         commsIntro: {
           speaker: 'АДМИРАЛ ВОРОНОВ', role: 'ENEMY',
-          text: 'Все зенитные расчёты — полная боевая готовность! Активировать «Бук» и все комплексы! Порт не должен быть потерян!'
+          text: 'Активировать все комплексы ПВО! Порт не должен быть потерян!'
+        }
+      },
+      {
+        id: 'm3_4',
+        code: 'OP-304 // ТАКТИКА: ДРИФТ В ПЛАВНЯХ',
+        title: 'Испытание маневренности VSA OFF',
+        desc: 'Отключите курсовую стабилизацию [V], пустите катер в управляемый гидродинамический занос и пройдите сквозь плотный перекрестный огонь.',
+        missionType: 'drift',
+        reqData: 5000,
+        phases: ['Отключение VSA', 'Дрифт на волнах', 'Уклонение от прожекторов', 'Эвакуация'],
+        reward: { usd: 120000, mb: 4500, bp: 4, salvage: { box: 3, titanium: 8 } },
+        enemies: [
+          { type: 'shore_mg', name: 'Прожекторные посты', count: 4 }
+        ],
+        targetName: 'Слалом в протоках',
+        commsIntro: {
+          speaker: 'ШТАБ [МАЯК]', role: 'HQ',
+          text: 'Противник простреливает русло прямой наводкой! Отключите VSA тумблером [V] и используйте боковой дрифт для резких виражей!'
         }
       }
     ]
   },
   {
     act: 4,
-    title: '💀 ДЕЛЬТА РАССВЕТА [ФИНАЛ]',
+    title: '💀 ДЕЛЬТА РАССВЕТА',
     sector: 'sector-4',
     desc: 'Финальный штурм командного пункта противника в дельте Днепра — среди островов, камышей и проток.',
     missions: [
@@ -473,30 +520,28 @@ const CAMPAIGN_ACTS_DEF = [
         id: 'm4_1',
         code: 'OP-401 // ЛАБИРИНТ ПРОТОК',
         title: 'Разведка островного архипелага',
-        desc: 'В дельте Днепра десятки малых островов. На одном из них — замаскированный командный пункт. Найдите его.',
+        desc: 'В дельте Днепра десятки малых островов. На одном из них — замаскированный командный пункт. Найдите 5 ключевых узлов.',
         missionType: 'recon',
         reqData: 7000,
-        reconTargets: 6,
+        reconTargets: 5,
         reconTimeLimit: 180,
         phases: ['Картографирование', 'Термосканирование', 'Обнаружение КП', 'Передача координат'],
         reward: { usd: 200000, mb: 10000, bp: 4, salvage: { box: 4, chips: 10, aicore: 2 } },
         enemies: [
           { type: 'patrol_boat', name: 'Скоростной катер «Мангуст»', count: 4 },
-          { type: 'shore_mg', name: 'Замаскированный пост', count: 6 },
-          { type: 'ew_station', name: 'Мобильный РЭБ на катере', count: 2 },
-          { type: 'drone_jammer', name: 'Антидрон-ружьё', count: 3 }
+          { type: 'shore_mg', name: 'Замаскированный пост', count: 6 }
         ],
         targetName: 'Командный пункт в дельте',
         commsIntro: {
           speaker: 'ИИ [БАРРАКУДА]', role: 'AI',
-          text: 'ВНИМАНИЕ. Множественные тепловые сигнатуры в дельте Днепра. Высокая вероятность замаскированного командного центра. Начинаю систематическое сканирование островов.'
+          text: 'Сканирование архипелага дельты. Летите к маякам и проведите фотофиксацию.'
         }
       },
       {
         id: 'm4_2',
         code: 'OP-402 // МЁРТВАЯ ЗОНА',
         title: 'Подавление радиолокационного зонта',
-        desc: 'КП защищён тройным эшелоном РЭБ. Подавите все передатчики чтобы открыть окно для финального удара.',
+        desc: 'КП защищён эшелонированной РЭБ. Подавите все передатчики чтобы открыть окно для финального удара.',
         missionType: 'rew',
         reqData: 12000,
         rewChannels: 6,
@@ -504,21 +549,19 @@ const CAMPAIGN_ACTS_DEF = [
         phases: ['Перехват частот', 'Взлом эшелона-1', 'Взлом эшелона-2', 'Взлом эшелона-3', 'Окно прорыва'],
         reward: { usd: 350000, mb: 18000, bp: 6, salvage: { box: 5, chips: 12, titanium: 10, aicore: 3 } },
         enemies: [
-          { type: 'ew_station', name: 'Передатчик РЭБ «Красуха-4»', count: 3 },
-          { type: 'shore_battery', name: 'ПЗРК «Верба» расчёт', count: 4 },
-          { type: 'patrol_boat', name: 'Скоростной перехватчик', count: 3 }
+          { type: 'ew_station', name: 'Передатчик РЭБ «Красуха-4»', count: 3 }
         ],
         targetName: 'Эшелонированная РЭБ-система',
         commsIntro: {
           speaker: 'ЛЕЙТЕНАНТ [ВЕКТОР]', role: 'EW',
-          text: 'Три уровня защиты! «Красуха-4» — серьёзный противник. Если не подавим все три — дрон потеряет связь в радиусе 5 км от КП!'
+          text: 'Подавите передатчики «Красуха-4»!'
         }
       },
       {
         id: 'm4_3',
         code: 'OP-403 // ФИНАЛЬНЫЙ ШТУРМ [СУПЕР-БОСС]',
         title: 'Ликвидация командного пункта «ЦИТАДЕЛЬ»',
-        desc: 'Генеральный штурм замаскированного бункерного КП на острове в дельте. Уничтожьте антенное поле, генераторы и сам бункер!',
+        desc: 'Генеральный штурм бункерного КП на острове в дельте. Уничтожьте антенное поле, генераторы и сам бункер!',
         missionType: 'strike',
         reqData: 25000,
         isBoss: true,
@@ -527,17 +570,57 @@ const CAMPAIGN_ACTS_DEF = [
         phases: ['Прорыв зенитного огня', 'Удар по генераторам', 'Разрушение антенн', 'Удар в бункер'],
         reward: { usd: 1000000, mb: 50000, bp: 15, salvage: { box: 10, chips: 25, titanium: 25, aicore: 10 } },
         enemies: [
-          { type: 'bunker', name: 'КП «Цитадель» [СУПЕР-БОСС]', count: 1 },
-          { type: 'shore_battery', name: 'ЗРК «Тор-М2» мобильный', count: 3 },
-          { type: 'patrol_boat', name: 'Скоростной катер «Мангуст»', count: 4 },
-          { type: 'ew_station', name: 'Комплекс «Красуха-4»', count: 2 },
-          { type: 'drone_jammer', name: 'Система «Антидрон»', count: 4 },
-          { type: 'shore_mg', name: 'Окопные позиции', count: 6 }
+          { type: 'bunker', name: 'КП «Цитадель» [СУПЕР-БОСС]', count: 1 }
         ],
         targetName: 'Бункерный КП «Цитадель»',
         commsIntro: {
           speaker: 'ШТАБ [МАЯК]', role: 'HQ',
-          text: 'Оператор! Это решающий удар всей кампании! Судьба Херсонского направления — в ваших руках! Уничтожьте «Цитадель» и вся система управления противника рухнет!'
+          text: 'Решающий удар кампании! Уничтожьте «Цитадель»!'
+        }
+      },
+      {
+        id: 'm4_4',
+        code: 'OP-404 // ТАКТИКА: НЕЙРО-ШТУРМ В РЭБ',
+        title: 'Терминальный оптический AI-захват',
+        desc: 'При 100% глушении видеоканала нейросетевой модуль Nvidia Jetson перехватывает управление и поражает уязвимый отсек цели.',
+        missionType: 'ai_strike',
+        reqData: 30000,
+        phases: ['Вход в зону РЭБ', 'Потеря видеосвязи (0% RSSI)', 'ИИ-автозахват оптического потока', 'Точное попадание'],
+        reward: { usd: 800000, mb: 40000, bp: 10, salvage: { box: 6, chips: 15, aicore: 5 } },
+        enemies: [
+          { type: 'ew_station', name: 'Комплекс «Красуха-4»', count: 2 }
+        ],
+        targetName: 'Защищенный командный радар',
+        commsIntro: {
+          speaker: 'ИИ [БАРРАКУДА]', role: 'AI',
+          text: 'Видеоканал подавлен (RSSI 0%). Активирован терминальный NPU модуль Jetson. Оптическое наведение захватило контур цели!'
+        }
+      }
+    ]
+  },
+  {
+    act: 5,
+    title: '🏝️ КИНБУРНСКАЯ КОСА',
+    sector: 'sector-5',
+    desc: 'Мелководный театр военных действий Днепровско-Бугского лимана. Песчаные отмели, диверсии и патрули.',
+    missions: [
+      {
+        id: 'm5_1',
+        code: 'OP-501 // МЕЛКОВОДНЫЙ ПРОРЫВ',
+        title: 'Навигация по эхолоту глубин',
+        desc: 'Пройдите по узкому фарватеру песчаных кос, маневрируя по глубиномеру (DEPTH > 1.0м), и уничтожьте береговую РЛС.',
+        missionType: 'kinburn',
+        reqData: 40000,
+        phases: ['Вход в лиман', 'Контроль глубин эхолота', 'Обход песчаных отмелей', 'Удар по РЛС'],
+        reward: { usd: 1500000, mb: 75000, bp: 20, salvage: { box: 8, chips: 20, titanium: 20, aicore: 8 } },
+        enemies: [
+          { type: 'shore_battery', name: 'Береговая РЛС «Мыс»', count: 1 },
+          { type: 'patrol_boat', name: 'Катер береговой охраны', count: 3 }
+        ],
+        targetName: 'Береговая РЛС Кинбурна',
+        commsIntro: {
+          speaker: 'ШТАБ [МАЯК]', role: 'HQ',
+          text: 'Добро пожаловать на Кинбурнскую косу! Следите за показаниями эхолота на HUD — если глубина упадет ниже 1.2м, водомет захватит песок!'
         }
       }
     ]
@@ -2669,10 +2752,30 @@ class BarracudaGame {
       }
 
       // Mission type badge
-      const typeLabels = { 'recon': '🔭 РАЗВЕДКА', 'rew': '📡 РЭБ-ВЗЛОМ', 'strike': '💥 УДАРНАЯ' };
-      const typeColors = { 'recon': '#00ccff', 'rew': '#ff9900', 'strike': '#ff3333' };
+      const typeLabels = {
+        'recon': '🔭 РАЗВЕДКА',
+        'rew': '📡 РЭБ-ВЗЛОМ',
+        'strike': '💥 УДАРНАЯ',
+        'rov': '🔮 МИКРО-ROV',
+        'sonar': '📡 СОНАР 3D',
+        'drift': '🚤 VSA ДРИФТ',
+        'ai_strike': '🧠 ИИ JETSON',
+        'kinburn': '🏝️ КИНБУРН'
+      };
+      const typeColors = {
+        'recon': '#00ccff',
+        'rew': '#ff9900',
+        'strike': '#ff3333',
+        'rov': '#00f0ff',
+        'sonar': '#00ff88',
+        'drift': '#ffcc00',
+        'ai_strike': '#d070ff',
+        'kinburn': '#ff5577'
+      };
       const mType = m.missionType || 'strike';
-      const typeBadge = `<span class="mission-type-badge" style="background:${typeColors[mType]}22;color:${typeColors[mType]};border:1px solid ${typeColors[mType]}44;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;letter-spacing:1px;">${typeLabels[mType]}</span>`;
+      const typeColor = typeColors[mType] || '#00ccff';
+      const typeLabel = typeLabels[mType] || '💥 ОПЕРАЦИЯ';
+      const typeBadge = `<span class="mission-type-badge" style="background:${typeColor}22;color:${typeColor};border:1px solid ${typeColor}44;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;letter-spacing:1px;">${typeLabel}</span>`;
 
       // Enemy list
       let enemyList = '';
@@ -2689,6 +2792,10 @@ class BarracudaGame {
       else if (isActive) launchText = 'ПРОДОЛЖИТЬ';
       else if (mType === 'recon') launchText = '🔭 ВЫЛЕТ НА РАЗВЕДКУ';
       else if (mType === 'rew') launchText = '📡 НАЧАТЬ ВЗЛОМ';
+      else if (mType === 'rov') launchText = '🔮 СПУСТИТЬ ROV';
+      else if (mType === 'sonar') launchText = '📡 ПРОРЫВ ПО СОНАРУ';
+      else if (mType === 'drift') launchText = '🚤 ДРИФТ-ИСПЫТАНИЕ';
+      else if (mType === 'ai_strike') launchText = '🧠 НЕЙРО-ШТУРМ';
       else launchText = '💥 НАЧАТЬ ШТУРМ';
 
       card.innerHTML = `
@@ -2771,9 +2878,72 @@ class BarracudaGame {
       this._startReconMission(mission, actData);
     } else if (mType === 'rew') {
       this._startRewMission(mission, actData);
+    } else if (mType === 'rov') {
+      this._startRovMission(mission, actData);
+    } else if (mType === 'sonar') {
+      this.start3DMissionSortie(mission.id);
+      setTimeout(() => {
+        if (this.engine3D) {
+          this.engine3D.setSonarActive(true);
+          this.sonarActive = true;
+          const sonarPanel = document.getElementById('sonar-waterfall-panel');
+          if (sonarPanel) sonarPanel.style.display = 'block';
+        }
+      }, 500);
+    } else if (mType === 'drift') {
+      this.start3DMissionSortie(mission.id);
+      setTimeout(() => {
+        if (this.engine3D) {
+          this.engine3D.setVsaState(false);
+          this.vsaEnabled = false;
+          this.showMissionWarning('⚠️ РЕЖИМ ДРИФТА: VSA ОТКЛЮЧЕНА! Маневрируйте на полной скорости!');
+        }
+      }, 500);
+    } else if (mType === 'ai_strike') {
+      this.start3DMissionSortie(mission.id);
+      setTimeout(() => {
+        if (this.engine3D) {
+          this.engine3D.setFpvAiModule(true);
+          this.startFpvFlightPhase();
+          this.showMissionWarning('🧠 РЭБ-ПОДАВЛЕНИЕ АКТИВИРОВАНО: ИИ Jetson NPU выполняет авто-доводку!');
+        }
+      }, 800);
     } else {
       this.start3DMissionSortie(mission.id);
     }
+  }
+
+  // =========================================================================
+  // ROV UNDERWATER MISSION — Submarine Tether & Magnetometer Cable Tap
+  // =========================================================================
+  _startRovMission(mission, actData) {
+    this.activeMission = mission;
+    this.sortieActive = true;
+    this.sortieTimeLeft = mission.timeLimit || 200;
+
+    // Switch sector
+    if (actData.sector && this.currentSector !== actData.sector) {
+      this.changeSector(actData.sector);
+    }
+
+    // Hide base HUD & modals
+    document.querySelectorAll('.help-modal-overlay, .tactical-modal-overlay').forEach(el => el.classList.remove('active'));
+    const gameFrame = document.getElementById('game-frame');
+    if (gameFrame) gameFrame.style.display = 'none';
+
+    // Show ROV overlay
+    const rovOverlay = document.getElementById('rov-mission-overlay');
+    if (rovOverlay) rovOverlay.style.display = 'flex';
+
+    if (this.engine3D) {
+      this.engine3D.startRovMode();
+    }
+    if (window.tacticalAudio) {
+      window.tacticalAudio.playRovThruster();
+    }
+    this.startSortieTimer();
+    this.addNotification('🔮 МИКРО-ROV СПУЩЕН', 'Ориентируйтесь по шкале магнитометра и подключите сифон данных!');
+    this.showMissionWarning('🔮 Подводный дрон активен. Нажмите [ПОДКЛЮЧИТЬ СИФОН], когда магнитометр зафиксирует максимум поля!');
   }
 
   // =========================================================================
@@ -2791,19 +2961,25 @@ class BarracudaGame {
       targetPositions: [],
       photosTaken: 0,
       startTime: Date.now(),
-      scanCooldown: 0
+      scanCooldown: 0,
+      lockedAudioPlayed: false
     };
 
-    // Generate random target positions along the river (north bank = enemy side)
+    // Generate target positions along the north bank (enemy side)
+    const targetNames = [
+      'ЗРК «ТОР-М2»', 'Комплекс РЭБ «ПОЛЕ-21»', 'Береговой капонир Д-30',
+      'РЛС обнаружения «МЫС»', 'Склад боеприпасов ГСМ', 'Пост наблюдения ДШК'
+    ];
+
     for (let i = 0; i < this.reconState.targetsTotal; i++) {
-      const spread = 300; // Wider area to search
-      const x = (i / this.reconState.targetsTotal - 0.5) * spread + (Math.random() - 0.5) * 60;
-      const z = -(130 + Math.random() * 80); // North bank (enemy side), deeper inland
+      const spread = 240;
+      const x = (i / (this.reconState.targetsTotal - 1 || 1) - 0.5) * spread + (Math.random() - 0.5) * 30;
+      const z = -(110 + i * 25 + Math.random() * 20); // North bank (enemy side)
       this.reconState.targetPositions.push({
         x: x,
         z: z,
         found: false,
-        name: mission.enemies ? mission.enemies[i % mission.enemies.length].name : `Цель ${i + 1}`
+        name: targetNames[i % targetNames.length]
       });
     }
 
@@ -2819,12 +2995,16 @@ class BarracudaGame {
     const gameFrame = document.getElementById('game-frame');
     if (gameFrame) gameFrame.style.display = 'none';
 
-    // Show FPV overlay directly (recon starts in drone flight)
+    // Show FPV overlay
     const fpvOverlay = document.getElementById('fpv-flight-overlay');
     if (fpvOverlay) {
       fpvOverlay.classList.remove('mission-hud-hidden');
       fpvOverlay.style.display = 'flex';
     }
+
+    // Show Recon HUD Overlay with Waypoints
+    const reconOverlay = document.getElementById('recon-hud-overlay');
+    if (reconOverlay) reconOverlay.style.display = 'block';
 
     // Hide boat cockpit
     const cockpit = document.getElementById('mission-cockpit-overlay');
@@ -2844,7 +3024,11 @@ class BarracudaGame {
     if (this.engine3D) {
       this.engine3D.startPilotMission(reconConfig, (event, data) => this._handleReconEvent(event, data));
       this.engine3D.startFpvFlight((event, data) => this._handleReconEvent(event, data));
-      // Create 3D target markers for visual guidance
+      // Position drone pointing towards enemy north bank
+      this.engine3D.fpvPos.set(0, 18, 50);
+      this.engine3D.fpvYaw = 0;
+      this.engine3D.fpvPitch = -0.15;
+      // Create 3D target markers and physical compound objects
       this.engine3D.createReconTargetMarkers(this.reconState.targetPositions);
     }
 
@@ -2852,14 +3036,32 @@ class BarracudaGame {
     this.initPilotInputListeners();
     this.startSortieTimer();
 
-    this.addNotification('🔭 РАЗВЕДКА НАЧАТА', `Найдите и сфотографируйте ${this.reconState.targetsTotal} целей на северном берегу!`);
-    this.showMissionWarning('🔍 Летите к северному берегу — ищите светящиеся маркеры целей. [H] = зависнуть, [ПРОБЕЛ] = фото');
+    const firstTarget = this.reconState.targetPositions[0];
+    this.addNotification('🔭 РАЗВЕДКА НАЧАТА', `Найдите ${this.reconState.targetsTotal} целей на северном берегу! Первая цель: ${firstTarget.name}`);
+    this.showMissionWarning(`🔍 ЛЕТИТЕ К СВЕТЯЩЕМУСЯ МАЯКУ: ${firstTarget.name}! Подлетите на расстояние <45м и нажмите [ПРОБЕЛ]`);
+
     if (window.tacticalAudio) {
       window.tacticalAudio.playFPVLaunch();
       window.tacticalAudio.startFpvMotorSound();
     }
 
-    // Add photo capture on Space during recon (NOT overriding other Space logic)
+    // Bind on-screen snap button and spacebar
+    const snapBtn = document.getElementById('btn-recon-snap');
+    if (snapBtn) {
+      snapBtn.onclick = (e) => {
+        e.stopPropagation();
+        this._attemptReconPhoto();
+      };
+    }
+
+    const fpvPhotoBtn = document.getElementById('btn-fpv-photo');
+    if (fpvPhotoBtn) {
+      fpvPhotoBtn.onclick = (e) => {
+        e.stopPropagation();
+        this._attemptReconPhoto();
+      };
+    }
+
     this._reconPhotoHandler = (e) => {
       if (!this.sortieActive || !this.reconState) return;
       if (e.code === 'Space') {
@@ -2869,31 +3071,31 @@ class BarracudaGame {
     };
     window.addEventListener('keydown', this._reconPhotoHandler);
 
-    // Start recon HUD update loop (proximity indicators)
+    // Start 60fps recon HUD update loop
     this._reconHudInterval = setInterval(() => {
       if (!this.sortieActive || !this.reconState || !this.engine3D) {
         clearInterval(this._reconHudInterval);
         return;
       }
       this._updateReconHUD();
-    }, 500);
+    }, 50);
   }
 
   _attemptReconPhoto() {
     if (!this.reconState || this.reconState.scanCooldown > Date.now()) return;
-    this.reconState.scanCooldown = Date.now() + 1200; // 1.2s cooldown
-
-    if (window.tacticalAudio) window.tacticalAudio.playPhotoCaptured();
+    this.reconState.scanCooldown = Date.now() + 1000;
 
     // Flash screen white briefly for photo effect
     const flash = document.createElement('div');
-    flash.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(255,255,255,0.35);z-index:9999;pointer-events:none;transition:opacity 0.3s';
+    flash.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(255,255,255,0.75);z-index:9999;pointer-events:none;transition:opacity 0.3s';
     document.body.appendChild(flash);
-    setTimeout(() => { flash.style.opacity = '0'; }, 50);
-    setTimeout(() => flash.remove(), 400);
+    setTimeout(() => { flash.style.opacity = '0'; }, 40);
+    setTimeout(() => flash.remove(), 350);
 
-    // Check if any unfound target is close to drone position
-    if (this.engine3D) {
+    if (window.tacticalAudio) window.tacticalAudio.playPhotoCaptured();
+
+    // Check if any unfound target is close to drone position (< 50m)
+    if (this.engine3D && this.engine3D.fpvPos) {
       const dronePos = this.engine3D.fpvPos;
       
       let nearestTarget = null;
@@ -2903,7 +3105,7 @@ class BarracudaGame {
         if (t.found) return;
         const dx = dronePos.x - t.x;
         const dz = dronePos.z - t.z;
-        const dist = Math.sqrt(dx * dx + dz * dz);
+        const dist = Math.hypot(dx, dz);
         if (dist < nearestDist) {
           nearestDist = dist;
           nearestTarget = { target: t, idx };
@@ -2914,6 +3116,7 @@ class BarracudaGame {
         nearestTarget.target.found = true;
         this.reconState.targetsFound++;
         this.reconState.photosTaken++;
+        this.reconState.lockedAudioPlayed = false;
 
         // Remove 3D marker for found target
         if (this.engine3D.removeReconMarker) {
@@ -2921,20 +3124,40 @@ class BarracudaGame {
         }
 
         if (window.tacticalAudio) window.tacticalAudio.playTargetFound();
+
+        // Show Polaroid Photo Card on screen
+        const photoCard = document.getElementById('recon-photo-card');
+        const photoName = document.getElementById('photo-last-name');
+        if (photoCard && photoName) {
+          photoName.textContent = `${nearestTarget.target.name} [${this.reconState.targetsFound}/${this.reconState.targetsTotal}]`;
+          photoCard.classList.add('show');
+          setTimeout(() => photoCard.classList.remove('show'), 3500);
+        }
+
         this.showMissionWarning(`📸 ЦЕЛЬ ЗАФИКСИРОВАНА: ${nearestTarget.target.name} [${this.reconState.targetsFound}/${this.reconState.targetsTotal}]`);
-        this.addNotification('📸 ЦЕЛЬ НАЙДЕНА', `${nearestTarget.target.name} — фото-фиксация успешна!`);
+        this.addNotification('📸 ФОТОФИКСАЦИЯ УСПЕШНА', `${nearestTarget.target.name} занесён в протокол разведки!`);
 
         // Check completion
         if (this.reconState.targetsFound >= this.reconState.targetsTotal) {
-          this.showMissionWarning('✅ ВСЕ ЦЕЛИ ОБНАРУЖЕНЫ! Возвращайтесь на базу...');
+          this.showMissionWarning('✅ ВСЕ ЦЕЛИ ОБНАРУЖЕНЫ! Завершение разведки...');
           setTimeout(() => {
-            this.finishSortie(true, 'Все цели обнаружены и зафиксированы');
-          }, 2500);
+            const reconOverlay = document.getElementById('recon-hud-overlay');
+            if (reconOverlay) reconOverlay.style.display = 'none';
+            this.finishSortie(true, 'Все цели разведаны и сфотографированы');
+          }, 2000);
+        } else {
+          // Find next target for guidance
+          const nextTarget = this.reconState.targetPositions.find(t => !t.found);
+          if (nextTarget) {
+            setTimeout(() => {
+              this.showMissionWarning(`🔭 СЛЕДУЮЩАЯ ЦЕЛЬ: ${nextTarget.name}! Летите к следующему световому маяку.`);
+            }, 1500);
+          }
         }
-      } else if (nearestTarget && nearestDist < 80) {
-        this.showMissionWarning(`📷 Почти! Цель в ${Math.round(nearestDist)}м — подлетите ближе!`);
+      } else if (nearestTarget && nearestDist < 90) {
+        this.showMissionWarning(`📷 Почти в зоне! Цель «${nearestTarget.target.name}» в ${Math.round(nearestDist)}м — подлетите ближе (<45м)!`);
       } else {
-        this.showMissionWarning('📷 Ничего не обнаружено — летите к маркерам на северном берегу');
+        this.showMissionWarning('📷 Цель слишком далеко! Подлетите ближе к световому столбу маяка (<45м).');
       }
     }
   }
@@ -3662,52 +3885,99 @@ class BarracudaGame {
     }
   }
 
-  // Recon HUD update: show proximity to nearest unfound target
+  // Recon HUD update: show proximity and 3D screen projection for nearest unfound target
   _updateReconHUD() {
-    if (!this.reconState || !this.engine3D || !this.engine3D.fpvPos) return;
-    const dronePos = this.engine3D.fpvPos;
-    let nearestDist = Infinity;
-    let nearestName = '';
-    
-    this.reconState.targetPositions.forEach(t => {
-      if (t.found) return;
-      const dx = dronePos.x - t.x;
-      const dz = dronePos.z - t.z;
-      const dist = Math.sqrt(dx * dx + dz * dz);
-      if (dist < nearestDist) {
-        nearestDist = dist;
-        nearestName = t.name;
-      }
+    if (!this.reconState || !this.engine3D) return;
+
+    const screenTargets = this.engine3D.getReconTargetsScreenInfo();
+    const unfound = screenTargets.filter(t => {
+      const match = this.reconState.targetPositions[t.idx];
+      return match && !match.found;
     });
 
-    // Update FPV OSD with recon info
+    if (unfound.length === 0) return;
+
+    // Find closest target
+    unfound.sort((a, b) => a.dist - b.dist);
+    const nearest = unfound[0];
+    const foundCount = this.reconState.targetsFound;
+    const totalCount = this.reconState.targetsTotal;
+
+    // 1. Update Top Objective Banner
+    const bannerEl = document.getElementById('recon-objective-banner');
+    if (bannerEl) {
+      if (nearest.dist <= 45) {
+        bannerEl.innerHTML = `🎯 <b>${nearest.name} В ПРИЦЕЛЕ (${nearest.dist}м)!</b> НАЖМИТЕ <b>[ПРОБЕЛ]</b> ИЛИ КНОПКУ <b>[📸 СНИМОК]</b>!`;
+        bannerEl.style.borderColor = '#00ff88';
+        bannerEl.style.color = '#00ff88';
+      } else {
+        bannerEl.innerHTML = `🔭 <b>ЭТАП [${foundCount + 1}/${totalCount}]:</b> Подлетите к <b>${nearest.name}</b> (${nearest.dist}м прямо) | [H] Зависнуть | [ПРОБЕЛ] Снимок`;
+        bannerEl.style.borderColor = '#00ffcc';
+        bannerEl.style.color = '#00ffcc';
+      }
+    }
+
+    // 2. Update 3D Screen Space Waypoint Reticle
+    const reticleEl = document.getElementById('recon-waypoint-reticle');
+    const tagEl = document.getElementById('wp-target-tag');
+    const snapBtn = document.getElementById('btn-recon-snap');
+    const mainCrosshair = document.getElementById('fpv-main-crosshair');
+
+    if (reticleEl && tagEl) {
+      reticleEl.style.display = 'block';
+
+      // If target is in front of camera
+      if (nearest.inFront) {
+        const clampedX = Math.max(40, Math.min(window.innerWidth - 40, nearest.screenX));
+        const clampedY = Math.max(40, Math.min(window.innerHeight - 80, nearest.screenY));
+        reticleEl.style.left = `${clampedX}px`;
+        reticleEl.style.top = `${clampedY}px`;
+      } else {
+        // Target is behind drone — point arrow towards edge
+        const edgeX = nearest.rawX > 0 ? window.innerWidth - 40 : 40;
+        reticleEl.style.left = `${edgeX}px`;
+        reticleEl.style.top = `50%`;
+      }
+
+      tagEl.textContent = `🎯 ${nearest.name} [${nearest.dist}м]`;
+
+      // Lock-On State (< 45m)
+      if (nearest.dist <= 45) {
+        reticleEl.classList.add('locked');
+        if (snapBtn) snapBtn.style.display = 'block';
+        if (mainCrosshair) mainCrosshair.style.borderColor = '#00ff88';
+
+        if (!this.reconState.lockedAudioPlayed && window.tacticalAudio) {
+          window.tacticalAudio.playTargetLock();
+          this.reconState.lockedAudioPlayed = true;
+        }
+      } else {
+        reticleEl.classList.remove('locked');
+        if (snapBtn) snapBtn.style.display = 'none';
+        if (mainCrosshair) mainCrosshair.style.borderColor = '';
+        this.reconState.lockedAudioPlayed = false;
+      }
+    }
+
+    // 3. Update FPV top OSD chip
     const reconOsd = document.getElementById('fpv-osd-recon-info');
     if (!reconOsd) {
-      // Create recon OSD element if not exists
       const topOsd = document.querySelector('.fpv-top-osd');
       if (topOsd) {
         const el = document.createElement('span');
         el.id = 'fpv-osd-recon-info';
         el.className = 'fpv-osd-chip';
-        el.style.color = '#00ccff';
         topOsd.appendChild(el);
       }
     }
-    
     const infoEl = document.getElementById('fpv-osd-recon-info');
     if (infoEl) {
-      const found = this.reconState.targetsFound;
-      const total = this.reconState.targetsTotal;
-      if (nearestDist < 50) {
-        infoEl.textContent = `📸 ЦЕЛЬ: ${Math.round(nearestDist)}м — НАЖМИТЕ ПРОБЕЛ`;
+      if (nearest.dist <= 45) {
+        infoEl.textContent = `📸 НАЖМИТЕ ПРОБЕЛ // ${nearest.name} [${nearest.dist}м]`;
         infoEl.style.color = '#00ff88';
-        infoEl.style.animation = 'fpvAlertBlink 0.5s infinite alternate';
-      } else if (nearestDist < 100) {
-        infoEl.textContent = `🔍 ${nearestName}: ${Math.round(nearestDist)}м [${found}/${total}]`;
-        infoEl.style.color = '#ffcc00';
-        infoEl.style.animation = '';
+        infoEl.style.animation = 'fpvAlertBlink 0.4s infinite alternate';
       } else {
-        infoEl.textContent = `🔭 Ближайшая цель: ${Math.round(nearestDist)}м [${found}/${total}]`;
+        infoEl.textContent = `🔭 ${nearest.name}: ${nearest.dist}м [${foundCount}/${totalCount}]`;
         infoEl.style.color = '#00ccff';
         infoEl.style.animation = '';
       }
@@ -5958,6 +6228,127 @@ class BarracudaGame {
       btnExitRov.addEventListener('click', () => {
         rovOverlay.style.display = 'none';
         if (this.engine3D) this.engine3D.stopRovMode();
+      });
+    }
+
+    // 6. Tactical Systems Center Modal & Quick Actions
+    const btnOpenTactical = document.getElementById('btn-open-tactical-hub');
+    const btnCloseTactical = document.getElementById('btn-close-tactical-hub');
+    const tacticalModal = document.getElementById('tactical-hub-modal');
+
+    if (btnOpenTactical && tacticalModal) {
+      btnOpenTactical.addEventListener('click', (e) => {
+        e.stopPropagation();
+        tacticalModal.classList.add('active');
+      });
+    }
+    if (btnCloseTactical && tacticalModal) {
+      btnCloseTactical.addEventListener('click', (e) => {
+        e.stopPropagation();
+        tacticalModal.classList.remove('active');
+      });
+    }
+
+    // Quick Combat Action Bar buttons
+    const btnQuickSonar = document.getElementById('btn-quick-sonar');
+    if (btnQuickSonar) {
+      btnQuickSonar.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const sonarPanel = document.getElementById('sonar-waterfall-panel');
+        if (sonarPanel) {
+          const isHidden = sonarPanel.style.display === 'none' || !sonarPanel.style.display;
+          sonarPanel.style.display = isHidden ? 'block' : 'none';
+          this.sonarActive = isHidden;
+          if (this.engine3D) this.engine3D.setSonarActive(isHidden);
+        }
+      });
+    }
+
+    const btnQuickRov = document.getElementById('btn-quick-rov');
+    if (btnQuickRov) {
+      btnQuickRov.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const mockMission = { id: 'm1_4', code: 'OP-104', title: 'Микро-ROV тест', timeLimit: 180 };
+        this._startRovMission(mockMission, { act: 1, sector: this.currentSector });
+      });
+    }
+
+    const btnQuickBoat = document.getElementById('btn-quick-boat');
+    if (btnQuickBoat) {
+      btnQuickBoat.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.start3DMissionSortie('pilot_test');
+        setTimeout(() => {
+          if (this.engine3D) {
+            this.engine3D.setVsaState(false);
+            this.vsaEnabled = false;
+            this.showMissionWarning('🚤 ТЕСТ-ДРАЙВ КАТЕРА: Курсовая устойчивость VSA отключена для управляемого заноса!');
+          }
+        }, 600);
+      });
+    }
+
+    // Tactical Hub Direct Launchers
+    const btnThSonar = document.getElementById('btn-th-launch-sonar');
+    if (btnThSonar) {
+      btnThSonar.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (tacticalModal) tacticalModal.classList.remove('active');
+        this.start3DMissionSortie('sonar_test');
+        setTimeout(() => {
+          if (this.engine3D) {
+            this.engine3D.setSonarActive(true);
+            this.sonarActive = true;
+            const sonarPanel = document.getElementById('sonar-waterfall-panel');
+            if (sonarPanel) sonarPanel.style.display = 'block';
+          }
+        }, 500);
+      });
+    }
+
+    const btnThRov = document.getElementById('btn-th-launch-rov');
+    if (btnThRov) {
+      btnThRov.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (tacticalModal) tacticalModal.classList.remove('active');
+        const mockMission = { id: 'm1_4', code: 'OP-104', title: 'Микро-ROV спецоперация', timeLimit: 180 };
+        this._startRovMission(mockMission, { act: 1, sector: this.currentSector });
+      });
+    }
+
+    const btnThBoat = document.getElementById('btn-th-launch-boat');
+    if (btnThBoat) {
+      btnThBoat.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (tacticalModal) tacticalModal.classList.remove('active');
+        this.start3DMissionSortie('drift_test');
+        setTimeout(() => {
+          if (this.engine3D) {
+            this.engine3D.setVsaState(false);
+            this.vsaEnabled = false;
+            this.showMissionWarning('🚤 ТЕСТ VSA: Попробуйте клавиши [V] (стабилизация) и [H] (динамический якорь)!');
+          }
+        }, 600);
+      });
+    }
+
+    const btnThPid = document.getElementById('btn-th-open-pid');
+    if (btnThPid) {
+      btnThPid.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (tacticalModal) tacticalModal.classList.remove('active');
+        const hangarModal = document.getElementById('hangar-modal');
+        if (hangarModal) hangarModal.classList.add('active');
+      });
+    }
+
+    const btnThKinburn = document.getElementById('btn-th-launch-kinburn');
+    if (btnThKinburn) {
+      btnThKinburn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (tacticalModal) tacticalModal.classList.remove('active');
+        this.changeSector('sector-5');
+        this.addNotification('🏝️ КИНБУРНСКАЯ КОСА', 'Сектор развёртывания изменён на Кинбурнскую косу (x4.0 Награды)!');
       });
     }
 
