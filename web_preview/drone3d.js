@@ -123,6 +123,35 @@ class Barracuda3DEngine {
     this.fpvHover = false; // Hover mode: drone stabilizes and holds position
     this.reconMarkers = []; // 3D target markers for recon missions
 
+    // Advanced Tactical Systems State (VSA, DPS, Sonar, Depth, ROV, PID, AI Lock)
+    this.vsaEnabled = true;
+    this.vsaDriftFactor = 0;
+    this.lateralSlipVel = 0;
+    this.dpsActive = false;
+    this.dpsAnchorPos = new THREE.Vector3();
+    this.sonarActive = false;
+    this.sonarCanvas = null;
+    this.sonarWaterfallHistory = [];
+    this.sonarPingTimer = 0;
+    this.currentDepth = 12.4;
+    this.shallowWaterTimer = 0;
+    this.shallowEnginePenalty = 1.0;
+    this.nonMagneticHull = false;
+    this.rovActive = false;
+    this.rovPos = new THREE.Vector3(0, -6, 0);
+    this.rovHeading = 0;
+    this.rovSpeed = 0;
+    this.rovMesh = null;
+    this.rovTetherLine = null;
+    this.siphonTargetPos = new THREE.Vector3(0, -6.5, 30);
+    this.siphonProgress = 0;
+    this.siphonLocked = false;
+    this.magnetometerVal = 48200;
+    this.fpvAiLockTarget = null;
+    this.fpvAiModuleActive = false;
+    this.fpvPidSettings = { pGain: 1.0, dGain: 1.0, expo: 1.0 };
+    this.capsizeWarningTimer = 0;
+
     // Enemy CIWS Anti-Air Defenses
     this.ciwsTracers = [];
     this.ciwsCooldown = 0;
@@ -1307,18 +1336,53 @@ class Barracuda3DEngine {
         const euler = new THREE.Euler(this.fpvPitch, this.fpvYaw, this.fpvRoll, 'YXZ');
         this.fpvDroneMesh.quaternion.setFromEuler(euler);
       } else {
-        // Normal flight mode
-        const turnRate = 1.2;   // Gentle, smooth yaw
-        const pitchRate = 0.9;  // Gentle pitch for easy altitude control
+        // Normal flight mode with PID Controller & Expo Curves
+        const pGain = (this.fpvPidSettings && this.fpvPidSettings.pGain) ? this.fpvPidSettings.pGain : 1.0;
+        const dGain = (this.fpvPidSettings && this.fpvPidSettings.dGain) ? this.fpvPidSettings.dGain : 1.0;
+        const expo = (this.fpvPidSettings && this.fpvPidSettings.expo) ? this.fpvPidSettings.expo : 1.0;
 
-        this.fpvPitch += this.fpvSteerY * pitchRate * dt;
-        this.fpvPitch = Math.max(-Math.PI / 3.0, Math.min(Math.PI / 3.5, this.fpvPitch));
+        // Apply stick expo
+        const rawSteerX = this.fpvSteerX;
+        const rawSteerY = this.fpvSteerY;
+        const shapedSteerX = Math.sign(rawSteerX) * (Math.abs(rawSteerX) * (1.0 - (expo - 1.0) * 0.35) + Math.pow(Math.abs(rawSteerX), 3) * ((expo - 1.0) * 0.35));
+        const shapedSteerY = Math.sign(rawSteerY) * (Math.abs(rawSteerY) * (1.0 - (expo - 1.0) * 0.35) + Math.pow(Math.abs(rawSteerY), 3) * ((expo - 1.0) * 0.35));
 
-        this.fpvYaw -= this.fpvSteerX * turnRate * dt;
+        // AI Terminal Guidance Override under EW (RSSI < 25% & AI module active)
+        if (this.fpvAiModuleActive && this.fpvGlitchAmount > 0.65 && this.enemyShip) {
+          const toTargetX = this.enemyShip.position.x - this.fpvPos.x;
+          const toTargetZ = this.enemyShip.position.z - this.fpvPos.z;
+          const toTargetY = (this.enemyShip.position.y + 4.0) - this.fpvPos.y;
+          const distH = Math.sqrt(toTargetX * toTargetX + toTargetZ * toTargetZ);
+          const aiTargetYaw = Math.atan2(toTargetX, toTargetZ);
 
-        // Natural banking roll when turning (smoothed)
-        const targetRoll = -this.fpvSteerX * 0.55;
-        this.fpvRoll += (targetRoll - this.fpvRoll) * Math.min(1.0, 3.5 * dt);
+          let diffYaw = aiTargetYaw - this.fpvYaw;
+          while (diffYaw > Math.PI) diffYaw -= Math.PI * 2;
+          while (diffYaw < -Math.PI) diffYaw += Math.PI * 2;
+          this.fpvYaw += diffYaw * Math.min(1.0, 4.5 * dt);
+
+          const aiPitch = -Math.atan2(toTargetY, Math.max(1, distH));
+          this.fpvPitch += (aiPitch - this.fpvPitch) * Math.min(1.0, 4.0 * dt);
+          this.fpvRoll += (-diffYaw * 0.6 - this.fpvRoll) * Math.min(1.0, 5.0 * dt);
+
+          if (!this._aiLockAudioTriggered) {
+            this._aiLockAudioTriggered = true;
+            if (window.tacticalAudio) window.tacticalAudio.playAiLockEngaged();
+            if (this.onMissionEvent) this.onMissionEvent('fpv_ai_terminal_engaged', { label: 'ИИ-НАВЕДЕНИЕ NPU JETSON [АКТИВНО]' });
+          }
+        } else {
+          this._aiLockAudioTriggered = false;
+          const turnRate = 1.35 * pGain;
+          const pitchRate = 1.05 * pGain;
+
+          this.fpvPitch += shapedSteerY * pitchRate * dt;
+          this.fpvPitch = Math.max(-Math.PI / 3.0, Math.min(Math.PI / 3.5, this.fpvPitch));
+
+          this.fpvYaw -= shapedSteerX * turnRate * dt;
+
+          // Natural banking roll when turning (smoothed with D-Gain)
+          const targetRoll = -shapedSteerX * 0.58;
+          this.fpvRoll += (targetRoll - this.fpvRoll) * Math.min(1.0, 3.8 * dGain * dt);
+        }
 
         // Apply orientation quaternion using Euler YXZ
         const euler = new THREE.Euler(this.fpvPitch, this.fpvYaw, this.fpvRoll, 'YXZ');
@@ -1326,13 +1390,13 @@ class Barracuda3DEngine {
 
         // Linear Flight Velocity & Thrust (smooth and controllable)
         const forwardVector = new THREE.Vector3(0, 0, -1).applyQuaternion(this.fpvDroneMesh.quaternion);
-        const speed = (this.fpvBoost ? 32.0 : 18.0) * (0.5 + this.fpvThrottle * 0.5);
+        const speed = (this.fpvBoost ? 34.0 : 20.0) * (0.5 + this.fpvThrottle * 0.5);
 
-        // Very smooth forward acceleration (low lerp = gradual)
-        this.fpvVel.lerp(forwardVector.multiplyScalar(speed), Math.min(1.0, 4.0 * dt));
+        // Very smooth forward acceleration (lerp damped by D-Gain)
+        this.fpvVel.lerp(forwardVector.multiplyScalar(speed), Math.min(1.0, 4.5 * dGain * dt));
 
-        // Slight aerodynamic gravity when diving / climbing
-        this.fpvVel.y -= 1.5 * dt;
+        // Aerodynamic gravity when diving / climbing
+        this.fpvVel.y -= 1.4 * dt;
       }
 
       // Update 3D guide line from drone toward enemy ship
@@ -2463,47 +2527,107 @@ class Barracuda3DEngine {
     // REAL-TIME 3D PILOTING PHYSICS & BOAT DYNAMICS (MISSIONS)
     // -------------------------------------------------------------
     if (this.pilotMode && this.boatModel) {
-      const maxForwardSpeed = this.pilotBoost ? 36.0 : 22.0;
-      const maxReverseSpeed = -8.0;
-      const accelRate = (this.pilotThrottle > 0 ? 12.0 : 18.0) * dt;
+      // Dynamic Positioning System (DPS Auto-Hold Anchor)
+      if (this.dpsActive) {
+        const dpsDx = this.dpsAnchorPos.x - this.pilotBoatPos.x;
+        const dpsDz = this.dpsAnchorPos.z - this.pilotBoatPos.z;
+        const dpsDist = Math.hypot(dpsDx, dpsDz);
+        if (dpsDist > 0.4) {
+          const targetHeading = Math.atan2(dpsDx, dpsDz);
+          let hDiff = targetHeading - this.pilotHeading;
+          while (hDiff > Math.PI) hDiff -= Math.PI * 2;
+          while (hDiff < -Math.PI) hDiff += Math.PI * 2;
+          this.pilotHeading += hDiff * Math.min(1.0, 3.0 * dt);
+          this.pilotSpeed += (Math.min(4.0, dpsDist * 1.5) - this.pilotSpeed) * Math.min(1.0, 4.0 * dt);
+        } else {
+          this.pilotSpeed *= Math.max(0, 1.0 - 5.0 * dt);
+        }
+      } else {
+        // Normal Manual Piloting
+        const maxForwardSpeed = (this.pilotBoost ? 36.0 : 22.0) * (this.currentDepth < 0.85 ? 0.55 : 1.0);
+        const maxReverseSpeed = -8.0;
+        const accelRate = (this.pilotThrottle > 0 ? 12.0 : 18.0) * dt;
 
-      // Update speed with inertia:
-      const targetSpeed = this.pilotThrottle > 0 ? this.pilotThrottle * maxForwardSpeed : this.pilotThrottle * (-maxReverseSpeed);
-      this.pilotSpeed += (targetSpeed - this.pilotSpeed) * Math.min(1.0, accelRate);
+        // Update speed with inertia:
+        const targetSpeed = this.pilotThrottle > 0 ? this.pilotThrottle * maxForwardSpeed : this.pilotThrottle * (-maxReverseSpeed);
+        this.pilotSpeed += (targetSpeed - this.pilotSpeed) * Math.min(1.0, accelRate);
 
-      // Smooth hydrodynamic turning (prevents sudden twitching and jerking):
-      const maxTurnRate = 1.25; // Gentle realistic naval rudder rate
-      const speedFactor = Math.min(1.0, Math.max(0.2, Math.abs(this.pilotSpeed) / 10.0));
-      const targetAngularVel = -this.pilotSteer * maxTurnRate * speedFactor;
-      this.pilotAngularVelocity += (targetAngularVel - this.pilotAngularVelocity) * Math.min(1.0, 5.5 * dt);
-      this.pilotHeading += this.pilotAngularVelocity * dt * (this.pilotSpeed >= 0 ? 1 : -0.7);
+        // Hydrodynamic turning authority: VSA ON (tight control) vs VSA OFF (drift mode)
+        const maxTurnRate = this.vsaEnabled ? 1.25 : 2.45;
+        const speedFactor = Math.min(1.0, Math.max(0.2, Math.abs(this.pilotSpeed) / 10.0));
+        const targetAngularVel = -this.pilotSteer * maxTurnRate * speedFactor;
+        this.pilotAngularVelocity += (targetAngularVel - this.pilotAngularVelocity) * Math.min(1.0, (this.vsaEnabled ? 5.5 : 8.0) * dt);
+        this.pilotHeading += this.pilotAngularVelocity * dt * (this.pilotSpeed >= 0 ? 1 : -0.7);
 
-      // Translate coordinates:
-      const vx = Math.sin(this.pilotHeading) * this.pilotSpeed;
-      const vz = Math.cos(this.pilotHeading) * this.pilotSpeed;
+        // VSA Drift / Lateral Slip Mechanics
+        if (this.vsaEnabled) {
+          this.lateralSlipVel *= Math.max(0, 1.0 - 9.0 * dt);
+        } else {
+          const latForce = -this.pilotSteer * Math.abs(this.pilotSpeed) * 0.55;
+          this.lateralSlipVel += (latForce - this.lateralSlipVel) * Math.min(1.0, 3.8 * dt);
+          if (Math.abs(this.lateralSlipVel) > 3.8 && Math.random() < 0.22) {
+            if (window.tacticalAudio) window.tacticalAudio.playWaterDrift();
+          }
+        }
+      }
+
+      // Translate coordinates (forward velocity + lateral drift slip)
+      const vx = Math.sin(this.pilotHeading) * this.pilotSpeed + Math.cos(this.pilotHeading) * this.lateralSlipVel;
+      const vz = Math.cos(this.pilotHeading) * this.pilotSpeed - Math.sin(this.pilotHeading) * this.lateralSlipVel;
       this.pilotBoatPos.x += vx * dt;
       this.pilotBoatPos.z += vz * dt;
 
-      // Realistic hydrodynamic pitch and roll based on smoothed angular velocity:
+      // Bathymetric Depth Calculation & Shallow Water Hazard
+      let calcDepth = 14.0 + Math.sin(this.pilotBoatPos.x * 0.015) * 3.0;
+      if (this.isKinburnSector || (this.missionConfig && this.missionConfig.isShallow)) {
+        calcDepth = 2.1 + Math.sin(this.pilotBoatPos.x * 0.045) * 1.5 + Math.cos(this.pilotBoatPos.z * 0.035) * 1.3;
+      }
+      this.currentDepth = Math.max(0.4, calcDepth);
+
+      if (this.currentDepth < 0.85 && Math.abs(this.pilotSpeed) > 10.0 && (t - this.shallowWaterTimer > 2.8)) {
+        this.shallowWaterTimer = t;
+        if (window.tacticalAudio) window.tacticalAudio.playShallowWaterAlarm();
+        if (this.onMissionEvent) this.onMissionEvent('shallow_water_warning', { depth: this.currentDepth.toFixed(1) });
+      }
+
+      // Realistic hydrodynamic pitch and roll based on smoothed angular velocity & wave interaction
       const waveHeave = Math.sin(t * 2.6) * 0.04 + Math.cos(t * 1.8) * 0.02;
-      const targetRoll = this.pilotAngularVelocity * 0.32;
+      const targetRoll = this.vsaEnabled
+        ? this.pilotAngularVelocity * 0.32
+        : (this.pilotAngularVelocity * 0.68 + (this.lateralSlipVel / 8.0) * 0.35 + Math.sin(t * 3.2) * 0.08);
       const targetPitch = (this.pilotSpeed / 36.0) * 0.12 + (this.pilotBoost ? 0.04 : 0.0);
+
       this.pilotRoll += (targetRoll - this.pilotRoll) * Math.min(1.0, 6.0 * dt);
       this.pilotPitch += (targetPitch - this.pilotPitch) * Math.min(1.0, 6.0 * dt);
+
+      // Capsize safety check in VSA OFF mode
+      if (!this.vsaEnabled && Math.abs(this.pilotRoll) > 0.82 && Math.abs(this.pilotSpeed) > 14.0 && (t - this.capsizeWarningTimer > 2.5)) {
+        this.capsizeWarningTimer = t;
+        if (this.onMissionEvent) this.onMissionEvent('vsa_capsize_risk', { rollDeg: Math.round(this.pilotRoll * (180 / Math.PI)) });
+      }
 
       this.boatModel.position.set(this.pilotBoatPos.x, this.boatBaseY + waveHeave, this.pilotBoatPos.z);
       this.boatModel.rotation.set(this.pilotPitch, this.pilotHeading, this.pilotRoll);
 
-      // Waterjet Spray & Foaming Wake:
-      if (Math.abs(this.pilotSpeed) > 1.0) {
+      // Waterjet Spray & Foaming Wake (larger on drift)
+      if (Math.abs(this.pilotSpeed) > 1.0 || Math.abs(this.lateralSlipVel) > 1.5) {
         const sternDist = 2.2;
         const wakeX = this.pilotBoatPos.x - Math.sin(this.pilotHeading) * sternDist;
         const wakeZ = this.pilotBoatPos.z - Math.cos(this.pilotHeading) * sternDist;
-        const sprayScale = this.pilotBoost ? 2.8 : 1.5;
+        const sprayScale = (this.pilotBoost ? 2.8 : 1.5) * (this.vsaEnabled ? 1.0 : 1.4);
         this.emitWakeParticle(wakeX - Math.cos(this.pilotHeading) * 0.4, wakeZ + Math.sin(this.pilotHeading) * 0.4, sprayScale);
         this.emitWakeParticle(wakeX + Math.cos(this.pilotHeading) * 0.4, wakeZ - Math.sin(this.pilotHeading) * 0.4, sprayScale);
         if (Math.random() > 0.4) {
           this.emitWakeParticle(wakeX, wakeZ, sprayScale * 1.2);
+        }
+      }
+
+      // Sonar Periodic Ping
+      if (this.sonarActive) {
+        this.sonarPingTimer += dt;
+        if (this.sonarPingTimer > 2.2) {
+          this.sonarPingTimer = 0;
+          if (window.tacticalAudio) window.tacticalAudio.playSonarPing();
         }
       }
 
@@ -3113,9 +3237,10 @@ class Barracuda3DEngine {
       m.userData.led.material.color.setHex(blink ? 0xff0033 : 0x330000);
       m.userData.light.intensity = blink ? 2.5 : 0.2;
 
-      // Distance collision check to player boat
+      // Distance collision check to player boat (Non-Magnetic Hull reduces magnetic trigger radius)
       const dist = Math.hypot(this.pilotBoatPos.x - m.position.x, this.pilotBoatPos.z - m.position.z);
-      if (dist < m.userData.radius) {
+      const triggerRadius = this.nonMagneticHull ? 0.95 : m.userData.radius;
+      if (dist < triggerRadius) {
         // MINE DETONATION!
         this.create3DExplosion(m.position);
         this.scene.remove(m);
@@ -3214,6 +3339,96 @@ class Barracuda3DEngine {
     });
   }
 
+  // =========================================================================
+  // ADVANCED TACTICAL CONTROLS (VSA, DPS, SONAR, ROV, PID, AI LOCK)
+  // =========================================================================
+  toggleVsa() {
+    this.vsaEnabled = !this.vsaEnabled;
+    if (window.tacticalAudio) window.tacticalAudio.playVsaToggle(this.vsaEnabled);
+    return this.vsaEnabled;
+  }
+
+  setVsaState(enabled) {
+    this.vsaEnabled = !!enabled;
+    if (window.tacticalAudio) window.tacticalAudio.playVsaToggle(this.vsaEnabled);
+  }
+
+  toggleDps() {
+    this.dpsActive = !this.dpsActive;
+    if (this.dpsActive) {
+      this.dpsAnchorPos.copy(this.pilotBoatPos);
+      if (window.tacticalAudio) window.tacticalAudio.playVsaToggle(true);
+    }
+    return this.dpsActive;
+  }
+
+  setDpsState(enabled) {
+    this.dpsActive = !!enabled;
+    if (this.dpsActive) this.dpsAnchorPos.copy(this.pilotBoatPos);
+  }
+
+  setSonarActive(active) {
+    this.sonarActive = !!active;
+    if (this.sonarActive && window.tacticalAudio) window.tacticalAudio.playSonarPing();
+  }
+
+  setNonMagneticHull(enabled) {
+    this.nonMagneticHull = !!enabled;
+  }
+
+  setFpvPidSettings(settings) {
+    if (settings) {
+      this.fpvPidSettings = {
+        pGain: settings.pGain !== undefined ? settings.pGain : 1.0,
+        dGain: settings.dGain !== undefined ? settings.dGain : 1.0,
+        expo: settings.expo !== undefined ? settings.expo : 1.0
+      };
+    }
+  }
+
+  setFpvAiModule(active) {
+    this.fpvAiModuleActive = !!active;
+  }
+
+  // Underwater Micro-ROV & Magnetometer Data Siphon Mode
+  startRovMode(config, onEventCallback) {
+    this.rovActive = true;
+    this.cameraMode = 'rov';
+    this.onMissionEvent = onEventCallback || null;
+    this.siphonProgress = 0;
+    this.siphonLocked = false;
+    this.rovPos.set(this.pilotBoatPos.x, -5.5, this.pilotBoatPos.z + 4);
+    this.siphonTargetPos.set(this.pilotBoatPos.x + (Math.random() - 0.5) * 8, -6.8, this.pilotBoatPos.z + 18);
+
+    if (window.tacticalAudio) window.tacticalAudio.playSonarPing();
+  }
+
+  stopRovMode() {
+    this.rovActive = false;
+    this.cameraMode = this.pilotMode ? 'chase' : 'orbit';
+  }
+
+  setRovInput(steerX, steerZ, boost) {
+    if (!this.rovActive) return;
+    const speed = boost ? 6.5 : 3.8;
+    this.rovPos.x += steerX * speed * 0.016;
+    this.rovPos.z += steerZ * speed * 0.016;
+
+    // Magnetometer calculation (nT)
+    const distToCable = Math.hypot(this.rovPos.x - this.siphonTargetPos.x, this.rovPos.z - this.siphonTargetPos.z);
+    this.magnetometerVal = Math.round(48000 + (3800 / Math.max(0.5, distToCable * 0.8)) + (Math.random() - 0.5) * 60);
+
+    // Check Siphon alignment
+    if (distToCable < 2.5) {
+      this.siphonProgress = Math.min(100, this.siphonProgress + 0.8);
+      if (this.siphonProgress >= 100 && !this.siphonLocked) {
+        this.siphonLocked = true;
+        if (window.tacticalAudio) window.tacticalAudio.playSiphonLock();
+        if (this.onMissionEvent) this.onMissionEvent('siphon_complete', { loot: 'Ключ шифрования ВМФ', mb: 8500 });
+      }
+    }
+  }
+
   getPilotTelemetry() {
     if (this.fpvFlightActive) {
       const distToWarship = this.enemyShip ? Math.round(this.fpvPos.distanceTo(this.enemyShip.position)) : 0;
@@ -3264,7 +3479,9 @@ class Barracuda3DEngine {
         ciwsActive: distToWarship < 120,
         boostActive: this.fpvBoost,
         glitchAmount: this.fpvGlitchAmount,
-        bearingArrow: bearingArrow
+        bearingArrow: bearingArrow,
+        aiModuleActive: this.fpvAiModuleActive,
+        pidSettings: this.fpvPidSettings
       };
     }
 
@@ -3305,7 +3522,17 @@ class Barracuda3DEngine {
       cratesCollected: this.missionStats.cratesCollected,
       totalCrates: this.missionStats.totalCrates,
       boostActive: this.pilotBoost,
-      bearingArrow: boatBearing
+      bearingArrow: boatBearing,
+      vsaEnabled: this.vsaEnabled,
+      dpsActive: this.dpsActive,
+      sonarActive: this.sonarActive,
+      depthM: this.currentDepth.toFixed(1),
+      isShallow: this.currentDepth < 1.0,
+      lateralSlipVel: Math.round(this.lateralSlipVel * 10) / 10,
+      magnetometerNt: this.magnetometerVal,
+      siphonProgress: Math.round(this.siphonProgress),
+      siphonLocked: this.siphonLocked,
+      rovActive: this.rovActive
     };
   }
 }

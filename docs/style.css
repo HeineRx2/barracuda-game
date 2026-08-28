@@ -4949,3 +4949,388 @@ body {
   }
 }
 
+/* ==========================================================================
+   ADVANCED TACTICAL SYSTEMS (VSA, DPS, SONAR, DEPTH SOUNDER, ROV, PID)
+   ========================================================================== */
+
+/* Depth Sounder & Shallow Alert */
+.mission-depth-sounder {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(4, 18, 28, 0.85);
+  border: 1px solid rgba(0, 240, 255, 0.35);
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  margin-top: 6px;
+  backdrop-filter: blur(8px);
+}
+.depth-icon {
+  font-size: 14px;
+}
+.depth-label {
+  color: #7a9aa8;
+  font-size: 11px;
+}
+.depth-val {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 14px;
+}
+.shallow-badge {
+  background: rgba(255, 30, 30, 0.85);
+  color: #fff;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 900;
+  animation: shallowPulse 0.6s infinite alternate;
+  border: 1px solid #ffcc00;
+}
+@keyframes shallowPulse {
+  from { transform: scale(0.95); opacity: 0.8; }
+  to { transform: scale(1.05); opacity: 1; filter: drop-shadow(0 0 8px #ff0033); }
+}
+
+/* Mission Tactical Toggles (VSA, DPS, Sonar) */
+.mission-tactical-toggles {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+.btn-tactical-toggle {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: rgba(4, 18, 28, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #7a9aa8;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(6px);
+}
+.btn-tactical-toggle:hover {
+  border-color: rgba(0, 240, 255, 0.5);
+  color: #00f0ff;
+  transform: translateY(-1px);
+}
+.btn-tactical-toggle.active {
+  background: rgba(0, 255, 136, 0.18);
+  border-color: #00ff88;
+  color: #00ff88;
+  box-shadow: 0 0 12px rgba(0, 255, 136, 0.3);
+}
+.btn-tt-icon {
+  font-size: 13px;
+}
+
+/* PID Avionics Tuning in Hangar */
+.avionics-pid-section {
+  background: rgba(3, 14, 22, 0.7);
+  border: 1px solid rgba(0, 240, 255, 0.3);
+  border-radius: 10px;
+  padding: 14px;
+  margin-bottom: 16px;
+}
+.pid-controls-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+.pid-card {
+  background: rgba(6, 24, 38, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 10px;
+}
+.pid-header {
+  display: flex;
+  justify-content: space-between;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  margin-bottom: 6px;
+  color: #8da4af;
+}
+.pid-slider {
+  width: 100%;
+  height: 6px;
+  background: rgba(0, 40, 60, 0.8);
+  border-radius: 3px;
+  outline: none;
+  cursor: pointer;
+  accent-color: #00f0ff;
+}
+.pid-hint {
+  font-size: 10px;
+  color: #617b88;
+  margin-top: 4px;
+  line-height: 1.3;
+}
+
+/* Sonar Waterfall Display Modal */
+.sonar-panel-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(660px, 92vw);
+  background: rgba(2, 10, 16, 0.95);
+  border: 1px solid rgba(0, 255, 136, 0.5);
+  border-radius: 12px;
+  box-shadow: 0 10px 50px rgba(0, 0, 0, 0.9), 0 0 30px rgba(0, 255, 136, 0.25);
+  z-index: 1200;
+  backdrop-filter: blur(14px);
+  overflow: hidden;
+}
+.sonar-panel-inner {
+  padding: 14px;
+}
+.sonar-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(0, 255, 136, 0.25);
+  font-family: 'Rajdhani', sans-serif;
+}
+.sonar-header-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #00ff88;
+  font-weight: 700;
+  font-size: 14px;
+}
+.sonar-header-status {
+  font-size: 11px;
+  color: #7a9aa8;
+}
+.btn-close-sonar {
+  background: rgba(255, 50, 50, 0.15);
+  border: 1px solid rgba(255, 50, 50, 0.4);
+  color: #ff5555;
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.btn-close-sonar:hover {
+  background: rgba(255, 50, 50, 0.4);
+  color: #fff;
+}
+.sonar-waterfall-viewport {
+  position: relative;
+  width: 100%;
+  height: 240px;
+  background: #02080d;
+  margin: 10px 0;
+  border: 1px solid rgba(0, 255, 136, 0.3);
+  border-radius: 8px;
+  overflow: hidden;
+}
+#sonar-waterfall-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.sonar-center-track {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 2px;
+  background: rgba(0, 255, 136, 0.4);
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+.sonar-grid-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: repeating-linear-gradient(0deg, transparent, transparent 19px, rgba(0, 255, 136, 0.08) 20px),
+              repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(0, 255, 136, 0.08) 40px);
+  pointer-events: none;
+}
+.sonar-panel-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 11px;
+  color: #8da4af;
+}
+.sonar-legend {
+  display: flex;
+  gap: 12px;
+}
+.sonar-speed-alert {
+  color: #00ff88;
+  font-weight: 600;
+}
+
+/* Underwater Micro-ROV Overlay */
+.rov-overlay-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at center, rgba(0, 35, 45, 0.4) 0%, rgba(1, 10, 15, 0.95) 100%);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 16px;
+  backdrop-filter: blur(2px);
+  pointer-events: auto;
+}
+.rov-water-vignette {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  box-shadow: inset 0 0 100px rgba(0, 20, 30, 0.9);
+  pointer-events: none;
+}
+.rov-scan-lines {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0, 240, 255, 0.03) 3px);
+  pointer-events: none;
+}
+.rov-top-hud {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 10;
+}
+.rov-hud-chip {
+  background: rgba(3, 18, 28, 0.85);
+  border: 1px solid rgba(0, 240, 255, 0.4);
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 700;
+  font-size: 13px;
+  color: #00f0ff;
+}
+.rov-center-hud {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  gap: 20px;
+}
+.rov-magnetometer-readout {
+  background: rgba(2, 12, 20, 0.9);
+  border: 1px solid rgba(255, 204, 0, 0.5);
+  padding: 10px 16px;
+  border-radius: 8px;
+  text-align: center;
+  font-family: 'Rajdhani', sans-serif;
+  box-shadow: 0 0 20px rgba(255, 204, 0, 0.2);
+}
+.mag-label {
+  font-size: 11px;
+  color: #ffcc00;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+.mag-val {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 24px;
+  font-weight: 700;
+  margin: 4px 0;
+}
+.mag-bar-track {
+  width: 140px;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  overflow: hidden;
+  margin: 0 auto;
+}
+.mag-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #00ff88, #ffcc00, #ff0033);
+  transition: width 0.15s ease;
+}
+.rov-crosshair-bracket {
+  width: 80px;
+  height: 80px;
+  border: 2px dashed rgba(0, 240, 255, 0.6);
+  border-radius: 50%;
+  animation: rovSpin 8s linear infinite;
+}
+@keyframes rovSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.btn-siphon-action {
+  background: linear-gradient(135deg, #00ff88, #00bb66);
+  color: #021810;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 15px;
+  font-weight: 900;
+  letter-spacing: 1px;
+  cursor: pointer;
+  box-shadow: 0 0 25px rgba(0, 255, 136, 0.6);
+  transition: all 0.2s ease;
+}
+.btn-siphon-action:hover {
+  transform: scale(1.05);
+  filter: brightness(1.15);
+}
+.rov-bottom-hud {
+  display: flex;
+  justify-content: center;
+  z-index: 10;
+}
+.rov-siphon-progress-box {
+  background: rgba(3, 18, 28, 0.85);
+  border: 1px solid rgba(0, 255, 136, 0.4);
+  padding: 10px 20px;
+  border-radius: 8px;
+  width: min(340px, 90vw);
+  text-align: center;
+  font-family: 'Rajdhani', sans-serif;
+}
+.siphon-label {
+  font-size: 13px;
+  color: #00ff88;
+  margin-bottom: 6px;
+}
+.siphon-bar-track {
+  height: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.siphon-bar-fill {
+  height: 100%;
+  background: #00ff88;
+  transition: width 0.2s ease;
+}
+
+

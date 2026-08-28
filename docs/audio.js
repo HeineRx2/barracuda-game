@@ -1938,6 +1938,174 @@ class TacticalAudioEngine {
     osc.start(now);
     osc.stop(now + 0.22);
   }
+
+  // =========================================================================
+  // ADVANCED TACTICAL AUDIO (Sonar, VSA, ROV, AI Lock, Shallow Alert)
+  // =========================================================================
+  playSonarPing() {
+    this.init();
+    const now = this.ctx.currentTime;
+    // Primary resonant hydroacoustic chirp (downward/upward chirped sine)
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    const filter = this.ctx.createBiquadFilter();
+
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(2400, now);
+    osc.frequency.exponentialRampToValueAtTime(1450, now + 0.08);
+    osc.frequency.exponentialRampToValueAtTime(1200, now + 0.6);
+
+    filter.type = 'bandpass';
+    filter.frequency.value = 1600;
+    filter.Q.value = 4.0;
+
+    gain.gain.setValueAtTime(0.001, now);
+    gain.gain.linearRampToValueAtTime(0.25, now + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.85);
+
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.masterGain);
+
+    osc.start(now);
+    osc.stop(now + 0.9);
+
+    // Deep water echo reverberation
+    const subOsc = this.ctx.createOscillator();
+    const subGain = this.ctx.createGain();
+    subOsc.type = 'sine';
+    subOsc.frequency.setValueAtTime(420, now + 0.05);
+    subOsc.frequency.exponentialRampToValueAtTime(320, now + 0.7);
+    subGain.gain.setValueAtTime(0.12, now + 0.05);
+    subGain.gain.exponentialRampToValueAtTime(0.001, now + 0.7);
+    subOsc.connect(subGain);
+    subGain.connect(this.masterGain);
+    subOsc.start(now + 0.05);
+    subOsc.stop(now + 0.75);
+  }
+
+  playShallowWaterAlarm() {
+    this.init();
+    const now = this.ctx.currentTime;
+    // Dual emergency warning beep (Naval echo sounder collision alarm)
+    for (let i = 0; i < 2; i++) {
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(880, now + i * 0.12);
+      gain.gain.setValueAtTime(0.12, now + i * 0.12);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.12 + 0.08);
+      osc.connect(gain);
+      gain.connect(this.masterGain);
+      osc.start(now + i * 0.12);
+      osc.stop(now + i * 0.12 + 0.09);
+    }
+  }
+
+  playVsaToggle(enabled) {
+    this.init();
+    const now = this.ctx.currentTime;
+    // Heavy mechanical relay switch + tactical servo confirm
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = enabled ? 'sine' : 'sawtooth';
+    osc.frequency.setValueAtTime(enabled ? 480 : 320, now);
+    osc.frequency.linearRampToValueAtTime(enabled ? 960 : 180, now + 0.06);
+
+    gain.gain.setValueAtTime(0.2, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+
+    osc.connect(gain);
+    gain.connect(this.masterGain);
+    osc.start(now);
+    osc.stop(now + 0.09);
+  }
+
+  playWaterDrift() {
+    this.init();
+    const now = this.ctx.currentTime;
+    const buf = this._createBrownNoiseBuffer(0.35);
+    const src = this.ctx.createBufferSource();
+    const filter = this.ctx.createBiquadFilter();
+    const gain = this.ctx.createGain();
+
+    src.buffer = buf;
+    filter.type = 'bandpass';
+    filter.frequency.setValueAtTime(850, now);
+    filter.frequency.linearRampToValueAtTime(1400, now + 0.15);
+    filter.Q.value = 2.0;
+
+    gain.gain.setValueAtTime(0.15, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+
+    src.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.masterGain);
+    src.start(now);
+    src.stop(now + 0.36);
+  }
+
+  playRovThruster() {
+    this.init();
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    const filter = this.ctx.createBiquadFilter();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(160, now);
+    osc.frequency.linearRampToValueAtTime(220, now + 0.2);
+
+    filter.type = 'lowpass';
+    filter.frequency.value = 400;
+
+    gain.gain.setValueAtTime(0.12, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.masterGain);
+    osc.start(now);
+    osc.stop(now + 0.25);
+  }
+
+  playSiphonLock() {
+    this.init();
+    const now = this.ctx.currentTime;
+    // Harmonic locking chord
+    [523.25, 659.25, 783.99, 1046.50].forEach((freq, idx) => {
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      const t = now + idx * 0.04;
+      gain.gain.setValueAtTime(0.15, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
+      osc.connect(gain);
+      gain.connect(this.masterGain);
+      osc.start(t);
+      osc.stop(t + 0.45);
+    });
+  }
+
+  playAiLockEngaged() {
+    this.init();
+    const now = this.ctx.currentTime;
+    // High-tech AI optical lock target beep (triplet)
+    [1200, 1600, 2400].forEach((freq, idx) => {
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      const t = now + idx * 0.05;
+      gain.gain.setValueAtTime(0.18, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
+      osc.connect(gain);
+      gain.connect(this.masterGain);
+      osc.start(t);
+      osc.stop(t + 0.07);
+    });
+  }
 }
 
 window.tacticalAudio = new TacticalAudioEngine();
+

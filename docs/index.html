@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>BARRACUDA // Автономный Ударный Дрон</title>
   <meta name="description" content="Тактический симулятор боевого надводного дрона Барракуда с реалистичной 3D-моделью.">
-  <link rel="stylesheet" href="style.css?v=3.5.0_mobile_pro">
+  <link rel="stylesheet" href="style.css?v=3.5.0_naval_tactics">
 
   <!-- Global Error Handler Overlay -->
   <script>
@@ -403,7 +403,7 @@
       <div class="mission-warning-banner" id="hud-warning-banner">⚠️ ВНИМАНИЕ: МИННОЕ ПОЛЕ // ЛУЧИ ПРОЖЕКТОРОВ</div>
     </div>
 
-    <!-- Bottom Left: Speedometer & Hull HP -->
+    <!-- Bottom Left: Speedometer & Hull HP & Depth Sounder -->
     <div class="mission-bottom-left">
       <div class="mission-speed-dial">
         <div class="speed-number" id="hud-val-speed">0</div>
@@ -418,6 +418,13 @@
           <div class="hull-bar-fill" id="hud-fill-hp" style="width:100%;"></div>
         </div>
       </div>
+      <!-- Echo Sounder / Bathymetry Depth Display -->
+      <div class="mission-depth-sounder" id="hud-depth-widget">
+        <span class="depth-icon">🌊</span>
+        <span class="depth-label">ЭХОЛОТ:</span>
+        <span class="depth-val text-cyan" id="hud-val-depth">12.4 м</span>
+        <span class="shallow-badge" id="hud-shallow-badge" style="display:none;">⚠️ МЕЛЬ</span>
+      </div>
     </div>
 
     <!-- Mobile Touch Joystick Area (Left Thumb) -->
@@ -428,8 +435,22 @@
       <div class="joystick-label">🕹️ РУЛЬ & ГАЗ</div>
     </div>
 
-    <!-- Bottom Right Controls: Boost & FPV Strike (Right Thumb) -->
+    <!-- Bottom Right Controls: Boost, VSA, DPS, Sonar & FPV Strike -->
     <div class="mission-bottom-right">
+      <div class="mission-tactical-toggles">
+        <button class="btn-tactical-toggle active" id="btn-mission-vsa" title="Курсовая устойчивость VSA (ВКЛ / ВЫКЛ: Режим дрифта)">
+          <span class="btn-tt-icon">🛡️</span>
+          <span class="btn-tt-text" id="hud-vsa-text">VSA: ВКЛ</span>
+        </button>
+        <button class="btn-tactical-toggle" id="btn-mission-dps" title="Система динамического позиционирования (Авто-удержание)">
+          <span class="btn-tt-icon">⚓</span>
+          <span class="btn-tt-text" id="hud-dps-text">DPS: ВЫКЛ</span>
+        </button>
+        <button class="btn-tactical-toggle" id="btn-mission-sonar" title="Гидроакустический сонар бокового обзора">
+          <span class="btn-tt-icon">📡</span>
+          <span class="btn-tt-text" id="hud-sonar-text">СОНАР</span>
+        </button>
+      </div>
       <button class="btn-mission-action btn-mission-boost" id="btn-mission-boost">
         <span class="btn-ma-icon">⚡</span>
         <span class="btn-ma-text">ФОРСАЖ</span>
@@ -445,6 +466,9 @@
       <span><b>[W / S]</b> Газ / Реверс</span>
       <span><b>[A / D]</b> Руль</span>
       <span><b>[Shift]</b> Форсаж</span>
+      <span><b>[V]</b> VSA Дрифт</span>
+      <span><b>[H]</b> DPS Якорь</span>
+      <span><b>[X]</b> Сонар</span>
       <span><b>[Пробел]</b> Пуск FPV</span>
     </div>
   </div>
@@ -1337,6 +1361,55 @@
           </div>
           <button class="btn-launch-mission btn-proto-select" data-select-proto="aegis" style="background:rgba(255,255,255,0.15); color:#fff;">АКТИВИРОВАТЬ</button>
         </div>
+
+        <!-- MK4 COAXIAL VTOL -->
+        <div class="proto-card" data-proto="coaxial_vtol">
+          <div>
+            <span class="proto-badge" style="color:#ffbb00; background:rgba(255,187,0,0.15); border-color:#ffbb00;">MK-4 // ТЯЖЕЛЫЙ VTOL</span>
+            <div class="proto-title">BARRACUDA «COAXIAL-VTOL»</div>
+            <div class="proto-role">Соосный тяжелый ракетоносец прорыва</div>
+            <div class="proto-stats-list">
+              <div class="proto-stat-item"><span>Бронепробитие БЧ:</span><span class="proto-stat-val text-yellow">+220% урон по кораблям</span></div>
+              <div class="proto-stat-item"><span>Штормовой взлет (VTOL):</span><span class="proto-stat-val text-green">Иммунитет к качке</span></div>
+              <div class="proto-stat-item"><span>ИИ-терминал NPU:</span><span class="proto-stat-val text-cyan">Оптический автозахват</span></div>
+            </div>
+          </div>
+          <button class="btn-launch-mission btn-proto-select" data-select-proto="coaxial_vtol" style="background:rgba(255,255,255,0.15); color:#fff;">АКТИВИРОВАТЬ</button>
+        </div>
+      </div>
+
+      <!-- FPV Avionics & PID Flight Controller Firmware Panel -->
+      <div class="avionics-pid-section">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+          <h3 style="font-family:'Rajdhani',sans-serif; font-size:16px; color:#00f0ff; margin:0;">🕹️ АВИОНИКА FPV & PID-РЕГУЛЯТОРЫ (STM32 FIRMWARE)</h3>
+          <span style="font-size:11px; color:#8da4af;">Индивидуальная калибровка динамики штурмового дрона</span>
+        </div>
+        <div class="pid-controls-grid">
+          <div class="pid-card">
+            <div class="pid-header">
+              <span>P-GAIN (МАНЕВРЕННОСТЬ)</span>
+              <b class="text-green" id="val-pid-p">1.0x</b>
+            </div>
+            <input type="range" class="pid-slider" id="slider-pid-p" min="0.5" max="2.0" step="0.1" value="1.0">
+            <div class="pid-hint">Выше — резче уклонение от зениток CIWS, ниже — плавный прицел.</div>
+          </div>
+          <div class="pid-card">
+            <div class="pid-header">
+              <span>D-GAIN (ДЕМПФИРОВАНИЕ ВЕТРА)</span>
+              <b class="text-cyan" id="val-pid-d">1.0x</b>
+            </div>
+            <input type="range" class="pid-slider" id="slider-pid-d" min="0.5" max="2.0" step="0.1" value="1.0">
+            <div class="pid-hint">Гасит рывки от штормовых порывов и сглаживает стабилизацию.</div>
+          </div>
+          <div class="pid-card">
+            <div class="pid-header">
+              <span>STICK EXPO (ЭКСПОНЕНТА)</span>
+              <b class="text-yellow" id="val-pid-expo">1.0x</b>
+            </div>
+            <input type="range" class="pid-slider" id="slider-pid-expo" min="1.0" max="2.5" step="0.1" value="1.0">
+            <div class="pid-hint">Мягкий центр для точного наведения на мостик + агрессивный край.</div>
+          </div>
+        </div>
       </div>
 
       <!-- Salvage Inventory & Crafting Forge -->
@@ -1385,9 +1458,77 @@
     </div>
   </div>
 
+  <!-- =========================================================================
+       SIDE-SCAN SONAR WATERFALL DISPLAY MODAL
+       ========================================================================= -->
+  <div id="sonar-waterfall-panel" class="sonar-panel-modal" style="display:none;">
+    <div class="sonar-panel-inner">
+      <div class="sonar-panel-header">
+        <div class="sonar-header-title">
+          <span class="sonar-ping-icon">📡</span>
+          <span>ГИДРОАКУСТИЧЕСКИЙ СОНАР БОКОВОГО ОБЗОРА (SSS-500)</span>
+        </div>
+        <div class="sonar-header-status">
+          <span id="sonar-telemetry-depth">ГЛУБИНА: 12.4 м</span> // 
+          <span id="sonar-telemetry-freq">ЧАСТОТА: 450 кГц CHIRP</span>
+        </div>
+        <button class="btn-close-sonar" id="btn-close-sonar">✕ ЗАКРЫТЬ</button>
+      </div>
+      <div class="sonar-waterfall-viewport">
+        <canvas id="sonar-waterfall-canvas" width="600" height="260"></canvas>
+        <div class="sonar-center-track"></div>
+        <div class="sonar-grid-overlay"></div>
+      </div>
+      <div class="sonar-panel-footer">
+        <div class="sonar-legend">
+          <span>🟩 ДНО / БАТИМЕТРИЯ</span>
+          <span>🟨 АНОМАЛИИ / КАБЕЛИ</span>
+          <span>🟥 МИННЫЕ ПОСТАНОВКИ</span>
+        </div>
+        <div class="sonar-speed-alert" id="sonar-speed-alert">РЕЖИМ: ОПТИМАЛЬНАЯ СКОРОСТЬ СКАНИРОВАНИЯ (12 УЗЛОВ)</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       UNDERWATER MICRO-ROV & MAGNETOMETER SIPHON OVERLAY
+       ========================================================================= -->
+  <div id="rov-mission-overlay" class="rov-overlay-container" style="display:none;">
+    <div class="rov-water-vignette"></div>
+    <div class="rov-scan-lines"></div>
+
+    <header class="rov-top-hud">
+      <div class="rov-hud-chip">ТЕЛЕУПРАВЛЯЕМЫЙ МИКРО-ROV «СПРУТ-1»</div>
+      <div class="rov-hud-chip" id="rov-hud-depth">ГЛУБИНА: 6.8 м</div>
+      <div class="rov-hud-chip" id="rov-hud-tether">ТРОС: 24.5 м</div>
+      <button class="btn-abort-mission" id="btn-exit-rov">✕ ВСПЛЫТИЕ</button>
+    </header>
+
+    <div class="rov-center-hud">
+      <div class="rov-target-reticle">
+        <div class="rov-magnetometer-readout">
+          <div class="mag-label">МАГНИТОМЕТР (nT)</div>
+          <div class="mag-val text-yellow" id="rov-val-mag">48,250 nT</div>
+          <div class="mag-bar-track"><div class="mag-bar-fill" id="rov-fill-mag" style="width:50%;"></div></div>
+        </div>
+        <div class="rov-crosshair-bracket"></div>
+      </div>
+      <div class="rov-siphon-prompt" id="rov-siphon-prompt">
+        <button class="btn-siphon-action" id="btn-trigger-siphon">🔮 ПОДКЛЮЧИТЬ СИФОН ДАННЫХ</button>
+      </div>
+    </div>
+
+    <div class="rov-bottom-hud">
+      <div class="rov-siphon-progress-box">
+        <div class="siphon-label">СИНХРОНИЗАЦИЯ СИФОНА: <b id="rov-siphon-pct">0%</b></div>
+        <div class="siphon-bar-track"><div class="siphon-bar-fill" id="rov-siphon-fill" style="width:0%;"></div></div>
+      </div>
+    </div>
+  </div>
+
   <!-- Audio, 3D Engine & Game Logic -->
-  <script src="audio.js?v=3.5.0_mobile_pro"></script>
-  <script src="drone3d.js?v=3.5.0_mobile_pro"></script>
-  <script src="game.js?v=3.5.0_mobile_pro"></script>
+  <script src="audio.js?v=3.5.0_naval_tactics"></script>
+  <script src="drone3d.js?v=3.5.0_naval_tactics"></script>
+  <script src="game.js?v=3.5.0_naval_tactics"></script>
 </body>
 </html>

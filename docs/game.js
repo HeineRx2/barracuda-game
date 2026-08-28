@@ -40,7 +40,8 @@ const SECTOR_INFO = {
   'sector-1': { name: 'АНТОНОВСКИЙ МОСТ', mult: 1.0, weather: 'storm' },
   'sector-2': { name: 'КАХОВСКАЯ ГЭС', mult: 1.8, weather: 'night' },
   'sector-3': { name: 'ХЕРСОНСКИЙ ПОРТ', mult: 2.5, weather: 'sunset' },
-  'sector-4': { name: 'ДЕЛЬТА ДНЕПРА', mult: 3.2, weather: 'dawn' }
+  'sector-4': { name: 'ДЕЛЬТА ДНЕПРА', mult: 3.2, weather: 'dawn' },
+  'sector-5': { name: 'КИНБУРНСКАЯ КОСА', mult: 4.0, weather: 'sunset', isShallow: true }
 };
 
 // =========================================================================
@@ -68,10 +69,13 @@ const ACHIEVEMENTS_DEF = [
   { id: 'campaign_act2', name: 'ПРОРЫВ БОНОВ', desc: 'Завершите Акт II кампании', icon: '⚓' },
   { id: 'campaign_act3', name: 'ПРИЗРАЧНЫЙ ФЛОТ', desc: 'Завершите Акт III кампании', icon: '🚢' },
   { id: 'campaign_act4', name: 'КОД: ЛЕВИАФАН', desc: 'Уничтожьте флагман Левиафан', icon: '💀' },
-  { id: 'salvage_master', name: 'ИНЖЕНЕР ФЛОТА', desc: 'Скрафтите модуль в Ангаре', icon: '💠' }
+  { id: 'salvage_master', name: 'ИНЖЕНЕР ФЛОТА', desc: 'Скрафтите модуль в Ангаре', icon: '💠' },
+  { id: 'sonar_scan', name: 'ГИДРОАКУСТИК', desc: 'Просканируйте дно сонаром бокового обзора', icon: '📡' },
+  { id: 'vsa_drift', name: 'МОРСКОЙ ДРИФТЕР', desc: 'Выполните вираж в режиме VSA OFF', icon: '🌊' },
+  { id: 'ai_terminal_hit', name: 'НЕЙРО-НАВЕДЕНИЕ', desc: 'Уничтожьте цель при РЭБ с помощью ИИ Jetson', icon: '🧠' },
+  { id: 'underwater_siphon', name: 'ГЛУБИННЫЙ СИФОН', desc: 'Подключите микро-ROV к подводному кабелю', icon: '🔮' }
 ];
 
-// =========================================================================
 // =========================================================================
 // NAVAL SHIP CLASSES & SCALING
 // =========================================================================
@@ -155,6 +159,23 @@ const DRONE_PROTOTYPES_DEF = {
     reqShips: 12,
     reqSalvage: { box: 4, titanium: 6, aicore: 1 },
     costUSD: 180000
+  },
+  coaxial_vtol: {
+    id: 'coaxial_vtol',
+    name: 'BARRACUDA «COAXIAL-VTOL»',
+    role: 'Соосный тяжелый ракетоносец прорыва',
+    desc: 'Соосная двухмоторная схема с тандемной кумулятивной БЧ. Неуязвим к штормовому ветру и качке при взлете. +220% урон по броне кораблей.',
+    badge: 'MK-4 // ТЯЖЕЛЫЙ VTOL',
+    clickMult: 1.4,
+    passiveMult: 1.6,
+    dataGainMult: 1.25,
+    fpvObstacleDensity: 0.75,
+    fpvDamageMult: 3.2,
+    fpvExtraLives: 1,
+    rebTimeBonus: 6,
+    reqShips: 8,
+    reqSalvage: { box: 3, titanium: 5, chips: 3 },
+    costUSD: 95000
   }
 };
 
@@ -176,6 +197,22 @@ const SALVAGE_CRAFT_RECIPES = [
     desc: '+12 секунд ко времени взлома частот и +25% к шансу критического сбора.',
     cost: { chips: 5, box: 2 },
     tier: 1,
+    unlocked: false
+  },
+  {
+    id: 'non_magnetic_hull',
+    name: 'НЕМАГНИТНЫЙ КОРПУС «CARBON-STEALTH»',
+    desc: '9.5-метровый цельнокарбоновый композит. Обнуляет магнитную сигнатуру (0 nT), позволяя безопасно проходить над умными донными минами.',
+    cost: { titanium: 6, chips: 4, box: 3 },
+    tier: 2,
+    unlocked: false
+  },
+  {
+    id: 'ai_jetson_module',
+    name: 'ИИ-МОДУЛЬ «NVIDIA JETSON ORIN»',
+    desc: 'Оптический NPU терминального наведения. При подавлении РЭБ (0% RSSI) автоматически доводит FPV-дрон в уязвимые отсеки цели.',
+    cost: { aicore: 2, chips: 8, box: 4 },
+    tier: 2,
     unlocked: false
   },
   {
@@ -3801,22 +3838,48 @@ class BarracudaGame {
       const cratesEl = document.getElementById('hud-val-crates');
       if (cratesEl) cratesEl.textContent = `${telem.cratesCollected} / ${telem.totalCrates}`;
 
-      const compassEl = document.getElementById('hud-compass-heading');
-      if (compassEl) compassEl.textContent = `▲ КУРС ${String(telem.headingDeg).padStart(3, '0')}°`;
+      // Depth sounder & Shallow warning
+      const depthVal = document.getElementById('hud-val-depth');
+      if (depthVal && telem.depthM) depthVal.textContent = `${telem.depthM} м`;
 
-      // Boat Navigation Direction Arrow
-      let navEl = document.getElementById('boat-nav-arrow');
-      if (!navEl) {
-        navEl = document.createElement('div');
-        navEl.id = 'boat-nav-arrow';
-        navEl.style.cssText = 'position:fixed; top:12%; left:50%; transform:translateX(-50%); font-size:18px; font-family:monospace; font-weight:bold; color:#00ffcc; text-shadow:0 0 10px #00ff88, 0 0 20px rgba(0,255,136,0.4); z-index:200; text-align:center; pointer-events:none; letter-spacing:1px;';
-        document.body.appendChild(navEl);
+      const shallowBadge = document.getElementById('hud-shallow-badge');
+      if (shallowBadge) {
+        shallowBadge.style.display = telem.isShallow ? 'inline-block' : 'none';
       }
-      if (telem.bearingArrow) {
-        navEl.style.display = 'block';
-        navEl.innerHTML = `<div style="font-size:14px;color:#00ddaa;">🎯 ЦЕЛЬ: ${telem.distToTarget}м</div><div style="font-size:20px;margin-top:2px;">${telem.bearingArrow}</div>`;
-      } else {
-        navEl.style.display = 'none';
+
+      // VSA & DPS toggle button states
+      const vsaBtn = document.getElementById('btn-mission-vsa');
+      const vsaText = document.getElementById('hud-vsa-text');
+      if (vsaBtn && vsaText) {
+        vsaBtn.classList.toggle('active', telem.vsaEnabled);
+        vsaText.textContent = telem.vsaEnabled ? 'VSA: ВКЛ' : 'VSA: ВЫКЛ (ДРИФТ)';
+      }
+
+      const dpsBtn = document.getElementById('btn-mission-dps');
+      const dpsText = document.getElementById('hud-dps-text');
+      if (dpsBtn && dpsText) {
+        dpsBtn.classList.toggle('active', telem.dpsActive);
+        dpsText.textContent = telem.dpsActive ? 'DPS: УДЕРЖАНИЕ' : 'DPS: ВЫКЛ';
+      }
+
+      // Draw Sonar Waterfall if open
+      if (this.sonarActive) {
+        this.drawSonarWaterfall();
+      }
+
+      // ROV Magnetometer HUD update
+      if (telem.rovActive) {
+        const magVal = document.getElementById('rov-val-mag');
+        const magFill = document.getElementById('rov-fill-mag');
+        const siphonPct = document.getElementById('rov-siphon-pct');
+        const siphonFill = document.getElementById('rov-siphon-fill');
+        if (magVal) magVal.textContent = `${telem.magnetometerNt.toLocaleString()} nT`;
+        if (magFill) {
+          const norm = Math.min(100, Math.max(0, (telem.magnetometerNt - 48000) / 40));
+          magFill.style.width = `${norm}%`;
+        }
+        if (siphonPct) siphonPct.textContent = `${telem.siphonProgress}%`;
+        if (siphonFill) siphonFill.style.width = `${telem.siphonProgress}%`;
       }
     }
   }
@@ -5784,15 +5847,175 @@ class BarracudaGame {
     }
   }
 
-  refreshSettingsUI() {
-    const soundToggle = document.getElementById('setting-sound');
-    if (soundToggle) {
-      soundToggle.textContent = this.soundEnabled ? '🔊 ЗВУК: ВКЛ' : '🔇 ЗВУК: ВЫКЛ';
-      soundToggle.style.color = this.soundEnabled ? '#00ff66' : '#ff4444';
+  // =========================================================================
+  // ADVANCED TACTICAL SYSTEMS (VSA, DPS, SONAR, ROV, PID, KINBURN)
+  // =========================================================================
+  initAdvancedTacticalSystems() {
+    // 1. VSA Toggle
+    const btnVsa = document.getElementById('btn-mission-vsa');
+    if (btnVsa) {
+      btnVsa.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (this.engine3D) {
+          const active = this.engine3D.toggleVsa();
+          this.vsaEnabled = active;
+          btnVsa.classList.toggle('active', active);
+          const textEl = document.getElementById('hud-vsa-text');
+          if (textEl) textEl.textContent = active ? 'VSA: ВКЛ' : 'VSA: ВЫКЛ (ДРИФТ)';
+          this.showMissionWarning(active ? '🛡️ VSA АКТИВИРОВАНА — Курсовая стабилизация' : '⚠️ VSA ОТКЛЮЧЕНА — РЕЖИМ ГИДРОДИНАМИЧЕСКОГО ДРИФТА!');
+          if (!active) this.unlockAchievement('vsa_drift');
+        }
+      });
     }
-    const volSlider = document.getElementById('setting-volume');
-    if (volSlider && window.tacticalAudio && window.tacticalAudio.masterGain) {
-      volSlider.value = Math.round(window.tacticalAudio.masterGain.gain.value * 100);
+
+    // 2. DPS Hold Anchor
+    const btnDps = document.getElementById('btn-mission-dps');
+    if (btnDps) {
+      btnDps.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (this.engine3D) {
+          const active = this.engine3D.toggleDps();
+          this.dpsEnabled = active;
+          btnDps.classList.toggle('active', active);
+          const textEl = document.getElementById('hud-dps-text');
+          if (textEl) textEl.textContent = active ? 'DPS: УДЕРЖАНИЕ' : 'DPS: ВЫКЛ';
+          this.showMissionWarning(active ? '⚓ DPS АКТИВИРОВАН — Удержание позиции' : '⚓ DPS ОТКЛЮЧЕН — Свободный ход');
+        }
+      });
+    }
+
+    // 3. Sonar Waterfall Display
+    const btnSonar = document.getElementById('btn-mission-sonar');
+    const btnCloseSonar = document.getElementById('btn-close-sonar');
+    const sonarPanel = document.getElementById('sonar-waterfall-panel');
+    if (btnSonar) {
+      btnSonar.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.sonarActive = !this.sonarActive;
+        if (this.engine3D) this.engine3D.setSonarActive(this.sonarActive);
+        if (sonarPanel) sonarPanel.style.display = this.sonarActive ? 'block' : 'none';
+        btnSonar.classList.toggle('active', this.sonarActive);
+        if (this.sonarActive) this.unlockAchievement('sonar_scan');
+      });
+    }
+    if (btnCloseSonar && sonarPanel) {
+      btnCloseSonar.addEventListener('click', () => {
+        sonarPanel.style.display = 'none';
+        this.sonarActive = false;
+        if (this.engine3D) this.engine3D.setSonarActive(false);
+        if (btnSonar) btnSonar.classList.remove('active');
+      });
+    }
+
+    // 4. PID Avionics Tuning
+    const sliderP = document.getElementById('slider-pid-p');
+    const sliderD = document.getElementById('slider-pid-d');
+    const sliderExpo = document.getElementById('slider-pid-expo');
+    const valP = document.getElementById('val-pid-p');
+    const valD = document.getElementById('val-pid-d');
+    const valExpo = document.getElementById('val-pid-expo');
+
+    const updatePid = () => {
+      this.pidSettings = {
+        pGain: parseFloat(sliderP ? sliderP.value : 1.0),
+        dGain: parseFloat(sliderD ? sliderD.value : 1.0),
+        expo: parseFloat(sliderExpo ? sliderExpo.value : 1.0)
+      };
+      if (valP) valP.textContent = this.pidSettings.pGain.toFixed(1) + 'x';
+      if (valD) valD.textContent = this.pidSettings.dGain.toFixed(1) + 'x';
+      if (valExpo) valExpo.textContent = this.pidSettings.expo.toFixed(1) + 'x';
+      if (this.engine3D) this.engine3D.setFpvPidSettings(this.pidSettings);
+      this.saveGame();
+    };
+
+    if (sliderP) { sliderP.value = this.pidSettings.pGain || 1.0; sliderP.addEventListener('input', updatePid); }
+    if (sliderD) { sliderD.value = this.pidSettings.dGain || 1.0; sliderD.addEventListener('input', updatePid); }
+    if (sliderExpo) { sliderExpo.value = this.pidSettings.expo || 1.0; sliderExpo.addEventListener('input', updatePid); }
+    updatePid();
+
+    // 5. Underwater ROV & Data Siphon
+    const btnTriggerSiphon = document.getElementById('btn-trigger-siphon');
+    const btnExitRov = document.getElementById('btn-exit-rov');
+    const rovOverlay = document.getElementById('rov-mission-overlay');
+    if (btnTriggerSiphon) {
+      btnTriggerSiphon.addEventListener('click', () => {
+        if (this.engine3D) {
+          this.engine3D.siphonProgress = 100;
+          this.engine3D.siphonLocked = true;
+          if (window.tacticalAudio) window.tacticalAudio.playSiphonLock();
+          this.unlockAchievement('underwater_siphon');
+          this.dataMB += 8500;
+          this.creditsUSD += 25000;
+          this.addNotification('🔮 СИФОН ПОДКЛЮЧЕН', '+8,500 МБ и +$25,000 получены!');
+          setTimeout(() => {
+            if (rovOverlay) rovOverlay.style.display = 'none';
+            if (this.engine3D) this.engine3D.stopRovMode();
+          }, 1500);
+        }
+      });
+    }
+    if (btnExitRov && rovOverlay) {
+      btnExitRov.addEventListener('click', () => {
+        rovOverlay.style.display = 'none';
+        if (this.engine3D) this.engine3D.stopRovMode();
+      });
+    }
+
+    // Apply crafted upgrades
+    if (this.craftedModules.has('non_magnetic_hull') && this.engine3D) {
+      this.engine3D.setNonMagneticHull(true);
+    }
+    if (this.craftedModules.has('ai_jetson_module') && this.engine3D) {
+      this.engine3D.setFpvAiModule(true);
+    }
+  }
+
+  drawSonarWaterfall() {
+    const canvas = document.getElementById('sonar-waterfall-canvas');
+    if (!canvas || canvas.offsetParent === null) return;
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width;
+    const H = canvas.height;
+
+    // Scroll canvas down
+    const imgData = ctx.getImageData(0, 0, W, H - 3);
+    ctx.putImageData(imgData, 0, 3);
+
+    // Top scanline
+    const depth = parseFloat((this.engine3D && this.engine3D.currentDepth) || 12.4);
+    const speed = Math.abs((this.engine3D && this.engine3D.pilotSpeed) || 0);
+    const isClean = speed < 18;
+
+    const depthEl = document.getElementById('sonar-telemetry-depth');
+    if (depthEl) depthEl.textContent = `ГЛУБИНА: ${depth.toFixed(1)} м`;
+
+    ctx.fillStyle = '#01060a';
+    ctx.fillRect(0, 0, W, 3);
+
+    // Gradient backscatter
+    const grad = ctx.createLinearGradient(0, 0, W, 0);
+    grad.addColorStop(0, '#00140c');
+    grad.addColorStop(0.5, '#003822');
+    grad.addColorStop(1, '#00140c');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, 3);
+
+    if (Math.random() > 0.35) {
+      ctx.fillStyle = isClean ? '#00ff88' : '#00aa55';
+      const scatterX = Math.random() * W;
+      ctx.fillRect(scatterX, 0, isClean ? 4 : 14, 2);
+    }
+
+    if (this.engine3D && this.engine3D.missionMines && this.engine3D.missionMines.length > 0) {
+      this.engine3D.missionMines.forEach(m => {
+        const dx = m.position.x - this.engine3D.pilotBoatPos.x;
+        const dz = m.position.z - this.engine3D.pilotBoatPos.z;
+        if (Math.abs(dz) < 18 && Math.abs(dx) < 40) {
+          const mapX = (W / 2) + (dx / 40) * (W / 2);
+          ctx.fillStyle = '#ff0033';
+          ctx.fillRect(mapX - 4, 0, 8, 3);
+        }
+      });
     }
   }
 }
@@ -5801,4 +6024,6 @@ window.addEventListener('DOMContentLoaded', () => {
   window.barracudaGame = new BarracudaGame();
   window.barracudaGame.initTechTree();
   window.barracudaGame.initSettings();
+  window.barracudaGame.initAdvancedTacticalSystems();
 });
+
