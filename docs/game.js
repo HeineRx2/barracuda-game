@@ -37,10 +37,10 @@ const DOSSIER_LORE = [
 ];
 
 const SECTOR_INFO = {
-  'sector-1': { name: 'О. ЗМЕИНЫЙ', mult: 1.0, weather: 'storm' },
-  'sector-2': { name: 'СЕВАСТОПОЛЬ', mult: 1.8, weather: 'night' },
-  'sector-3': { name: 'НОВОРОССИЙСК', mult: 2.5, weather: 'sunset' },
-  'sector-4': { name: 'КЕРЧЬ', mult: 3.2, weather: 'dawn' }
+  'sector-1': { name: 'АНТОНОВСКИЙ МОСТ', mult: 1.0, weather: 'storm' },
+  'sector-2': { name: 'КАХОВСКАЯ ГЭС', mult: 1.8, weather: 'night' },
+  'sector-3': { name: 'ХЕРСОНСКИЙ ПОРТ', mult: 2.5, weather: 'sunset' },
+  'sector-4': { name: 'ДЕЛЬТА ДНЕПРА', mult: 3.2, weather: 'dawn' }
 };
 
 // =========================================================================
@@ -198,212 +198,309 @@ const SALVAGE_CRAFT_RECIPES = [
 
 // =========================================================================
 // CAMPAIGN ACTS & STORY MISSIONS DEFINITIONS
+// Theater: Dnipro River, Kherson region
+// Mission types: 'recon' (scout), 'rew' (EW hack), 'strike' (boat+FPV assault)
 // =========================================================================
 const CAMPAIGN_ACTS_DEF = [
   {
     act: 1,
-    title: '🏝️ ТЕНЬ НАД ЗМЕИНЫМ',
+    title: '🌉 ТЕНЬ АНТОНОВСКОГО',
     sector: 'sector-1',
-    desc: 'Вскрытие эшелона наблюдения противника в районе острова Змеиный.',
+    desc: 'Разведка и первые удары в районе разрушенного Антоновского моста через Днепр.',
     missions: [
       {
         id: 'm1_1',
-        code: 'OP-101 // ЗОВ ГОРИЗОНТА',
-        title: 'Первичный радиоперехват',
-        desc: 'Проникните в зону действия берегового поста РЛС и дешифруйте несущую частоту 142.5 МГц.',
+        code: 'OP-101 // РАЗВЕДКА РУСЛА',
+        title: 'Первичная аэроразведка',
+        desc: 'Запустите FPV-дрон и проведите аэроразведку участка Днепра. Обнаружьте и сфотографируйте 3 вражеских позиции на левом берегу.',
+        missionType: 'recon',
         reqData: 40,
-        phases: ['Сканирование', 'Взлом РЭБ', 'FPV-Удар', 'Сбор данных'],
+        reconTargets: 3,
+        reconTimeLimit: 240,
+        phases: ['Запуск дрона', 'Поиск целей', 'Фото-фиксация', 'Возврат'],
         reward: { usd: 3500, mb: 100, bp: 0, salvage: { box: 1, chips: 1 } },
-        targetName: 'Патрульный катер «Раптор»',
+        enemies: [
+          { type: 'patrol_boat', name: 'Патрульный катер', count: 2 },
+          { type: 'shore_mg', name: 'Береговой пулемёт ДШК', count: 3 }
+        ],
+        targetName: 'Позиции левого берега',
         commsIntro: {
           speaker: 'ШТАБ [МАЯК]', role: 'HQ',
-          text: 'Барракуда, говорит «Маяк». В квадрате 4 зафиксирована аномальная активность РЛС. Перехватите сигнал и вскройте фарватер.'
+          text: 'Барракуда, говорит «Маяк». Нужна свежая разведка участка Днепра у Антоновского моста. Запустите дрон, найдите и зафиксируйте позиции противника. Не атаковать — только наблюдение!'
         }
       },
       {
         id: 'm1_2',
         code: 'OP-102 // СЛЕПОЕ ПЯТНО',
-        title: 'Ослепление РЛС-купола',
-        desc: 'Подавите береговой ретранслятор и уничтожьте эскортный тральщик до передачи тревоги.',
+        title: 'Уничтожение 3 опорных пунктов',
+        desc: 'По данным разведки, нанесите удар по трём обнаруженным опорникам (ОП) вдоль берега.',
+        missionType: 'strike',
         reqData: 100,
-        phases: ['Радиомаскировка', 'Саботаж частот', 'FPV-Прорыв', 'Эвакуация'],
+        strikeTargets: 3,
+        phases: ['Выход на маршрут', 'Подход к ОП-1', 'FPV-удар', 'Перемещение к ОП-2', 'Финальный удар'],
         reward: { usd: 7000, mb: 250, bp: 1, salvage: { box: 1, titanium: 2 } },
-        targetName: 'Тральщик дивизиона',
+        enemies: [
+          { type: 'shore_battery', name: 'Береговая батарея 2А65', count: 3 },
+          { type: 'ew_station', name: 'Станция РЭБ «Поле-21»', count: 1 },
+          { type: 'patrol_boat', name: 'Патрульный катер «Раптор»', count: 1 }
+        ],
+        targetName: 'Опорные пункты левого берега',
         commsIntro: {
           speaker: 'ЛЕЙТЕНАНТ [ВЕКТОР]', role: 'EW',
-          text: 'Вижу частотную модуляцию радара. Если заглушим несущую волну за 25 секунд — они ослепнут!'
+          text: 'Данные разведки переданы! Координаты 3 опорников загружены в навигацию. Будьте осторожны — у них станция РЭБ «Поле-21», может подавить связь с дроном!'
         }
       },
       {
         id: 'm1_3',
         code: 'OP-103 // ОХОТА НА «ГРОМ» [БОСС]',
-        title: 'Ликвидация корвета «Гром»',
-        desc: 'Финальный удар по флагману патрульного дивизиона. Нанесите точечный кинетический удар в склад боекомплекта.',
+        title: 'Уничтожение бронекатера «Гром»',
+        desc: 'Бронированный патрульный катер блокирует фарватер у опор моста. Нанесите точечный FPV-удар в рубку.',
+        missionType: 'strike',
         reqData: 200,
         isBoss: true,
         bossId: 'corvette',
-        phases: ['Вскрытие ордера', 'РЭБ-прорыв', 'Штурм FLIR', 'Подъем ящика'],
+        phases: ['Маскировка в камышах', 'Обход патруля', 'FPV-штурм рубки', 'Сбор трофеев'],
         reward: { usd: 18000, mb: 600, bp: 2, salvage: { box: 2, titanium: 3, chips: 2 } },
-        targetName: 'Корвет «Гром»',
+        enemies: [
+          { type: 'armored_boat', name: 'Бронекатер «Гром» [БОСС]', count: 1 },
+          { type: 'patrol_boat', name: 'Катер охранения', count: 2 },
+          { type: 'shore_mg', name: 'ЗУ-23 на берегу', count: 2 }
+        ],
+        targetName: 'Бронекатер «Гром»',
         commsIntro: {
           speaker: 'АДМИРАЛ ВОРОНОВ', role: 'ENEMY',
-          text: 'Внимание всем бортам! В секторе неопознанный надводный дрон! Артиллерии открыть заградительный огонь!'
+          text: 'Внимание всем бортам! В акватории обнаружен неопознанный надводный аппарат! Артиллерии — заградительный огонь по фарватеру!'
         }
       }
     ]
   },
   {
     act: 2,
-    title: '⚓ СЕВАСТОПОЛЬСКИЙ ПРОРЫВ',
+    title: '🌙 НОЧЬ НАД КАХОВКОЙ',
     sector: 'sector-2',
-    desc: 'Ночной рейд сквозь боновые заграждения и береговую систему ПВО Севастополя.',
+    desc: 'Ночные операции в районе разрушенной Каховской ГЭС и затопленных территорий.',
     missions: [
       {
         id: 'm2_1',
-        code: 'OP-201 // НОЧНОЙ КИЛЬВАТЕР',
-        title: 'Прорыв подводных гидрофонов',
-        desc: 'Обойдите рубеж гидроакустических буев на сверхмалой скорости под покровом ночи.',
+        code: 'OP-201 // ПРИЗРАКИ КАХОВКИ',
+        title: 'Ночная разведка затопленных позиций',
+        desc: 'Исследуйте затопленные территории ниже дамбы. Обнаружьте скрытые артиллерийские позиции в руинах.',
+        missionType: 'recon',
         reqData: 350,
-        phases: ['Стелс-маневр', 'Взлом буев', 'FPV-атака', 'Сбор трофеев'],
+        reconTargets: 4,
+        reconTimeLimit: 220,
+        phases: ['Стелс-подход', 'Тепловизор FLIR', 'Маркировка целей', 'Эвакуация'],
         reward: { usd: 15000, mb: 500, bp: 1, salvage: { box: 1, chips: 3 } },
-        targetName: 'Сторожевой катер охраны водного района',
+        enemies: [
+          { type: 'shore_battery', name: 'Гаубица Д-30 в укрытии', count: 4 },
+          { type: 'ew_station', name: 'Комплекс РЭБ «Мурманск-БН»', count: 1 },
+          { type: 'sniper_post', name: 'Наблюдательный пост', count: 3 }
+        ],
+        targetName: 'Скрытые позиции у дамбы',
         commsIntro: {
           speaker: 'ШТАБ [МАЯК]', role: 'HQ',
-          text: 'Вход в бухту заминирован и перекрыт бонами. Действуйте в режиме полного радиомолчания.'
+          text: 'Ночной режим. Переключите FLIR. В затопленной зоне у дамбы противник прячет артиллерию. Нужна точная маркировка — ночью они маскируются под руины.'
         }
       },
       {
         id: 'm2_2',
-        code: 'OP-202 // СИСТЕМА «БАЛ»',
-        title: 'Саботаж берегового комплекса',
-        desc: 'Перехватите телеметрию наведения берегового ракетного дивизиона и сорвите пуск.',
+        code: 'OP-202 // СИСТЕМА «ПОЛЕ»',
+        title: 'Саботаж станции РЭБ',
+        desc: 'Станция «Поле-21» подавляет наши каналы связи. Подойдите к ней по реке и уничтожьте антенны.',
+        missionType: 'rew',
         reqData: 600,
-        phases: ['Спутниковый перехват', 'Дешифровка ключа', 'Точечный удар', 'Эвакуация данных'],
+        rewChannels: 4,
+        rewTimePerChannel: 8,
+        phases: ['Частотный перехват', 'Взлом канала 1-2', 'Взлом канала 3-4', 'Физическое уничтожение'],
         reward: { usd: 28000, mb: 900, bp: 2, salvage: { box: 2, titanium: 4 } },
-        targetName: 'Командный пункт наведения',
+        enemies: [
+          { type: 'ew_station', name: 'Комплекс РЭБ «Поле-21»', count: 1 },
+          { type: 'shore_mg', name: 'Охрана позиции', count: 4 },
+          { type: 'patrol_boat', name: 'Катер реагирования', count: 1 }
+        ],
+        targetName: 'Станция РЭБ «Поле-21»',
         commsIntro: {
           speaker: 'ЛЕЙТЕНАНТ [ВЕКТОР]', role: 'EW',
-          text: 'Перехватываю телекодовую связь батареи «Бал». Внедрим троян в их систему наведения!'
+          text: 'Перехватываю несущую частоту «Поле-21». Мощный передатчик! Нужно подавить 4 канала последовательно — следите за таймингом!'
         }
       },
       {
         id: 'm2_3',
-        code: 'OP-203 // ФРЕГАТ «БУРЯ» [БОСС]',
-        title: 'Потопление ракетного фрегата',
-        desc: 'Удар по тяжелому ракетоносцу с активной защитой. Пробейте ходовой мостик.',
+        code: 'OP-203 // БАРЖА «ВОЛГА» [БОСС]',
+        title: 'Потопление десантной баржи',
+        desc: 'Тяжёлая десантная баржа готовит переправу. Уничтожьте баржу и груз вместе с охранением.',
+        missionType: 'strike',
         reqData: 1000,
         isBoss: true,
         bossId: 'frigate',
-        phases: ['Преодоление ПВО', 'РЭБ-подавление', 'Удар в мостик', 'Захват ящика'],
+        phases: ['Обход минных постановок', 'Уничтожение охранения', 'FPV-удар в трюм', 'Захват документов'],
         reward: { usd: 45000, mb: 1500, bp: 3, salvage: { box: 3, chips: 4, titanium: 4, aicore: 1 } },
-        targetName: 'Фрегат «Буря»',
+        enemies: [
+          { type: 'barge', name: 'Десантная баржа «Волга» [БОСС]', count: 1 },
+          { type: 'patrol_boat', name: 'Катер охранения БК-16', count: 3 },
+          { type: 'shore_battery', name: 'ЗУ-23-2 на барже', count: 2 }
+        ],
+        targetName: 'Десантная баржа «Волга»',
         commsIntro: {
           speaker: 'АДМИРАЛ ВОРОНОВ', role: 'ENEMY',
-          text: '«Буря», активировать комплекс активной защиты! Сбить дрон любыми средствами!'
+          text: '«Волга», активировать зенитное прикрытие! Катерам — патрулирование по периметру в три эшелона!'
         }
       }
     ]
   },
   {
     act: 3,
-    title: '🚢 ПРИЗРАЧНЫЙ КОНВОЙ',
+    title: '⚓ ХЕРСОНСКИЙ РУБЕЖ',
     sector: 'sector-3',
-    desc: 'Охота на конвой снабжения, перевозящий квантовые вычислители проекта «Левиафан».',
+    desc: 'Операции в акватории Херсонского порта. Нейтрализация логистической базы противника.',
     missions: [
       {
         id: 'm3_1',
-        code: 'OP-301 // ТЕНЬ В ТЕРМИНАЛЕ',
-        title: 'Удар по танкеру снабжения',
-        desc: 'Отрежьте эскадру противника от поставок топлива в акватории терминала.',
+        code: 'OP-301 // ГЛАЗА ПОРТА',
+        title: 'Разведка портовой инфраструктуры',
+        desc: 'Проведите детальную разведку акватории порта: склады, краны, причалы. Обнаружьте 5 ключевых объектов.',
+        missionType: 'recon',
         reqData: 1500,
-        phases: ['Разведка ордера', 'Взлом шифра', 'Удар в машинное', 'Сбор трофеев'],
+        reconTargets: 5,
+        reconTimeLimit: 200,
+        phases: ['Вход в акваторию', 'Съёмка складов', 'Маркировка техники', 'Разведка ПВО', 'Выход'],
         reward: { usd: 55000, mb: 2000, bp: 2, salvage: { box: 2, titanium: 6 } },
-        targetName: 'Танкер флота',
+        enemies: [
+          { type: 'shore_battery', name: 'ЗРК «Стрела-10» на причале', count: 2 },
+          { type: 'patrol_boat', name: 'Катер портовой охраны', count: 3 },
+          { type: 'shore_mg', name: 'Пост наблюдения', count: 4 },
+          { type: 'supply_truck', name: 'Грузовик снабжения', count: 3 }
+        ],
+        targetName: 'Портовая инфраструктура',
         commsIntro: {
           speaker: 'ШТАБ [МАЯК]', role: 'HQ',
-          text: 'Конвой вошел в зону поражения. Без топлива их корабли станут легкой мишенью.'
+          text: 'Херсонский порт — ключевой узел логистики противника. Нужна полная картина: складские площади, зенитное прикрытие, количество техники. Фиксируйте всё!'
         }
       },
       {
         id: 'm3_2',
-        code: 'OP-302 // КВАНТОВЫЙ КЛЮЧ',
-        title: 'Перехват глубоководного ретранслятора',
-        desc: 'Подключитесь к оптоволоконной магистрали и скачайте исходные коды системы «Омега».',
+        code: 'OP-302 // ПЕРЕХВАТ КОНВОЯ',
+        title: 'Уничтожение речного конвоя',
+        desc: 'Конвой из 3 барж везёт боеприпасы по Днепру к порту. Перехватите и потопите все 3.',
+        missionType: 'strike',
         reqData: 2500,
-        phases: ['Глубоководный поиск', 'Взлом 3 каналов', 'FPV-эскорт', 'Сбор ИИ-ядра'],
+        strikeTargets: 3,
+        phases: ['Перехват маршрута', 'Удар по барже-1', 'Удар по барже-2', 'Удар по барже-3'],
         reward: { usd: 90000, mb: 3500, bp: 3, salvage: { box: 3, chips: 6, aicore: 1 } },
-        targetName: 'Эскортный корвет «Штиль»',
+        enemies: [
+          { type: 'supply_barge', name: 'Баржа-снаряд №1', count: 1 },
+          { type: 'supply_barge', name: 'Баржа-снаряд №2', count: 1 },
+          { type: 'supply_barge', name: 'Баржа-снаряд №3', count: 1 },
+          { type: 'patrol_boat', name: 'Катер сопровождения', count: 2 },
+          { type: 'shore_battery', name: 'Батарея Д-30 на берегу', count: 1 }
+        ],
+        targetName: 'Речной конвой снабжения',
         commsIntro: {
           speaker: 'ЛЕЙТЕНАНТ [ВЕКТОР]', role: 'EW',
-          text: 'Невероятно... В подводном кабеле передаются терабайты данных ИИ-нейросети!'
+          text: 'Перехватили радиообмен — конвой из трёх барж идёт вверх по течению! В каждой — до 40 тонн боеприпасов. Уничтожить все три!'
         }
       },
       {
         id: 'm3_3',
-        code: 'OP-303 // КРЕЙСЕР «НЕМЕЗИС» [БОСС]',
-        title: 'Уничтожение флагманского крейсера',
-        desc: 'Тяжелый ракетный крейсер — опора обороны сектора. Нанесите скоординированный FPV-удар.',
+        code: 'OP-303 // «ПОРТОВЫЙ ШАХ» [БОСС]',
+        title: 'Уничтожение портового крана и склада',
+        desc: 'Главный грузовой кран и склад ГСМ — сердце логистики. Один удар решит исход кампании.',
+        missionType: 'strike',
         reqData: 4500,
         isBoss: true,
         bossId: 'cruiser',
-        phases: ['Прорыв эскорта', 'Тотальный РЭБ', 'FLIR-удар в погреб', 'Подъем архивов'],
+        phases: ['Прорыв ПВО', 'Уничтожение ЗРК', 'Удар по крану', 'Подрыв склада ГСМ'],
         reward: { usd: 150000, mb: 6000, bp: 5, salvage: { box: 4, chips: 8, titanium: 8, aicore: 2 } },
-        targetName: 'Крейсер «Немезис»',
+        enemies: [
+          { type: 'port_crane', name: 'Портовый кран [ГЛАВНАЯ ЦЕЛЬ]', count: 1 },
+          { type: 'fuel_depot', name: 'Склад ГСМ', count: 1 },
+          { type: 'shore_battery', name: 'ЗРК «Бук-М1» мобильный', count: 2 },
+          { type: 'patrol_boat', name: 'Катер реагирования', count: 3 },
+          { type: 'ew_station', name: 'Станция РЭБ', count: 1 }
+        ],
+        targetName: 'Портовый комплекс',
         commsIntro: {
           speaker: 'АДМИРАЛ ВОРОНОВ', role: 'ENEMY',
-          text: 'Как этот дрон проник сквозь внешнее кольцо?! Всем боевым постам — тревога нулевого уровня!'
+          text: 'Все зенитные расчёты — полная боевая готовность! Активировать «Бук» и все комплексы! Порт не должен быть потерян!'
         }
       }
     ]
   },
   {
     act: 4,
-    title: '💀 КОД: ЛЕВИАФАН [ФИНАЛ]',
+    title: '💀 ДЕЛЬТА РАССВЕТА [ФИНАЛ]',
     sector: 'sector-4',
-    desc: 'Штурм автономного плавучего командного центра «Левиафан-01» в Керченском проливе.',
+    desc: 'Финальный штурм командного пункта противника в дельте Днепра — среди островов, камышей и проток.',
     missions: [
       {
         id: 'm4_1',
-        code: 'OP-401 // СИГНАЛ ИЗ БЕЗДНЫ',
-        title: 'Триангуляция ИИ-хаба',
-        desc: 'Определите точные координаты автономного флагмана сквозь плотную стену помех.',
+        code: 'OP-401 // ЛАБИРИНТ ПРОТОК',
+        title: 'Разведка островного архипелага',
+        desc: 'В дельте Днепра десятки малых островов. На одном из них — замаскированный командный пункт. Найдите его.',
+        missionType: 'recon',
         reqData: 7000,
-        phases: ['Поиск несущей', 'Взлом квантового шифра', 'Удар по ретрансляторам', 'Анализ'],
+        reconTargets: 6,
+        reconTimeLimit: 180,
+        phases: ['Картографирование', 'Термосканирование', 'Обнаружение КП', 'Передача координат'],
         reward: { usd: 200000, mb: 10000, bp: 4, salvage: { box: 4, chips: 10, aicore: 2 } },
-        targetName: 'Авангардный дрон-страж',
+        enemies: [
+          { type: 'patrol_boat', name: 'Скоростной катер «Мангуст»', count: 4 },
+          { type: 'shore_mg', name: 'Замаскированный пост', count: 6 },
+          { type: 'ew_station', name: 'Мобильный РЭБ на катере', count: 2 },
+          { type: 'drone_jammer', name: 'Антидрон-ружьё', count: 3 }
+        ],
+        targetName: 'Командный пункт в дельте',
         commsIntro: {
           speaker: 'ИИ [БАРРАКУДА]', role: 'AI',
-          text: 'ВНИМАНИЕ. Обнаружен встречный машинный сигнал ИИ «Левиафан». Инициализация боевых протоколов.'
+          text: 'ВНИМАНИЕ. Множественные тепловые сигнатуры в дельте Днепра. Высокая вероятность замаскированного командного центра. Начинаю систематическое сканирование островов.'
         }
       },
       {
         id: 'm4_2',
-        code: 'OP-402 // ОМЕГА-СЕТЬ',
-        title: 'Коллапс защитного периметра',
-        desc: 'Перегрузите генераторы помех и откройте коридор для генерального штурма.',
+        code: 'OP-402 // МЁРТВАЯ ЗОНА',
+        title: 'Подавление радиолокационного зонта',
+        desc: 'КП защищён тройным эшелоном РЭБ. Подавите все передатчики чтобы открыть окно для финального удара.',
+        missionType: 'rew',
         reqData: 12000,
-        phases: ['Саботаж генераторов', 'Кибер-удар', 'Уничтожение стражей', 'Подготовка прорыва'],
+        rewChannels: 6,
+        rewTimePerChannel: 6,
+        phases: ['Перехват частот', 'Взлом эшелона-1', 'Взлом эшелона-2', 'Взлом эшелона-3', 'Окно прорыва'],
         reward: { usd: 350000, mb: 18000, bp: 6, salvage: { box: 5, chips: 12, titanium: 10, aicore: 3 } },
-        targetName: 'Энергетический барбет',
+        enemies: [
+          { type: 'ew_station', name: 'Передатчик РЭБ «Красуха-4»', count: 3 },
+          { type: 'shore_battery', name: 'ПЗРК «Верба» расчёт', count: 4 },
+          { type: 'patrol_boat', name: 'Скоростной перехватчик', count: 3 }
+        ],
+        targetName: 'Эшелонированная РЭБ-система',
         commsIntro: {
           speaker: 'ЛЕЙТЕНАНТ [ВЕКТОР]', role: 'EW',
-          text: 'Их защита трещит по швам! Еще один синхронный импульс — и ядро Левиафана будет открыто!'
+          text: 'Три уровня защиты! «Красуха-4» — серьёзный противник. Если не подавим все три — дрон потеряет связь в радиусе 5 км от КП!'
         }
       },
       {
         id: 'm4_3',
-        code: 'OP-403 // БИТВА ЗА ЧЁРНОЕ МОРЕ [СУПЕР-БОСС]',
-        title: 'Ликвидация Дредноута «Левиафан-01»',
-        desc: 'Генеральное сражение с автономным дредноутом. Уничтожьте все 3 контура ИИ-серверов!',
+        code: 'OP-403 // ФИНАЛЬНЫЙ ШТУРМ [СУПЕР-БОСС]',
+        title: 'Ликвидация командного пункта «ЦИТАДЕЛЬ»',
+        desc: 'Генеральный штурм замаскированного бункерного КП на острове в дельте. Уничтожьте антенное поле, генераторы и сам бункер!',
+        missionType: 'strike',
         reqData: 25000,
         isBoss: true,
         bossId: 'cruiser',
-        phases: ['Прорыв импульсного щита', 'Квантовый взлом ядра', 'Кинетический гипер-удар', 'Захват протокола'],
+        strikeTargets: 3,
+        phases: ['Прорыв зенитного огня', 'Удар по генераторам', 'Разрушение антенн', 'Удар в бункер'],
         reward: { usd: 1000000, mb: 50000, bp: 15, salvage: { box: 10, chips: 25, titanium: 25, aicore: 10 } },
-        targetName: 'Автономный Дредноут «Левиафан-01»',
+        enemies: [
+          { type: 'bunker', name: 'КП «Цитадель» [СУПЕР-БОСС]', count: 1 },
+          { type: 'shore_battery', name: 'ЗРК «Тор-М2» мобильный', count: 3 },
+          { type: 'patrol_boat', name: 'Скоростной катер «Мангуст»', count: 4 },
+          { type: 'ew_station', name: 'Комплекс «Красуха-4»', count: 2 },
+          { type: 'drone_jammer', name: 'Система «Антидрон»', count: 4 },
+          { type: 'shore_mg', name: 'Окопные позиции', count: 6 }
+        ],
+        targetName: 'Бункерный КП «Цитадель»',
         commsIntro: {
           speaker: 'ШТАБ [МАЯК]', role: 'HQ',
-          text: 'Оператор! Судьба всего морского театра в ваших руках! Нанесите решающий удар!'
+          text: 'Оператор! Это решающий удар всей кампании! Судьба Херсонского направления — в ваших руках! Уничтожьте «Цитадель» и вся система управления противника рухнет!'
         }
       }
     ]
@@ -414,9 +511,9 @@ const CAMPAIGN_ACTS_DEF = [
 // BOSS SHIPS DEFINITION
 // =========================================================================
 const BOSS_SHIPS = [
-  { id: 'corvette', name: '🚢 КОРВЕТ «ГРОМ»', hpMult: 2.0, rewardMult: 3.0, evadeMult: 1.5, desc: 'Лёгкий корвет с усиленным ПВО' },
-  { id: 'frigate', name: '⚓ ФРЕГАТ «БУРЯ»', hpMult: 3.0, rewardMult: 5.0, evadeMult: 2.0, desc: 'Ракетный фрегат с активной защитой' },
-  { id: 'cruiser', name: '💀 КРЕЙСЕР «НЕМЕЗИС»', hpMult: 4.5, rewardMult: 8.0, evadeMult: 2.5, desc: 'Тяжёлый крейсер — высшая цель' }
+  { id: 'corvette', name: '🚤 БРОНЕКАТЕР «ГРОМ»', hpMult: 2.0, rewardMult: 3.0, evadeMult: 1.5, desc: 'Бронированный речной катер с 30-мм пушкой' },
+  { id: 'frigate', name: '🚢 БАРЖА «ВОЛГА»', hpMult: 3.0, rewardMult: 5.0, evadeMult: 2.0, desc: 'Тяжёлая десантная баржа с зенитным вооружением' },
+  { id: 'cruiser', name: '💀 КП «ЦИТАДЕЛЬ»', hpMult: 4.5, rewardMult: 8.0, evadeMult: 2.5, desc: 'Бункерный командный пункт — высшая цель' }
 ];
 
 // Fisher-Yates shuffle utility
@@ -2534,14 +2631,39 @@ class BarracudaGame {
         salvageText = parts.join(' ');
       }
 
+      // Mission type badge
+      const typeLabels = { 'recon': '🔭 РАЗВЕДКА', 'rew': '📡 РЭБ-ВЗЛОМ', 'strike': '💥 УДАРНАЯ' };
+      const typeColors = { 'recon': '#00ccff', 'rew': '#ff9900', 'strike': '#ff3333' };
+      const mType = m.missionType || 'strike';
+      const typeBadge = `<span class="mission-type-badge" style="background:${typeColors[mType]}22;color:${typeColors[mType]};border:1px solid ${typeColors[mType]}44;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;letter-spacing:1px;">${typeLabels[mType]}</span>`;
+
+      // Enemy list
+      let enemyList = '';
+      if (m.enemies && m.enemies.length > 0) {
+        enemyList = `<div style="margin-top:6px;padding:6px 8px;background:rgba(255,255,255,0.03);border-radius:6px;border:1px solid rgba(255,255,255,0.06);">
+          <div style="font-size:9px;color:#8da4af;letter-spacing:1px;margin-bottom:4px;">ПРОТИВНИК В ЗОНЕ:</div>
+          ${m.enemies.map(e => `<div style="font-size:11px;color:#e0e8ec;margin:2px 0;"><span style="color:#ff6644;">▸</span> ${e.name} <span style="color:#667;font-size:10px;">×${e.count}</span></div>`).join('')}
+        </div>`;
+      }
+
+      // Launch button text based on mission type
+      let launchText = 'НАЧАТЬ ОПЕРАЦИЮ';
+      if (isCompleted) launchText = 'ПОВТОРИТЬ ОПЕРАЦИЮ';
+      else if (isActive) launchText = 'ПРОДОЛЖИТЬ';
+      else if (mType === 'recon') launchText = '🔭 ВЫЛЕТ НА РАЗВЕДКУ';
+      else if (mType === 'rew') launchText = '📡 НАЧАТЬ ВЗЛОМ';
+      else launchText = '💥 НАЧАТЬ ШТУРМ';
+
       card.innerHTML = `
         <div>
           <div class="mission-header-row">
             <span class="mission-code-badge">${m.code}</span>
+            ${typeBadge}
             ${statusPill}
           </div>
           <div class="mission-title-text">${m.title}</div>
           <div class="mission-desc-text">${m.desc}</div>
+          ${enemyList}
           ${phaseTrack}
           <div class="mission-rewards-row">
             <span>НАГРАДЫ: <strong>+$${m.reward.usd.toLocaleString()}</strong></span>
@@ -2551,7 +2673,7 @@ class BarracudaGame {
           </div>
         </div>
         <button class="btn-launch-mission" data-mission-id="${m.id}" ${!isUnlocked ? 'disabled' : ''}>
-          ${isCompleted ? 'ПОВТОРИТЬ ОПЕРАЦИЮ' : (isActive ? 'ПРОДОЛЖИТЬ ШТУРМ' : 'НАЧАТЬ ОПЕРАЦИЮ')}
+          ${launchText}
         </button>
       `;
 
@@ -2573,9 +2695,463 @@ class BarracudaGame {
   // =========================================================================
 
   startCampaignMission(missionId) {
-    this.start3DMissionSortie(missionId);
+    let found = null;
+    let foundAct = null;
+    for (const act of CAMPAIGN_ACTS_DEF) {
+      const m = act.missions.find(item => item.id === missionId);
+      if (m) { found = m; foundAct = act; break; }
+    }
+    if (!found) return;
+
+    // AUTO-CLOSE campaign modal immediately
+    const campaignModal = document.getElementById('campaign-modal');
+    if (campaignModal) campaignModal.classList.remove('active');
+
+    // Show comms intro
+    if (found.commsIntro) {
+      this.showCommsTransmission({
+        speaker: found.commsIntro.speaker,
+        role: found.commsIntro.role,
+        text: found.commsIntro.text,
+        choices: [
+          { text: '«Вас понял. Приступаю к операции.»', action: () => {
+            this._launchMissionByType(found, foundAct);
+          }},
+          { text: '«Отмена. Возвращаюсь на базу.»', action: () => {
+            this.addNotification('🔙 ОТМЕНА', 'Операция отменена по решению оператора.');
+          }}
+        ]
+      });
+    } else {
+      this._launchMissionByType(found, foundAct);
+    }
   }
 
+  _launchMissionByType(mission, actData) {
+    const mType = mission.missionType || 'strike';
+    
+    if (mType === 'recon') {
+      this._startReconMission(mission, actData);
+    } else if (mType === 'rew') {
+      this._startRewMission(mission, actData);
+    } else {
+      this.start3DMissionSortie(mission.id);
+    }
+  }
+
+  // =========================================================================
+  // RECONNAISSANCE MISSION — FPV drone scout + photograph targets
+  // =========================================================================
+  _startReconMission(mission, actData) {
+    this.activeMission = mission;
+    this.sortieActive = true;
+    this.fpvFlightPhase = true; // Start directly in FPV
+    this.sortieTimeLeft = mission.reconTimeLimit || 240;
+
+    this.reconState = {
+      targetsTotal: mission.reconTargets || 3,
+      targetsFound: 0,
+      targetPositions: [],
+      photosTaken: 0,
+      startTime: Date.now(),
+      scanCooldown: 0
+    };
+
+    // Generate random target positions along the river (north bank = enemy side)
+    for (let i = 0; i < this.reconState.targetsTotal; i++) {
+      const spread = 300; // Wider area to search
+      const x = (i / this.reconState.targetsTotal - 0.5) * spread + (Math.random() - 0.5) * 60;
+      const z = -(130 + Math.random() * 80); // North bank (enemy side), deeper inland
+      this.reconState.targetPositions.push({
+        x: x,
+        z: z,
+        found: false,
+        name: mission.enemies ? mission.enemies[i % mission.enemies.length].name : `Цель ${i + 1}`
+      });
+    }
+
+    // Close any open modals
+    document.querySelectorAll('.help-modal-overlay, .tactical-modal-overlay').forEach(el => el.classList.remove('active'));
+
+    // Switch sector if needed
+    if (actData.sector && this.currentSector !== actData.sector) {
+      this.changeSector(actData.sector);
+    }
+
+    // Hide base HUD
+    const gameFrame = document.getElementById('game-frame');
+    if (gameFrame) gameFrame.style.display = 'none';
+
+    // Show FPV overlay directly (recon starts in drone flight)
+    const fpvOverlay = document.getElementById('fpv-flight-overlay');
+    if (fpvOverlay) {
+      fpvOverlay.classList.remove('mission-hud-hidden');
+      fpvOverlay.style.display = 'flex';
+    }
+
+    // Hide boat cockpit
+    const cockpit = document.getElementById('mission-cockpit-overlay');
+    if (cockpit) { cockpit.classList.add('mission-hud-hidden'); cockpit.style.display = 'none'; }
+
+    // Configure 3D recon
+    const reconConfig = {
+      type: 'recon',
+      targetPositions: this.reconState.targetPositions,
+      mineCount: 0,
+      crateCount: 0,
+      searchlightCount: actData.act >= 2 ? 2 : 1,
+      targetDist: 100,
+      targetLabel: mission.title
+    };
+
+    if (this.engine3D) {
+      this.engine3D.startPilotMission(reconConfig, (event, data) => this._handleReconEvent(event, data));
+      this.engine3D.startFpvFlight((event, data) => this._handleReconEvent(event, data));
+      // Create 3D target markers for visual guidance
+      this.engine3D.createReconTargetMarkers(this.reconState.targetPositions);
+    }
+
+    this.inputState = { throttle: 0, steer: 0, boost: false, fpvPitch: 0, fpvYaw: 0, hover: false };
+    this.initPilotInputListeners();
+    this.startSortieTimer();
+
+    this.addNotification('🔭 РАЗВЕДКА НАЧАТА', `Найдите и сфотографируйте ${this.reconState.targetsTotal} целей на северном берегу!`);
+    this.showMissionWarning('🔍 Летите к северному берегу — ищите светящиеся маркеры целей. [H] = зависнуть, [ПРОБЕЛ] = фото');
+    if (window.tacticalAudio) {
+      window.tacticalAudio.playFPVLaunch();
+      window.tacticalAudio.startFpvMotorSound();
+    }
+
+    // Add photo capture on Space during recon (NOT overriding other Space logic)
+    this._reconPhotoHandler = (e) => {
+      if (!this.sortieActive || !this.reconState) return;
+      if (e.code === 'Space') {
+        e.preventDefault();
+        this._attemptReconPhoto();
+      }
+    };
+    window.addEventListener('keydown', this._reconPhotoHandler);
+
+    // Start recon HUD update loop (proximity indicators)
+    this._reconHudInterval = setInterval(() => {
+      if (!this.sortieActive || !this.reconState || !this.engine3D) {
+        clearInterval(this._reconHudInterval);
+        return;
+      }
+      this._updateReconHUD();
+    }, 500);
+  }
+
+  _attemptReconPhoto() {
+    if (!this.reconState || this.reconState.scanCooldown > Date.now()) return;
+    this.reconState.scanCooldown = Date.now() + 1200; // 1.2s cooldown
+
+    if (window.tacticalAudio) window.tacticalAudio.playPhotoCaptured();
+
+    // Flash screen white briefly for photo effect
+    const flash = document.createElement('div');
+    flash.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(255,255,255,0.35);z-index:9999;pointer-events:none;transition:opacity 0.3s';
+    document.body.appendChild(flash);
+    setTimeout(() => { flash.style.opacity = '0'; }, 50);
+    setTimeout(() => flash.remove(), 400);
+
+    // Check if any unfound target is close to drone position
+    if (this.engine3D) {
+      const dronePos = this.engine3D.fpvPos;
+      
+      let nearestTarget = null;
+      let nearestDist = Infinity;
+      
+      this.reconState.targetPositions.forEach((t, idx) => {
+        if (t.found) return;
+        const dx = dronePos.x - t.x;
+        const dz = dronePos.z - t.z;
+        const dist = Math.sqrt(dx * dx + dz * dz);
+        if (dist < nearestDist) {
+          nearestDist = dist;
+          nearestTarget = { target: t, idx };
+        }
+      });
+
+      if (nearestTarget && nearestDist < 50) {
+        nearestTarget.target.found = true;
+        this.reconState.targetsFound++;
+        this.reconState.photosTaken++;
+
+        // Remove 3D marker for found target
+        if (this.engine3D.removeReconMarker) {
+          this.engine3D.removeReconMarker(nearestTarget.idx);
+        }
+
+        if (window.tacticalAudio) window.tacticalAudio.playTargetFound();
+        this.showMissionWarning(`📸 ЦЕЛЬ ЗАФИКСИРОВАНА: ${nearestTarget.target.name} [${this.reconState.targetsFound}/${this.reconState.targetsTotal}]`);
+        this.addNotification('📸 ЦЕЛЬ НАЙДЕНА', `${nearestTarget.target.name} — фото-фиксация успешна!`);
+
+        // Check completion
+        if (this.reconState.targetsFound >= this.reconState.targetsTotal) {
+          this.showMissionWarning('✅ ВСЕ ЦЕЛИ ОБНАРУЖЕНЫ! Возвращайтесь на базу...');
+          setTimeout(() => {
+            this.finishSortie(true, 'Все цели обнаружены и зафиксированы');
+          }, 2500);
+        }
+      } else if (nearestTarget && nearestDist < 80) {
+        this.showMissionWarning(`📷 Почти! Цель в ${Math.round(nearestDist)}м — подлетите ближе!`);
+      } else {
+        this.showMissionWarning('📷 Ничего не обнаружено — летите к маркерам на северном берегу');
+      }
+    }
+  }
+
+  _handleReconEvent(event, data) {
+    if (!this.sortieActive) return;
+    if (event === 'fpv_crashed') {
+      this.finishSortie(false, data.reason || 'FPV-дрон потерпел крушение');
+    } else if (event === 'fpv_damaged') {
+      this.reconState.scanCooldown = Date.now() + 500;
+      const glitchLayer = document.getElementById('fpv-glitch-layer');
+      if (glitchLayer) {
+        glitchLayer.classList.add('fpv-glitched');
+        setTimeout(() => glitchLayer.classList.remove('fpv-glitched'), 200);
+      }
+    }
+  }
+
+  // =========================================================================
+  // REW (Electronic Warfare) HACK MINIGAME — Timing-based frequency capture
+  // =========================================================================
+  _startRewMission(mission, actData) {
+    this.activeMission = mission;
+    
+    const channels = mission.rewChannels || 4;
+    const timePerChannel = mission.rewTimePerChannel || 8;
+
+    this.rewState = {
+      channels: channels,
+      channelsDone: 0,
+      channelsFailed: 0,
+      timePerChannel: timePerChannel,
+      currentBarPos: 0,
+      greenZoneStart: 0.35 + Math.random() * 0.2,
+      greenZoneWidth: 0.15 - (actData.act - 1) * 0.02, // Gets harder with acts
+      barSpeed: 1.2 + actData.act * 0.3,
+      barDirection: 1,
+      active: true,
+      startTime: Date.now()
+    };
+
+    // Close modals
+    document.querySelectorAll('.help-modal-overlay, .tactical-modal-overlay').forEach(el => el.classList.remove('active'));
+
+    // Switch sector
+    if (actData.sector && this.currentSector !== actData.sector) {
+      this.changeSector(actData.sector);
+    }
+
+    // Create REW overlay
+    this._createRewOverlay();
+    this._startRewLoop();
+
+    if (window.tacticalAudio) window.tacticalAudio.playCyberHackTone(true);
+    this.addNotification('📡 РЭБ-ВЗЛОМ НАЧАТ', `Подавите ${channels} частотных каналов!`);
+  }
+
+  _createRewOverlay() {
+    // Remove old if exists
+    let overlay = document.getElementById('rew-hack-overlay');
+    if (overlay) overlay.remove();
+
+    overlay = document.createElement('div');
+    overlay.id = 'rew-hack-overlay';
+    overlay.style.cssText = `
+      position:fixed; top:0; left:0; width:100%; height:100%; z-index:5000;
+      background:rgba(0,8,16,0.95); display:flex; flex-direction:column;
+      align-items:center; justify-content:center; font-family:'Rajdhani',monospace;
+    `;
+    overlay.innerHTML = `
+      <div style="color:#00ff88;font-size:11px;letter-spacing:3px;margin-bottom:8px;">ELECTRONIC WARFARE MODULE // FREQUENCY CAPTURE</div>
+      <div style="color:#fff;font-size:22px;font-weight:800;margin-bottom:16px;" id="rew-channel-label">КАНАЛ 1 / ${this.rewState.channels}</div>
+      <div style="color:#8da4af;font-size:13px;margin-bottom:24px;" id="rew-instruction">Нажмите [ПРОБЕЛ] когда курсор окажется в ЗЕЛЁНОЙ зоне!</div>
+      
+      <div id="rew-bar-container" style="
+        width:80%; max-width:600px; height:50px; background:#0a1a28;
+        border:2px solid #1a3a4a; border-radius:8px; position:relative;
+        overflow:hidden; margin-bottom:20px;
+      ">
+        <div id="rew-green-zone" style="
+          position:absolute; top:0; height:100%; background:rgba(0,255,100,0.15);
+          border-left:2px solid #00ff88; border-right:2px solid #00ff88;
+        "></div>
+        <div id="rew-cursor" style="
+          position:absolute; top:0; width:4px; height:100%; background:#ff4400;
+          box-shadow:0 0 12px #ff4400, 0 0 24px rgba(255,68,0,0.5);
+        "></div>
+      </div>
+      
+      <div style="display:flex;gap:12px;margin-bottom:16px;" id="rew-channel-dots"></div>
+      
+      <div style="display:flex;gap:16px;">
+        <button id="rew-hack-btn" style="
+          padding:12px 32px; background:linear-gradient(135deg,#00aa44,#00ff88);
+          border:none; border-radius:8px; color:#000; font-size:16px; font-weight:800;
+          font-family:'Rajdhani',sans-serif; cursor:pointer; letter-spacing:1px;
+        ">⚡ ЗАХВАТ ЧАСТОТЫ [ПРОБЕЛ]</button>
+        <button id="rew-abort-btn" style="
+          padding:12px 24px; background:rgba(255,50,50,0.2); border:1px solid #ff3333;
+          border-radius:8px; color:#ff5555; font-size:14px; font-weight:700;
+          font-family:'Rajdhani',sans-serif; cursor:pointer;
+        ">✕ ОТМЕНА</button>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+
+    // Update green zone visual
+    this._updateRewGreenZone();
+    this._updateRewDots();
+
+    // Button handlers
+    document.getElementById('rew-hack-btn').addEventListener('click', () => this._rewAttemptCapture());
+    document.getElementById('rew-abort-btn').addEventListener('click', () => this._finishRewMission(false));
+
+    // Keyboard handler
+    this._rewKeyHandler = (e) => {
+      if (e.code === 'Space' && this.rewState && this.rewState.active) {
+        e.preventDefault();
+        this._rewAttemptCapture();
+      }
+    };
+    window.addEventListener('keydown', this._rewKeyHandler);
+  }
+
+  _updateRewGreenZone() {
+    const zone = document.getElementById('rew-green-zone');
+    if (zone && this.rewState) {
+      zone.style.left = `${this.rewState.greenZoneStart * 100}%`;
+      zone.style.width = `${this.rewState.greenZoneWidth * 100}%`;
+    }
+  }
+
+  _updateRewDots() {
+    const dotsEl = document.getElementById('rew-channel-dots');
+    if (!dotsEl || !this.rewState) return;
+    let html = '';
+    for (let i = 0; i < this.rewState.channels; i++) {
+      let color = '#1a3a4a';
+      if (i < this.rewState.channelsDone) color = '#00ff88';
+      else if (i < this.rewState.channelsDone + this.rewState.channelsFailed) color = '#ff3333';
+      html += `<div style="width:16px;height:16px;border-radius:50%;background:${color};border:2px solid ${color === '#1a3a4a' ? '#2a4a5a' : color};"></div>`;
+    }
+    dotsEl.innerHTML = html;
+  }
+
+  _startRewLoop() {
+    this._rewAnimFrame = requestAnimationFrame(() => this._rewAnimStep());
+  }
+
+  _rewAnimStep() {
+    if (!this.rewState || !this.rewState.active) return;
+
+    // Move cursor
+    this.rewState.currentBarPos += this.rewState.barSpeed * this.rewState.barDirection * 0.012;
+    if (this.rewState.currentBarPos >= 1) {
+      this.rewState.currentBarPos = 1;
+      this.rewState.barDirection = -1;
+    } else if (this.rewState.currentBarPos <= 0) {
+      this.rewState.currentBarPos = 0;
+      this.rewState.barDirection = 1;
+    }
+
+    // Update cursor visual
+    const cursor = document.getElementById('rew-cursor');
+    if (cursor) cursor.style.left = `${this.rewState.currentBarPos * 100}%`;
+
+    // Play scanning pulse periodically
+    if (Math.random() < 0.02 && window.tacticalAudio) {
+      window.tacticalAudio.playRewScanPulse();
+    }
+
+    this._rewAnimFrame = requestAnimationFrame(() => this._rewAnimStep());
+  }
+
+  _rewAttemptCapture() {
+    if (!this.rewState || !this.rewState.active) return;
+
+    const pos = this.rewState.currentBarPos;
+    const inGreen = pos >= this.rewState.greenZoneStart && 
+                    pos <= this.rewState.greenZoneStart + this.rewState.greenZoneWidth;
+
+    if (inGreen) {
+      this.rewState.channelsDone++;
+      if (window.tacticalAudio) window.tacticalAudio.playRewSuccess();
+
+      const label = document.getElementById('rew-channel-label');
+      if (label) label.textContent = `КАНАЛ ${this.rewState.channelsDone + 1} / ${this.rewState.channels}`;
+
+      // Randomize next green zone
+      this.rewState.greenZoneStart = 0.1 + Math.random() * 0.65;
+      this.rewState.barSpeed += 0.15; // Gets faster
+      this._updateRewGreenZone();
+    } else {
+      this.rewState.channelsFailed++;
+      if (window.tacticalAudio) window.tacticalAudio.playRewFail();
+      
+      // Flash screen red
+      const overlay = document.getElementById('rew-hack-overlay');
+      if (overlay) {
+        overlay.style.background = 'rgba(80,0,0,0.95)';
+        setTimeout(() => { if (overlay) overlay.style.background = 'rgba(0,8,16,0.95)'; }, 200);
+      }
+    }
+
+    this._updateRewDots();
+
+    // Check completion
+    if (this.rewState.channelsDone >= this.rewState.channels) {
+      setTimeout(() => this._finishRewMission(true), 800);
+    } else if (this.rewState.channelsFailed >= 3) {
+      setTimeout(() => this._finishRewMission(false), 800);
+    }
+  }
+
+  _finishRewMission(success) {
+    if (!this.rewState) return;
+    this.rewState.active = false;
+
+    if (this._rewAnimFrame) cancelAnimationFrame(this._rewAnimFrame);
+    if (this._rewKeyHandler) window.removeEventListener('keydown', this._rewKeyHandler);
+
+    const overlay = document.getElementById('rew-hack-overlay');
+    if (overlay) overlay.remove();
+
+    if (success) {
+      // Mark mission as completed + give rewards
+      this.completedMissions.add(this.activeMission.id);
+      const m = this.activeMission;
+      const usdEarned = Math.floor(m.reward.usd * this.getGlobalMultiplier());
+      const mbEarned = Math.floor(m.reward.mb * this.getGlobalMultiplier());
+      this.creditsUSD += usdEarned;
+      this.addData(mbEarned);
+      this.blueprintsBP += (m.reward.bp || 0);
+      if (m.reward.salvage) {
+        Object.keys(m.reward.salvage).forEach(k => {
+          this.salvage[k] = (this.salvage[k] || 0) + m.reward.salvage[k];
+        });
+      }
+
+      if (window.tacticalAudio) window.tacticalAudio.playMissionVictory();
+      this.addNotification('✅ РЭБ-ВЗЛОМ УСПЕШЕН', `Все каналы подавлены! +$${usdEarned.toLocaleString()} +${mbEarned} МБ`);
+    } else {
+      if (window.tacticalAudio) window.tacticalAudio.playAlertAlarm();
+      this.addNotification('❌ ВЗЛОМ ПРОВАЛЕН', 'Противник обнаружил вмешательство! Каналы восстановлены.');
+    }
+
+    this.renderCampaignDOM();
+    this.saveGame();
+    this.updateUI();
+  }
+
+  // =========================================================================
+  // STANDARD STRIKE MISSIONS — 3D Boat Sortie + FPV
+  // =========================================================================
   start3DMissionSortie(missionId) {
     let found = null;
     let foundAct = null;
@@ -2764,9 +3340,18 @@ class BarracudaGame {
         else if (e.code === 'KeyA' || e.code === 'ArrowLeft') this.inputState.fpvYaw = -0.8;  // Bank / Yaw left
         else if (e.code === 'KeyD' || e.code === 'ArrowRight') this.inputState.fpvYaw = 0.8;   // Bank / Yaw right
         else if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') this.inputState.boost = true;
+        else if (e.code === 'KeyH') {
+          // HOVER MODE toggle
+          this.inputState.hover = !this.inputState.hover;
+          if (this.engine3D) this.engine3D.fpvHover = this.inputState.hover;
+          this.showMissionWarning(this.inputState.hover ? '🚁 РЕЖИМ ЗАВИСАНИЯ — дрон стабилизирован' : '🚁 ПОЛЁТ ВОЗОБНОВЛЁН');
+        }
         else if (e.code === 'Space') {
           e.preventDefault();
-          this.inputState.boost = true;
+          // In recon mode, Space is photo — don't use for boost
+          if (!this.reconState) {
+            this.inputState.boost = true;
+          }
         }
         this.applyFpvInputs();
       }
@@ -2954,6 +3539,31 @@ class BarracudaGame {
       });
     }
 
+    // HOVER MODE button (mobile)
+    const btnFpvHover = document.getElementById('btn-fpv-hover');
+    if (btnFpvHover) {
+      btnFpvHover.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.inputState.hover = !this.inputState.hover;
+        if (this.engine3D) this.engine3D.fpvHover = this.inputState.hover;
+        btnFpvHover.classList.toggle('active', this.inputState.hover);
+        btnFpvHover.querySelector('span').textContent = this.inputState.hover ? '🚁 ПОЛЁТ' : '🚁 HOVER';
+        this.showMissionWarning(this.inputState.hover ? '🚁 РЕЖИМ ЗАВИСАНИЯ — дрон стабилизирован' : '🚁 ПОЛЁТ ВОЗОБНОВЛЁН');
+        this.applyFpvInputs();
+      });
+    }
+
+    // PHOTO CAPTURE button (mobile recon)
+    const btnFpvPhoto = document.getElementById('btn-fpv-photo');
+    if (btnFpvPhoto) {
+      btnFpvPhoto.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (this.reconState) {
+          this._attemptReconPhoto();
+        }
+      });
+    }
+
     const btnAbort = document.getElementById('btn-abort-sortie');
     if (btnAbort) {
       btnAbort.addEventListener('click', (e) => {
@@ -3010,7 +3620,60 @@ class BarracudaGame {
 
   applyFpvInputs() {
     if (this.engine3D && this.fpvFlightPhase) {
-      this.engine3D.setFpvInput(this.inputState.fpvYaw, this.inputState.fpvPitch, 0.8, this.inputState.boost);
+      const throttle = this.inputState.hover ? 0.0 : 0.8;
+      this.engine3D.setFpvInput(this.inputState.fpvYaw, this.inputState.fpvPitch, throttle, this.inputState.boost);
+    }
+  }
+
+  // Recon HUD update: show proximity to nearest unfound target
+  _updateReconHUD() {
+    if (!this.reconState || !this.engine3D || !this.engine3D.fpvPos) return;
+    const dronePos = this.engine3D.fpvPos;
+    let nearestDist = Infinity;
+    let nearestName = '';
+    
+    this.reconState.targetPositions.forEach(t => {
+      if (t.found) return;
+      const dx = dronePos.x - t.x;
+      const dz = dronePos.z - t.z;
+      const dist = Math.sqrt(dx * dx + dz * dz);
+      if (dist < nearestDist) {
+        nearestDist = dist;
+        nearestName = t.name;
+      }
+    });
+
+    // Update FPV OSD with recon info
+    const reconOsd = document.getElementById('fpv-osd-recon-info');
+    if (!reconOsd) {
+      // Create recon OSD element if not exists
+      const topOsd = document.querySelector('.fpv-top-osd');
+      if (topOsd) {
+        const el = document.createElement('span');
+        el.id = 'fpv-osd-recon-info';
+        el.className = 'fpv-osd-chip';
+        el.style.color = '#00ccff';
+        topOsd.appendChild(el);
+      }
+    }
+    
+    const infoEl = document.getElementById('fpv-osd-recon-info');
+    if (infoEl) {
+      const found = this.reconState.targetsFound;
+      const total = this.reconState.targetsTotal;
+      if (nearestDist < 50) {
+        infoEl.textContent = `📸 ЦЕЛЬ: ${Math.round(nearestDist)}м — НАЖМИТЕ ПРОБЕЛ`;
+        infoEl.style.color = '#00ff88';
+        infoEl.style.animation = 'fpvAlertBlink 0.5s infinite alternate';
+      } else if (nearestDist < 100) {
+        infoEl.textContent = `🔍 ${nearestName}: ${Math.round(nearestDist)}м [${found}/${total}]`;
+        infoEl.style.color = '#ffcc00';
+        infoEl.style.animation = '';
+      } else {
+        infoEl.textContent = `🔭 Ближайшая цель: ${Math.round(nearestDist)}м [${found}/${total}]`;
+        infoEl.style.color = '#00ccff';
+        infoEl.style.animation = '';
+      }
     }
   }
 

@@ -120,6 +120,8 @@ class Barracuda3DEngine {
     this.fpvGlowMesh = null;
     this.fpvLockTarget = null;
     this.fpvGlitchAmount = 0;
+    this.fpvHover = false; // Hover mode: drone stabilizes and holds position
+    this.reconMarkers = []; // 3D target markers for recon missions
 
     // Enemy CIWS Anti-Air Defenses
     this.ciwsTracers = [];
@@ -426,7 +428,7 @@ class Barracuda3DEngine {
   }
 
   // =========================================================================
-  // REALISTIC OCEAN WATER WITH SPECULAR REFLECTIONS
+  // DNIPRO RIVER WATER — Murky green-brown river surface + RIVER BANKS
   // =========================================================================
   createWater() {
     const waterGeometry = new THREE.PlaneGeometry(8000, 8000);
@@ -446,31 +448,284 @@ class Barracuda3DEngine {
           textureHeight: 1024,
           waterNormals: waterNormals,
           sunDirection: this.sun ? this.sun.clone().normalize() : new THREE.Vector3(0.5, 0.7, 0.5).normalize(),
-          sunColor: 0xfff4d0,
-          waterColor: 0x051a28,
-          distortionScale: 4.5,
+          sunColor: 0xd4c490,
+          waterColor: 0x1a3020, // Murky green-brown river color
+          distortionScale: 2.8,
           fog: true
         });
 
         this.water.rotation.x = -Math.PI / 2;
         this.water.position.y = 0.0;
         this.scene.add(this.water);
+
+        // Create river banks
+        this._createRiverBanks();
         return;
       } catch (e) {
         console.warn('THREE.Water init failed, falling back to standard plane:', e);
       }
     }
 
-    // Fallback standard ocean surface
+    // Fallback standard river surface
     const oceanMat = new THREE.MeshStandardMaterial({
-      color: 0x061e2e,
-      roughness: 0.12,
-      metalness: 0.9
+      color: 0x1a3020,  // Murky river green
+      roughness: 0.2,
+      metalness: 0.7
     });
     this.water = new THREE.Mesh(waterGeometry, oceanMat);
     this.water.rotation.x = -Math.PI / 2;
     this.water.position.y = 0.0;
     this.scene.add(this.water);
+
+    // Create river banks
+    this._createRiverBanks();
+  }
+
+  // =========================================================================
+  // RIVER BANKS — Terrain strips on both sides to create the Dnipro feeling
+  // =========================================================================
+  _createRiverBanks() {
+    this.riverBanks = new THREE.Group();
+    
+    // River width ~240 units, banks on each side
+    const bankLength = 4000;
+    const bankWidth = 1500;
+    const riverHalfWidth = 120;
+
+    // Bank material — dark silty mud with grass patches
+    const bankMat = new THREE.MeshStandardMaterial({
+      color: 0x2e3820, // Dark earthy green-brown (Dnipro floodplain)
+      roughness: 0.92,
+      metalness: 0.05
+    });
+
+    // Mud/silt near water edge
+    const mudMat = new THREE.MeshStandardMaterial({
+      color: 0x1e2015,
+      roughness: 0.95,
+      metalness: 0.0
+    });
+
+    // Left bank (North/enemy side) — higher, more fortified
+    const leftBankGeo = new THREE.PlaneGeometry(bankLength, bankWidth, 60, 30);
+    const leftVerts = leftBankGeo.attributes.position;
+    for (let i = 0; i < leftVerts.count; i++) {
+      const x = leftVerts.getX(i);
+      const y = leftVerts.getY(i);
+      const distFromEdge = Math.max(0, -y);
+      const slope = Math.min(1, distFromEdge / 40);
+      const noise = Math.sin(x * 0.02) * 1.5 + Math.sin(x * 0.07) * 0.8 + Math.sin(x * 0.15 + y * 0.1) * 0.4;
+      const height = slope * (2.5 + noise + Math.random() * 0.3);
+      leftVerts.setZ(i, height);
+    }
+    leftBankGeo.computeVertexNormals();
+    const leftBank = new THREE.Mesh(leftBankGeo, bankMat);
+    leftBank.rotation.x = -Math.PI / 2;
+    leftBank.position.set(0, 0.05, -(riverHalfWidth + bankWidth / 2));
+    this.riverBanks.add(leftBank);
+
+    // Right bank (South/friendly side) — lower, marshy
+    const rightBankGeo = new THREE.PlaneGeometry(bankLength, bankWidth, 60, 30);
+    const rightVerts = rightBankGeo.attributes.position;
+    for (let i = 0; i < rightVerts.count; i++) {
+      const x = rightVerts.getX(i);
+      const y = rightVerts.getY(i);
+      const distFromEdge = Math.max(0, y);
+      const slope = Math.min(1, distFromEdge / 50);
+      const noise = Math.cos(x * 0.018) * 1.2 + Math.sin(x * 0.06) * 0.6;
+      const height = slope * (1.8 + noise + Math.random() * 0.3);
+      rightVerts.setZ(i, height);
+    }
+    rightBankGeo.computeVertexNormals();
+    const rightBank = new THREE.Mesh(rightBankGeo, bankMat);
+    rightBank.rotation.x = -Math.PI / 2;
+    rightBank.position.set(0, 0.05, (riverHalfWidth + bankWidth / 2));
+    this.riverBanks.add(rightBank);
+
+    // ===== MUD STRIPS along water edge =====
+    for (let side = -1; side <= 1; side += 2) {
+      const mudGeo = new THREE.PlaneGeometry(bankLength, 20, 20, 1);
+      const mudStrip = new THREE.Mesh(mudGeo, mudMat);
+      mudStrip.rotation.x = -Math.PI / 2;
+      mudStrip.position.set(0, 0.08, side * (riverHalfWidth + 10));
+      this.riverBanks.add(mudStrip);
+    }
+
+    // ===== DENSE REED / ТРОСТНИК CLUSTERS =====
+    const reedColors = [0x4a6028, 0x506830, 0x3d5020, 0x5a7035, 0x445825];
+    const reedStemGeo = new THREE.CylinderGeometry(0.06, 0.12, 1, 4); // Thin stem
+    const reedTopGeo = new THREE.ConeGeometry(0.2, 0.6, 4); // Bushy top
+    const reedTallStemGeo = new THREE.CylinderGeometry(0.05, 0.1, 1, 4);
+    const reedBrushGeo = new THREE.ConeGeometry(0.35, 0.8, 5); // Thick cattail head
+
+    for (let side = -1; side <= 1; side += 2) {
+      // Dense reed patches along entire water edge
+      for (let patch = 0; patch < 120; patch++) {
+        const patchX = (Math.random() - 0.5) * bankLength * 0.85;
+        const patchZ = side * (riverHalfWidth + Math.random() * 25);
+        const reedsInPatch = 6 + Math.floor(Math.random() * 10);
+        const patchColor = reedColors[Math.floor(Math.random() * reedColors.length)];
+        const reedMat = new THREE.MeshStandardMaterial({
+          color: patchColor,
+          roughness: 0.9,
+          metalness: 0.0
+        });
+
+        for (let r = 0; r < reedsInPatch; r++) {
+          const rh = 2.0 + Math.random() * 3.5; // Height 2-5.5 units
+          const rx = patchX + (Math.random() - 0.5) * 5;
+          const rz = patchZ + (Math.random() - 0.5) * 4;
+
+          // Stem
+          const stem = new THREE.Mesh(reedStemGeo, reedMat);
+          stem.scale.set(1, rh, 1);
+          stem.position.set(rx, rh / 2, rz);
+          stem.rotation.x = (Math.random() - 0.5) * 0.12;
+          stem.rotation.z = (Math.random() - 0.5) * 0.12;
+          this.riverBanks.add(stem);
+
+          // Top (cone) — cattail brush or leaf tip
+          if (Math.random() > 0.3) {
+            const isCattail = Math.random() > 0.5;
+            const top = new THREE.Mesh(isCattail ? reedBrushGeo : reedTopGeo, 
+              new THREE.MeshStandardMaterial({
+                color: isCattail ? 0x3a2810 : patchColor,
+                roughness: 0.95
+              })
+            );
+            top.position.set(rx, rh + (isCattail ? 0.3 : 0.2), rz);
+            top.rotation.x = (Math.random() - 0.5) * 0.1;
+            this.riverBanks.add(top);
+          }
+        }
+      }
+
+      // Low bushes further from water (squashed spheres)
+      const bushMat = new THREE.MeshStandardMaterial({
+        color: 0x2a4a18,
+        roughness: 0.92,
+        metalness: 0.0
+      });
+      const bushGeo = new THREE.SphereGeometry(1, 5, 4);
+      for (let b = 0; b < 40; b++) {
+        const bx = (Math.random() - 0.5) * bankLength * 0.8;
+        const bz = side * (riverHalfWidth + 25 + Math.random() * 80);
+        const bush = new THREE.Mesh(bushGeo, bushMat.clone());
+        bush.material.color.setHSL(0.25 + Math.random() * 0.08, 0.45 + Math.random() * 0.15, 0.15 + Math.random() * 0.08);
+        const scale = 0.8 + Math.random() * 1.5;
+        bush.scale.set(scale, scale * 0.4, scale); // Flat/wide bushes
+        bush.position.set(bx, scale * 0.3, bz);
+        this.riverBanks.add(bush);
+      }
+    }
+
+    // ===== FLOATING DEBRIS near banks (logs, trash) =====
+    const debrisMat = new THREE.MeshStandardMaterial({
+      color: 0x2a1e10,
+      roughness: 0.95
+    });
+    const logGeo = new THREE.CylinderGeometry(0.2, 0.3, 4, 5);
+    for (let i = 0; i < 30; i++) {
+      const side = Math.random() > 0.5 ? 1 : -1;
+      const log = new THREE.Mesh(logGeo, debrisMat);
+      log.position.set(
+        (Math.random() - 0.5) * bankLength * 0.6,
+        0.1,
+        side * (riverHalfWidth - 10 + Math.random() * 20)
+      );
+      log.rotation.z = Math.PI / 2;
+      log.rotation.y = Math.random() * Math.PI;
+      this.riverBanks.add(log);
+    }
+
+    this.scene.add(this.riverBanks);
+  }
+
+  // =========================================================================
+  // RECON TARGET 3D MARKERS — Glowing pillars of light over target positions
+  // =========================================================================
+  createReconTargetMarkers(targetPositions) {
+    // Clear old markers
+    this.reconMarkers.forEach(m => {
+      if (m.parent) m.parent.remove(m);
+    });
+    this.reconMarkers = [];
+
+    targetPositions.forEach((t, idx) => {
+      const group = new THREE.Group();
+      group.userData = { targetIdx: idx };
+
+      // Vertical light beam (tall thin box)
+      const beamGeo = new THREE.CylinderGeometry(0.3, 0.3, 50, 6);
+      const beamMat = new THREE.MeshBasicMaterial({
+        color: 0x00ccff,
+        transparent: true,
+        opacity: 0.25,
+        side: THREE.DoubleSide
+      });
+      const beam = new THREE.Mesh(beamGeo, beamMat);
+      beam.position.set(0, 25, 0);
+      group.add(beam);
+
+      // Pulsing ring at ground level
+      const ringGeo = new THREE.TorusGeometry(5, 0.3, 8, 24);
+      const ringMat = new THREE.MeshBasicMaterial({
+        color: 0x00ff88,
+        transparent: true,
+        opacity: 0.6
+      });
+      const ring = new THREE.Mesh(ringGeo, ringMat);
+      ring.rotation.x = -Math.PI / 2;
+      ring.position.y = 1;
+      group.add(ring);
+
+      // Second ring (larger, slower pulse)
+      const ring2Geo = new THREE.TorusGeometry(8, 0.2, 8, 24);
+      const ring2Mat = new THREE.MeshBasicMaterial({
+        color: 0xffcc00,
+        transparent: true,
+        opacity: 0.35
+      });
+      const ring2 = new THREE.Mesh(ring2Geo, ring2Mat);
+      ring2.rotation.x = -Math.PI / 2;
+      ring2.position.y = 1.5;
+      group.add(ring2);
+
+      // Small diamond shape floating above
+      const diamondGeo = new THREE.OctahedronGeometry(1.2, 0);
+      const diamondMat = new THREE.MeshBasicMaterial({
+        color: 0x00ffcc,
+        transparent: true,
+        opacity: 0.8
+      });
+      const diamond = new THREE.Mesh(diamondGeo, diamondMat);
+      diamond.position.y = 12;
+      group.add(diamond);
+
+      group.position.set(t.x, 0, t.z);
+      this.scene.add(group);
+      this.reconMarkers.push(group);
+    });
+  }
+
+  removeReconMarker(idx) {
+    if (this.reconMarkers[idx]) {
+      const marker = this.reconMarkers[idx];
+      // Fade out animation
+      const fadeOut = () => {
+        marker.children.forEach(child => {
+          if (child.material) {
+            child.material.opacity -= 0.05;
+          }
+        });
+        if (marker.children[0] && marker.children[0].material && marker.children[0].material.opacity > 0) {
+          requestAnimationFrame(fadeOut);
+        } else {
+          if (marker.parent) marker.parent.remove(marker);
+        }
+      };
+      fadeOut();
+    }
   }
 
   // =========================================================================
@@ -1031,34 +1286,75 @@ class Barracuda3DEngine {
       }
     } else {
       // ---- MANUAL MODE: Player-controlled FPV flight (missions only) ----
-      const turnRate = 1.2;   // Gentle, smooth yaw
-      const pitchRate = 0.9;  // Gentle pitch for easy altitude control
 
-      this.fpvPitch += this.fpvSteerY * pitchRate * dt;
-      this.fpvPitch = Math.max(-Math.PI / 3.0, Math.min(Math.PI / 3.5, this.fpvPitch));
+      // HOVER MODE: stabilize position, dampen velocity, hold altitude
+      if (this.fpvHover) {
+        // Dampen all velocity rapidly
+        this.fpvVel.multiplyScalar(Math.max(0, 1.0 - 4.0 * dt));
+        
+        // Hold altitude with gentle correction
+        const targetY = Math.max(3.0, this.fpvPos.y); // Don't let it sink
+        this.fpvVel.y += (targetY - this.fpvPos.y) * 0.5 * dt;
+        
+        // Still allow slow yaw rotation for looking around
+        this.fpvYaw -= this.fpvSteerX * 0.6 * dt;
+        this.fpvPitch += this.fpvSteerY * 0.3 * dt;
+        this.fpvPitch = Math.max(-0.3, Math.min(0.3, this.fpvPitch));
+        
+        // Stabilize roll to zero
+        this.fpvRoll += (0 - this.fpvRoll) * Math.min(1.0, 5.0 * dt);
+        
+        const euler = new THREE.Euler(this.fpvPitch, this.fpvYaw, this.fpvRoll, 'YXZ');
+        this.fpvDroneMesh.quaternion.setFromEuler(euler);
+      } else {
+        // Normal flight mode
+        const turnRate = 1.2;   // Gentle, smooth yaw
+        const pitchRate = 0.9;  // Gentle pitch for easy altitude control
 
-      this.fpvYaw -= this.fpvSteerX * turnRate * dt;
+        this.fpvPitch += this.fpvSteerY * pitchRate * dt;
+        this.fpvPitch = Math.max(-Math.PI / 3.0, Math.min(Math.PI / 3.5, this.fpvPitch));
 
-      // Natural banking roll when turning (smoothed)
-      const targetRoll = -this.fpvSteerX * 0.55;
-      this.fpvRoll += (targetRoll - this.fpvRoll) * Math.min(1.0, 3.5 * dt);
+        this.fpvYaw -= this.fpvSteerX * turnRate * dt;
 
-      // Apply orientation quaternion using Euler YXZ
-      const euler = new THREE.Euler(this.fpvPitch, this.fpvYaw, this.fpvRoll, 'YXZ');
-      this.fpvDroneMesh.quaternion.setFromEuler(euler);
+        // Natural banking roll when turning (smoothed)
+        const targetRoll = -this.fpvSteerX * 0.55;
+        this.fpvRoll += (targetRoll - this.fpvRoll) * Math.min(1.0, 3.5 * dt);
 
-      // Linear Flight Velocity & Thrust (smooth and controllable)
-      const forwardVector = new THREE.Vector3(0, 0, -1).applyQuaternion(this.fpvDroneMesh.quaternion);
-      const speed = (this.fpvBoost ? 32.0 : 18.0) * (0.5 + this.fpvThrottle * 0.5);
+        // Apply orientation quaternion using Euler YXZ
+        const euler = new THREE.Euler(this.fpvPitch, this.fpvYaw, this.fpvRoll, 'YXZ');
+        this.fpvDroneMesh.quaternion.setFromEuler(euler);
 
-      // Very smooth forward acceleration (low lerp = gradual)
-      this.fpvVel.lerp(forwardVector.multiplyScalar(speed), Math.min(1.0, 4.0 * dt));
+        // Linear Flight Velocity & Thrust (smooth and controllable)
+        const forwardVector = new THREE.Vector3(0, 0, -1).applyQuaternion(this.fpvDroneMesh.quaternion);
+        const speed = (this.fpvBoost ? 32.0 : 18.0) * (0.5 + this.fpvThrottle * 0.5);
 
-      // Slight aerodynamic gravity when diving / climbing
-      this.fpvVel.y -= 1.5 * dt;
+        // Very smooth forward acceleration (low lerp = gradual)
+        this.fpvVel.lerp(forwardVector.multiplyScalar(speed), Math.min(1.0, 4.0 * dt));
+
+        // Slight aerodynamic gravity when diving / climbing
+        this.fpvVel.y -= 1.5 * dt;
+      }
 
       // Update 3D guide line from drone toward enemy ship
       this._updateFpvGuideLine();
+
+      // Animate recon markers (pulsing rings)
+      if (this.reconMarkers && this.reconMarkers.length > 0) {
+        this.reconMarkers.forEach(marker => {
+          if (!marker.parent) return;
+          marker.children.forEach((child, ci) => {
+            if (ci === 1 || ci === 2) { // rings
+              child.rotation.z = t * (ci === 1 ? 0.5 : -0.3);
+              const pulse = 0.8 + Math.sin(t * 3 + ci) * 0.2;
+              child.scale.set(pulse, pulse, 1);
+            }
+            if (ci === 3) { // diamond
+              child.position.y = 10 + Math.sin(t * 2) * 2;
+              child.rotation.y = t * 1.5;
+            }
+          });
+        });
+      }
     }
 
     this.fpvPos.addScaledVector(this.fpvVel, dt);
@@ -1488,24 +1784,24 @@ class Barracuda3DEngine {
     const skyUniforms = this.sky.material.uniforms;
 
     switch (sectorId) {
-      case 'c1': // Snake Island (Storm)
+      case 'c1': // Antonivskyi Bridge (Storm)
       case 'sector-1':
         this.weatherType = 'storm';
-        this.scene.fog.color.setHex(0x10222e);
+        this.scene.fog.color.setHex(0x152820);
         this.scene.fog.density = 0.0035;
-        this.water.material.uniforms['waterColor'].value.setHex(0x061824);
+        this.water.material.uniforms['waterColor'].value.setHex(0x142818);
         skyUniforms['turbidity'].value = 3.5;
         skyUniforms['rayleigh'].value = 2.4;
         this.sunLight.intensity = 2.2;
-        this.sunLight.color.setHex(0xffe0c0);
+        this.sunLight.color.setHex(0xd8c8a0);
         break;
 
-      case 'c2': // Sevastopol (Night Infiltration)
+      case 'c2': // Kakhovka Dam (Night Infiltration)
       case 'sector-2':
         this.weatherType = 'night';
-        this.scene.fog.color.setHex(0x030810);
+        this.scene.fog.color.setHex(0x04100a);
         this.scene.fog.density = 0.005;
-        this.water.material.uniforms['waterColor'].value.setHex(0x02070e);
+        this.water.material.uniforms['waterColor'].value.setHex(0x081208);
         skyUniforms['turbidity'].value = 8.0;
         skyUniforms['rayleigh'].value = 0.2;
         this.sunLight.intensity = 0.6;
@@ -1513,26 +1809,26 @@ class Barracuda3DEngine {
         this.greenGlow.intensity = 2.4;
         break;
 
-      case 'sector-3': // Novorossiysk (Sunset Firestorm)
+      case 'sector-3': // Kherson Port (Sunset)
         this.weatherType = 'sunset';
-        this.scene.fog.color.setHex(0x381814);
+        this.scene.fog.color.setHex(0x382418);
         this.scene.fog.density = 0.003;
-        this.water.material.uniforms['waterColor'].value.setHex(0x180808);
+        this.water.material.uniforms['waterColor'].value.setHex(0x1a1508);
         skyUniforms['turbidity'].value = 4.0;
         skyUniforms['rayleigh'].value = 4.5;
         this.sunLight.intensity = 3.0;
-        this.sunLight.color.setHex(0xff6622);
+        this.sunLight.color.setHex(0xff7733);
         break;
 
-      case 'sector-4': // Kerch (Naval Mist)
+      case 'sector-4': // Dnipro Delta (Dawn Mist)
         this.weatherType = 'dawn';
-        this.scene.fog.color.setHex(0x1a2e38);
+        this.scene.fog.color.setHex(0x1a2e20);
         this.scene.fog.density = 0.0045;
-        this.water.material.uniforms['waterColor'].value.setHex(0x0c202a);
+        this.water.material.uniforms['waterColor'].value.setHex(0x102218);
         skyUniforms['turbidity'].value = 2.0;
         skyUniforms['rayleigh'].value = 2.0;
         this.sunLight.intensity = 2.4;
-        this.sunLight.color.setHex(0xfff8ee);
+        this.sunLight.color.setHex(0xfff0d0);
         break;
     }
   }
