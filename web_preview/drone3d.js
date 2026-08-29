@@ -747,6 +747,20 @@ class Barracuda3DEngine {
       camo.position.y = 3.7;
       compound.add(camo);
 
+      // Try loading real 3D GLB models if available
+      try {
+        if (typeof THREE.GLTFLoader !== 'undefined') {
+          const loader = new THREE.GLTFLoader();
+          const modelUrl = idx % 2 === 0 ? 'assets/models/ural_4320.glb' : 'assets/models/anntenna01.glb';
+          loader.load(modelUrl, (gltf) => {
+            const m = gltf.scene;
+            m.scale.set(2.0, 2.0, 2.0);
+            m.position.set(idx % 2 === 0 ? 8 : -8, 0.2, 0);
+            compound.add(m);
+          }, undefined, () => {});
+        }
+      } catch(e) {}
+
       group.add(compound);
 
       group.position.set(t.x, 0, t.z);
