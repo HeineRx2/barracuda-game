@@ -6109,6 +6109,24 @@ class BarracudaGame {
   }
 
   // =========================================================================
+  // SETTINGS UI REFRESH
+  // =========================================================================
+  refreshSettingsUI() {
+    const soundToggle = document.getElementById('setting-sound');
+    if (soundToggle) {
+      soundToggle.textContent = this.soundEnabled ? '🔊 ЗВУК: ВКЛ' : '🔇 ЗВУК: ВЫКЛ';
+      soundToggle.classList.toggle('active', this.soundEnabled);
+    }
+    const volSlider = document.getElementById('setting-volume');
+    if (volSlider) {
+      const vol = (window.tacticalAudio && window.tacticalAudio.masterGain)
+        ? Math.round(window.tacticalAudio.masterGain.gain.value * 100)
+        : (this.soundEnabled ? 70 : 0);
+      volSlider.value = vol;
+    }
+  }
+
+  // =========================================================================
   // SETTINGS
   // =========================================================================
   initSettings() {
