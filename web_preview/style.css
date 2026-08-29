@@ -78,7 +78,7 @@ body {
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-  pointer-events: none;
+  pointer-events: none; /* transparent to 3D viewport below */
   padding: 12px 18px;
   box-sizing: border-box;
   overflow: hidden;
@@ -93,6 +93,19 @@ body {
 /* =========================================================================
    GLOBAL INTERACTIVE ELEMENTS (Fix for PC and Mobile)
    ========================================================================= */
+/* All interactive UI containers must be clickable */
+.top-hud-bar,
+.top-nav-row,
+.top-stats-row,
+.bottom-hud-bar,
+.booster-floating-widget,
+.booster-inner-btn,
+.concept-action-rings,
+.concept-dossier-card,
+.concept-slide-panel {
+  pointer-events: auto !important;
+}
+
 button,
 .ring-action-btn,
 .btn-buy-action,
@@ -107,6 +120,9 @@ button,
   pointer-events: auto !important;
   cursor: pointer !important;
   -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 /* =========================================================================
@@ -371,8 +387,10 @@ button,
   justify-content: space-between;
   align-items: center;
   pointer-events: auto;
+  position: relative;
   z-index: 15;
   gap: 10px;
+  flex-shrink: 0;
 }
 
 .top-nav-row,
