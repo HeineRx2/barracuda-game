@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>BARRACUDA // Автономный Ударный Дрон</title>
   <meta name="description" content="Тактический симулятор боевого надводного дрона Барракуда с реалистичной 3D-моделью.">
-  <link rel="stylesheet" href="style.css?v=3.5.2">
+  <link rel="stylesheet" href="style.css?v=3.5.3">
 
   <!-- Global Error Handler Overlay -->
   <script>
@@ -79,7 +79,7 @@
         <span class="lock-bracket">🎯 МАШИННОЕ ОТДЕЛЕНИЕ [x4 КРИТ]</span>
       </button>
     </div>
-    <button id="btn-exit-flir" class="btn-flir-exit">✕ ВЫХОД ИЗ ПРИЦЕЛА</button>
+    <button id="btn-exit-flir" class="btn-flir-exit" onclick="event.stopPropagation();var o=document.getElementById('flir-overlay');if(o)o.classList.remove('active');if(window.barracudaGame&amp;&amp;window.barracudaGame.engine3D)window.barracudaGame.engine3D.cameraMode='orbit';">✕ ВЫХОД ИЗ ПРИЦЕЛА</button>
   </div>
 
   <!-- Screen Flash for Kinetic Strike -->
@@ -156,7 +156,7 @@
 
     <!-- QUICK COMBAT ACTIONS BAR (FLIR, SIGINT РЭБ, ПУСК FPV, СОНАР, ROV, ТЕСТ VSA) -->
     <div class="quick-combat-actions-bar">
-      <button class="combat-quick-btn flir-btn" id="btn-open-flir" title="FLIR тепловизор">
+      <button class="combat-quick-btn flir-btn" id="btn-open-flir" title="FLIR тепловизор" onclick="event.stopPropagation();var o=document.getElementById('flir-overlay');if(o)o.classList.add('active');if(window.barracudaGame&amp;&amp;window.barracudaGame.engine3D)window.barracudaGame.engine3D.cameraMode='flir';if(window.tacticalAudio)window.tacticalAudio.playThermalModeSfx();">
         <span class="cq-icon">🎯</span>
         <span class="cq-text">FLIR</span>
       </button>
@@ -205,23 +205,23 @@
 
       <!-- Right / Bottom-dock Action Ring Buttons -->
       <nav class="concept-action-rings" id="main-nav-dock">
-        <button class="ring-action-btn" data-panel="panel-vessel">
+        <button class="ring-action-btn" data-panel="panel-vessel" onclick="event.stopPropagation();var p=document.getElementById('panel-vessel');var was=p&amp;&amp;p.classList.contains('active');document.querySelectorAll('.concept-slide-panel').forEach(function(x){x.classList.remove('active');});document.querySelectorAll('.ring-action-btn').forEach(function(x){x.classList.remove('active');});if(!was&amp;&amp;p){p.classList.add('active');this.classList.add('active');}">
           <div class="ring-circle-icon">⚡</div>
           <span class="ring-label">СТЕЛС-ДРОН</span>
         </button>
-        <button class="ring-action-btn" data-panel="panel-modules">
+        <button class="ring-action-btn" data-panel="panel-modules" onclick="event.stopPropagation();var p=document.getElementById('panel-modules');var was=p&amp;&amp;p.classList.contains('active');document.querySelectorAll('.concept-slide-panel').forEach(function(x){x.classList.remove('active');});document.querySelectorAll('.ring-action-btn').forEach(function(x){x.classList.remove('active');});if(!was&amp;&amp;p){p.classList.add('active');this.classList.add('active');}">
           <div class="ring-circle-icon">⚙️</div>
           <span class="ring-label">МОДУЛИ</span>
         </button>
-        <button class="ring-action-btn" data-panel="panel-weapons">
+        <button class="ring-action-btn" data-panel="panel-weapons" onclick="event.stopPropagation();var p=document.getElementById('panel-weapons');var was=p&amp;&amp;p.classList.contains('active');document.querySelectorAll('.concept-slide-panel').forEach(function(x){x.classList.remove('active');});document.querySelectorAll('.ring-action-btn').forEach(function(x){x.classList.remove('active');});if(!was&amp;&amp;p){p.classList.add('active');this.classList.add('active');}">
           <div class="ring-circle-icon">🎯</div>
           <span class="ring-label">ВООРУЖЕНИЕ</span>
         </button>
-        <button class="ring-action-btn" data-panel="panel-contracts">
+        <button class="ring-action-btn" data-panel="panel-contracts" onclick="event.stopPropagation();var p=document.getElementById('panel-contracts');var was=p&amp;&amp;p.classList.contains('active');document.querySelectorAll('.concept-slide-panel').forEach(function(x){x.classList.remove('active');});document.querySelectorAll('.ring-action-btn').forEach(function(x){x.classList.remove('active');});if(!was&amp;&amp;p){p.classList.add('active');this.classList.add('active');}">
           <div class="ring-circle-icon">📜</div>
           <span class="ring-label">КОНТРАКТЫ</span>
         </button>
-        <button class="ring-action-btn" id="btn-open-techtree">
+        <button class="ring-action-btn" id="btn-open-techtree" onclick="event.stopPropagation();var m=document.getElementById('techtree-modal');if(m)m.classList.add('active');try{window.barracudaGame&amp;&amp;window.barracudaGame.refreshTechTree();}catch(e){}">
           <div class="ring-circle-icon">🔬</div>
           <span class="ring-label">ДЕРЕВО ТЕХНОЛОГИЙ</span>
         </button>
@@ -409,7 +409,7 @@
       </div>
       <div class="bottom-mission-subrow">
         <span class="mission-tag">СТЕХ-УДАР: FPV-ДРОН ВЫСОКОЙ ДАЛЬНОСТИ</span>
-        <button id="btn-assault" class="btn-concept-strike">ЗАПУСК FPV-ШТУРМА</button>
+        <button id="btn-assault" class="btn-concept-strike" onclick="event.stopPropagation();if(window.barracudaGame)window.barracudaGame.startAssault();">ЗАПУСК FPV-ШТУРМА</button>
       </div>
     </footer>
 
@@ -775,7 +775,7 @@
     <div class="tactical-modal-card">
       <div class="modal-card-header">
         <h2 class="modal-card-title">🗺️ ТЕАТР БОЕВЫХ ДЕЙСТВИЙ // ЧЁРНОЕ МОРЕ</h2>
-        <button class="btn-close-modal" id="btn-close-map">✕</button>
+        <button class="btn-close-modal" id="btn-close-map" onclick="event.stopPropagation();var m=document.getElementById('map-modal');if(m)m.classList.remove('active');">✕</button>
       </div>
       <p class="modal-card-desc">Выберите сектор развёртывания. Каждый район меняет погоду 3D-океана, вражеские корабли и множители наград.</p>
       <div class="sector-cards-grid">
@@ -813,7 +813,7 @@
     <div class="tactical-modal-card cyber-card">
       <div class="modal-card-header">
         <h2 class="modal-card-title">📡 РЭБ // ДЕШИФРОВКА РАДИОСПЕКТРА</h2>
-        <button class="btn-close-modal" id="btn-close-cyber">✕</button>
+        <button class="btn-close-modal" id="btn-close-cyber" onclick="event.stopPropagation();var m=document.getElementById('cyber-modal');if(m)m.classList.remove('active');if(window.barracudaGame)window.barracudaGame.cyberHackActive=false;">✕</button>
       </div>
       <p class="modal-card-desc">Совместите частоту перехвата с несущей волной вражеского радара для извлечения разведданных. <strong>Время ограничено!</strong></p>
       <p id="cyber-timer-label" class="cyber-timer-display">ТАЙМЕР: 30с</p>
@@ -875,7 +875,7 @@
   <!-- HELP / TACTICAL MANUAL MODAL -->
   <div id="help-modal" class="help-modal-overlay">
     <div class="help-modal-content">
-      <button class="help-close-btn" id="btn-close-help" title="Закрыть руководство">✕</button>
+      <button class="help-close-btn" id="btn-close-help" title="Закрыть руководство" onclick="event.stopPropagation();var m=document.getElementById('help-modal');if(m)m.classList.remove('active');">✕</button>
       
       <div class="help-header">
         <div class="help-badge">ИНСТРУКЦИЯ ОПЕРАТОРА // СЕКРЕТНО</div>
@@ -948,7 +948,7 @@
   <!-- TECH TREE MODAL (TACTICAL R&D MATRIX) -->
   <div id="techtree-modal" class="help-modal-overlay">
     <div class="help-modal-content tt-modal-container">
-      <button class="help-close-btn" id="btn-close-techtree" title="Закрыть НИОКР">✕</button>
+      <button class="help-close-btn" id="btn-close-techtree" title="Закрыть НИОКР" onclick="event.stopPropagation();var m=document.getElementById('techtree-modal');if(m)m.classList.remove('active');">✕</button>
       
       <!-- Tech Tree Top Header -->
       <div class="tt-top-header">
@@ -1205,7 +1205,7 @@
     <div class="help-modal-content" style="max-width: 480px;">
       <div class="help-modal-header">
         <h2>⚙️ НАСТРОЙКИ СИСТЕМЫ</h2>
-        <button class="btn-close-help" id="btn-close-settings">✕</button>
+        <button class="btn-close-help" id="btn-close-settings" onclick="event.stopPropagation();var m=document.getElementById('settings-modal');if(m)m.classList.remove('active');">✕</button>
       </div>
       <div class="help-modal-body">
         <div class="help-section">
@@ -1252,7 +1252,7 @@
   <!-- CAMPAIGN STORY OPERATIONS MODAL -->
   <div id="campaign-modal" class="help-modal-overlay">
     <div class="help-modal-content campaign-modal-container">
-      <button class="help-close-btn" id="btn-close-campaign" title="Закрыть операции">✕</button>
+      <button class="help-close-btn" id="btn-close-campaign" title="Закрыть операции" onclick="event.stopPropagation();var m=document.getElementById('campaign-modal');if(m)m.classList.remove('active');">✕</button>
       
       <div style="text-align:center; margin-bottom:16px;">
         <div style="font-family:'Rajdhani',monospace; font-size:11px; color:#00ff88; letter-spacing:2px;">OPERATIONAL COMMAND // DNIPRO RIVER THEATER</div>
@@ -1291,7 +1291,7 @@
   <!-- DRONE HANGAR & SALVAGE/CRAFTING FORGE MODAL -->
   <div id="hangar-modal" class="help-modal-overlay">
     <div class="help-modal-content hangar-modal-container">
-      <button class="help-close-btn" id="btn-close-hangar" title="Закрыть ангар">✕</button>
+      <button class="help-close-btn" id="btn-close-hangar" title="Закрыть ангар" onclick="event.stopPropagation();var m=document.getElementById('hangar-modal');if(m)m.classList.remove('active');">✕</button>
 
       <div style="text-align:center; margin-bottom:18px;">
         <div style="font-family:'Rajdhani',monospace; font-size:11px; color:#00f0ff; letter-spacing:2px;">NAVAL DRONE YARD // PROTOYPE HANGAR</div>
@@ -1520,7 +1520,7 @@
           <span class="th-badge">АРСЕНАЛ v3.5</span>
           <h2>🛰️ ЦЕНТР ТАКТИЧЕСКИХ СИСТЕМ И ИСПЫТАНИЙ</h2>
         </div>
-        <button class="btn-close-modal" id="btn-close-tactical-hub">✕</button>
+        <button class="btn-close-modal" id="btn-close-tactical-hub" onclick="event.stopPropagation();var m=document.getElementById('tactical-hub-modal');if(m)m.classList.remove('active');">✕</button>
       </div>
       <p class="tactical-hub-sub">Прямой доступ к новым тактическим модулям симулятора БПА «Барракуда». Протестируйте каждую систему в действии:</p>
       
@@ -1609,8 +1609,8 @@
   </div>
 
   <!-- Audio, 3D Engine & Game Logic -->
-  <script src="audio.js?v=3.5.2"></script>
-  <script src="drone3d.js?v=3.5.2"></script>
-  <script src="game.js?v=3.5.2"></script>
+  <script src="audio.js?v=3.5.3"></script>
+  <script src="drone3d.js?v=3.5.3"></script>
+  <script src="game.js?v=3.5.3"></script>
 </body>
 </html>

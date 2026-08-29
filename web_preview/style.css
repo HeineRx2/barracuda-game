@@ -78,10 +78,10 @@ body {
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-  pointer-events: none; /* transparent to 3D viewport below */
+  pointer-events: none; /* HUD frame itself transparent - buttons below have pointer-events:auto */
   padding: 12px 18px;
   box-sizing: border-box;
-  overflow: hidden;
+  overflow: visible; /* Don't clip buttons/panels that might extend beyond frame */
   transition: opacity 0.25s ease;
 }
 

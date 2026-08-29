@@ -3430,7 +3430,18 @@ class BarracudaGame {
       const m = act.missions.find(item => item.id === missionId);
       if (m) { found = m; foundAct = act; break; }
     }
-    if (!found) return;
+    if (!found) {
+      found = {
+        id: missionId || 'test_sortie',
+        code: 'TEST-001 // ТАКТИЧЕСКИЙ ВЫХОД',
+        title: missionId === 'sonar_test' ? 'Испытания 3D-Сонара' : (missionId === 'drift_test' ? 'Тест-драйв VSA / Дрифт' : 'Боевое патрулирование'),
+        desc: 'Испытание бортовых систем, манёвренности катера и гидродинамики.',
+        phases: ['Выход в квадрат', 'Тестирование систем', 'Возврат на базу'],
+        reward: { usd: 3500, mb: 100, bp: 0, salvage: { box: 1 } },
+        enemies: [{ type: 'patrol_boat', name: 'Учебный катер «Раптор»', count: 1 }]
+      };
+      foundAct = CAMPAIGN_ACTS_DEF[0];
+    }
 
     this.activeMission = found;
     this.sortieActive = true;
