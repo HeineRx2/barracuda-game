@@ -567,6 +567,11 @@ class Barracuda3DEngine {
 
     const reedBrushGeo = new THREE.ConeGeometry(0.35, 0.8, 5); // Thick cattail head
 
+    // ── REED COLORS & GEOMETRIES (must be defined before the loop)
+    const reedColors = [0x4a6628, 0x3d5520, 0x567030, 0x8a9a40, 0x6b7a30];
+    const reedStemGeo = new THREE.CylinderGeometry(0.04, 0.06, 1, 4); // Scale Y per reed
+    const reedTopGeo  = new THREE.ConeGeometry(0.12, 0.6, 5);          // Leaf tip
+
     for (let side = -1; side <= 1; side += 2) {
       // Dense reed patches along entire water edge
       for (let patch = 0; patch < 120; patch++) {
