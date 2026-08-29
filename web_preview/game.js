@@ -1991,16 +1991,17 @@ class BarracudaGame {
     this.dailyCrits = 0;
     this.dailyOverclocks = 0;
 
-    this.loadGame();
-    this.processOfflineIncome();
-    this.initDailyQuests();
-    this.init3D();
-    this.initDOM();
-    this.initCampaignAndHangar();
-    this.initEvents();
-    this.startLoop();
-    this.updateDossier(DOSSIER_LORE[0], false);
+    try { this.loadGame(); } catch(e) { console.error('[INIT] loadGame error:', e); }
+    try { this.processOfflineIncome(); } catch(e) { console.error('[INIT] processOfflineIncome error:', e); }
+    try { this.initDailyQuests(); } catch(e) { console.error('[INIT] initDailyQuests error:', e); }
+    try { this.init3D(); } catch(e) { console.error('[INIT] init3D error:', e); }
+    try { this.initDOM(); } catch(e) { console.error('[INIT] initDOM error:', e); }
+    try { this.initCampaignAndHangar(); } catch(e) { console.error('[INIT] initCampaignAndHangar error:', e); }
+    try { this.initEvents(); } catch(e) { console.error('[INIT] initEvents error:', e); }
+    try { this.startLoop(); } catch(e) { console.error('[INIT] startLoop error:', e); }
+    try { this.updateDossier(DOSSIER_LORE[0], false); } catch(e) { console.error('[INIT] updateDossier error:', e); }
     this._uiDirty = true;
+    console.log('[BARRACUDA] ✓ Game initialized successfully');
 
     // Auto-show help or initial Comms transmission for new players
     if (!localStorage.getItem('barracuda_intro_seen')) {
@@ -4729,13 +4730,13 @@ class BarracudaGame {
     // Sector Map
     if (this.btnOpenMap) {
       this.btnOpenMap.addEventListener('click', () => {
-        this.mapModal.classList.add('active');
-        window.tacticalAudio.playRadioSquelch();
+        this.mapModal?.classList.add('active');
+        if (window.tacticalAudio) window.tacticalAudio.playRadioSquelch();
       });
     }
     if (this.btnCloseMap) {
       this.btnCloseMap.addEventListener('click', () => {
-        this.mapModal.classList.remove('active');
+        this.mapModal?.classList.remove('active');
       });
     }
 
@@ -4750,8 +4751,8 @@ class BarracudaGame {
     // SIGINT Cyber Hack Modal — Enhanced
     if (this.btnOpenCyber) {
       this.btnOpenCyber.addEventListener('click', () => {
-        this.cyberModal.classList.add('active');
-        window.tacticalAudio.playSonarPing();
+        this.cyberModal?.classList.add('active');
+        if (window.tacticalAudio) window.tacticalAudio.playSonarPing();
         this.targetFreq = 80 + Math.floor(Math.random() * 140);
         this.targetAmp = +(0.5 + Math.random() * 1.2).toFixed(1);
         this.cyberHackTimer = 30;
@@ -4763,7 +4764,7 @@ class BarracudaGame {
 
     if (this.btnCloseCyber) {
       this.btnCloseCyber.addEventListener('click', () => {
-        this.cyberModal.classList.remove('active');
+        this.cyberModal?.classList.remove('active');
         this.cyberHackActive = false;
       });
     }
@@ -4807,7 +4808,7 @@ class BarracudaGame {
             this.creditsUSD += 10000 * mult;
             this.addData(150 * mult);
             this.addNotification('🏆 ПОЛНЫЙ ВЗЛОМ', 'Все 3 канала дешифрованы! Мега-бонус!');
-            this.cyberModal.classList.remove('active');
+            this.cyberModal?.classList.remove('active');
             this.cyberHackActive = false;
 
             // Check if active campaign mission in phase 1
@@ -4922,8 +4923,8 @@ class BarracudaGame {
       this.engine3D.setWeatherSector(sectorId);
     }
     // Start ambient soundscape for new sector
-    window.tacticalAudio.startAmbient(sectorId);
-    this.mapModal.classList.remove('active');
+    if (window.tacticalAudio) window.tacticalAudio.startAmbient(sectorId);
+    this.mapModal?.classList.remove('active');
     this.checkAllAchievements();
     this._uiDirty = true;
   }
@@ -5267,7 +5268,7 @@ class BarracudaGame {
   // =========================================================================
   startAssault() {
     this.minigameActive = true;
-    this.assaultModal.classList.add('active');
+    this.assaultModal?.classList.add('active');
 
     // Check if this should be a boss fight
     if (this.shouldTriggerBoss()) {
@@ -5408,7 +5409,7 @@ class BarracudaGame {
       this.checkAchievement('first_prestige');
 
       setTimeout(() => {
-        this.assaultModal.classList.remove('active');
+        this.assaultModal?.classList.remove('active');
         this.updateDossier(DOSSIER_LORE[0], false);
         this.checkAllAchievements();
         this.saveGame();
@@ -5419,7 +5420,7 @@ class BarracudaGame {
       this.lockStatusLabel.style.color = '#ff2a2a';
 
       setTimeout(() => {
-        this.assaultModal.classList.remove('active');
+        this.assaultModal?.classList.remove('active');
       }, 1500);
     }
   }
@@ -5536,7 +5537,7 @@ class BarracudaGame {
         this.cyberHackTimer -= dt;
         if (this.cyberHackTimer <= 0) {
           this.cyberHackActive = false;
-          this.cyberModal.classList.remove('active');
+          this.cyberModal?.classList.remove('active');
           this.addNotification('❌ ВРЕМЯ ВЫШЛО', 'Сигнал потерян! Взлом провален.');
         }
 

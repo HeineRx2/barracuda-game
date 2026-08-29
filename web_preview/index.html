@@ -9,6 +9,7 @@
 
   <!-- Global Error Handler Overlay -->
   <script>
+    // Global error handler - shows red banner with JS errors
     window.addEventListener('error', function(e) {
       console.error('[GLOBAL ERROR]', e);
       var b = document.getElementById('debug-error-banner');
@@ -19,6 +20,17 @@
         document.addEventListener('DOMContentLoaded', function() { document.body.appendChild(b); });
       }
       b.innerHTML += '<div style="margin-bottom:6px;">⚠️ <b>JS ОШИБКА:</b> ' + (e.message || e) + '<br><small style="color:#ffcccc;">Файл: ' + (e.filename ? e.filename.split('/').pop() : 'script') + ' : строка ' + e.lineno + '</small></div>';
+    });
+    window.addEventListener('unhandledrejection', function(e) {
+      console.error('[PROMISE ERROR]', e.reason);
+    });
+
+    // Fallback proxy for tacticalAudio - prevents crashes if audio fails to init
+    // Any call like window.tacticalAudio.playX() will silently no-op
+    window.tacticalAudio = new Proxy({}, {
+      get: function(_, prop) {
+        return function() {}; // no-op for all method calls
+      }
     });
   </script>
 
