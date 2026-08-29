@@ -1491,8 +1491,27 @@ button,
     flex-direction: column;
     justify-content: space-between;
     height: 100%;
-    pointer-events: none;
+    pointer-events: none; /* Frame itself transparent to allow 3D viewport touches */
     overflow: hidden;
+  }
+
+  /* ALL interactive children of game-frame must explicitly be auto */
+  #game-frame button,
+  #game-frame .booster-floating-widget,
+  #game-frame .booster-inner-btn,
+  #game-frame .ring-action-btn,
+  #game-frame .combat-quick-btn,
+  #game-frame .top-hud-bar,
+  #game-frame .top-nav-row,
+  #game-frame .top-stats-row,
+  #game-frame .bottom-hud-bar,
+  #game-frame .quick-combat-actions-bar,
+  #game-frame .concept-action-rings,
+  #game-frame .mini-radar-box {
+    pointer-events: auto !important;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: rgba(0,255,136,0.15);
+    cursor: pointer;
   }
 
   /* ------------------- TOP HUD BAR (PINNED TO TOP) ------------------- */
@@ -5798,39 +5817,39 @@ button,
   .btn-nav-drawer-toggle {
     display: flex !important;
   }
-  
-  /* Top Nav Row Compact Layout */
+
+  /* Top Nav Row Compact Layout — all buttons visible and clickable */
   .top-nav-row {
     display: flex !important;
     justify-content: space-between !important;
-    gap: 4px !important;
+    gap: 3px !important;
     width: 100% !important;
+    pointer-events: auto !important;
   }
   .top-nav-row button {
-    flex: 1 1 auto !important;
+    flex: 1 1 0 !important;
     min-width: 0 !important;
-    padding: 4px 6px !important;
-    font-size: 11px !important;
-  }
-  
-  /* Quick Combat Bar: sleek scrollable / compact */
-  .quick-combat-actions-bar {
-    display: flex !important;
-    flex-wrap: nowrap !important;
-    overflow-x: auto !important;
-    gap: 4px !important;
-    padding: 2px 4px !important;
-    -webkit-overflow-scrolling: touch;
-  }
-  .combat-quick-btn {
-    flex: 0 0 auto !important;
-    padding: 4px 8px !important;
+    padding: 4px 3px !important;
     font-size: 10px !important;
+    pointer-events: auto !important;
+    touch-action: manipulation !important;
   }
 
-  /* Clean mobile layout with fully clickable controls */
-  .middle-arena {
+  /* Quick Combat Bar: vertical column on right side (DO NOT override to horizontal) */
+  .quick-combat-actions-bar {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 5px !important;
     pointer-events: auto !important;
+  }
+  .combat-quick-btn {
+    pointer-events: auto !important;
+    touch-action: manipulation !important;
+  }
+
+  /* Ensure middle arena and panels are interactive */
+  .middle-arena {
+    pointer-events: none !important; /* Allow 3D viewport touch-through */
   }
   .concept-action-rings {
     gap: 6px !important;
@@ -5865,16 +5884,25 @@ button,
     font-size: 10px !important;
   }
 
-  /* Ensure all interactive buttons respond immediately to touch */
+  /* Ensure ALL interactive elements respond immediately to touch */
   button,
   .ring-action-btn,
   .btn-buy-action,
   .btn-recon-snap,
   .btn-fpv-boost,
   .combat-quick-btn,
-  .drawer-action-btn {
+  .booster-inner-btn,
+  .drawer-action-btn,
+  .btn-dossier-pill,
+  .btn-sector-pill,
+  .btn-help-pill,
+  .btn-tactical-pause {
     touch-action: manipulation !important;
-    -webkit-tap-highlight-color: transparent !important;
+    -webkit-tap-highlight-color: rgba(0,255,136,0.1) !important;
+    pointer-events: auto !important;
+    cursor: pointer !important;
+    user-select: none !important;
+    -webkit-user-select: none !important;
   }
 
   /* FPV & Recon touch buttons on mobile */
