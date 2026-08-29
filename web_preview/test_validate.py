@@ -172,6 +172,9 @@ check('btn-mission-vsa' in html_code, "HTML: Кнопка тумблера VSA (
 check('btn-mission-dps' in html_code, "HTML: Кнопка якоря DPS (btn-mission-dps)")
 check('slider-pid-p' in html_code, "HTML: Ползунок P-Gain в Ангаре (slider-pid-p)")
 check('coaxial_vtol' in html_code, "HTML: Карточка прототипа MK-4 COAXIAL VTOL")
+check('mobile-drawer-modal' in html_code, "HTML: Мобильное меню-шторка (mobile-drawer-modal)")
+check('recon-compass-arrow' in html_code, "HTML: 3D-стрелка компаса навигации (recon-compass-arrow)")
+check('recon-screen-tap-zone' in html_code, "HTML: Тап-зона экрана для мобильной съемки (recon-screen-tap-zone)")
 
 # ============================================================
 # SUMMARY

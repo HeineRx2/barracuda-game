@@ -83,20 +83,24 @@
           <span class="dossier-pill-icon">🛰️</span>
           <span class="dossier-pill-text">ТАКТИКА</span>
         </button>
-        <button class="btn-dossier-pill" id="btn-toggle-dossier" title="Секретное досье">
+        <button class="btn-dossier-pill btn-nav-drawer-toggle" id="btn-open-mobile-drawer" title="Меню и опции" style="display:none;">
+          <span class="dossier-pill-icon">☰</span>
+          <span class="dossier-pill-text">МЕНЮ</span>
+        </button>
+        <button class="btn-dossier-pill btn-desktop-only" id="btn-toggle-dossier" title="Секретное досье">
           <span class="dossier-pill-icon">📁</span>
           <span class="dossier-pill-text">ДОСЬЕ</span>
           <span class="dossier-unread-dot" id="dossier-unread-beacon"></span>
         </button>
-        <button class="btn-sector-pill" id="btn-open-map" title="Карта спецопераций">
+        <button class="btn-sector-pill btn-desktop-only" id="btn-open-map" title="Карта спецопераций">
           <span class="sector-badge-icon">🗺️</span>
           <span id="label-current-sector" class="sector-badge-name">О. ЗМЕИНЫЙ</span>
         </button>
-        <button class="btn-help-pill" id="btn-open-help" title="Справка">
+        <button class="btn-help-pill btn-desktop-only" id="btn-open-help" title="Справка">
           <span class="help-pill-icon">❓</span>
           <span class="help-pill-text">СПРАВКА</span>
         </button>
-        <button class="btn-help-pill" id="btn-open-settings" title="Настройки">
+        <button class="btn-help-pill btn-desktop-only" id="btn-open-settings" title="Настройки">
           <span class="help-pill-icon">⚙️</span>
           <span class="help-pill-text">ОПЦИИ</span>
         </button>
@@ -531,8 +535,18 @@
       <!-- RECONNAISSANCE 3D WAYPOINT HUD (Follows targets in 3D screen space) -->
       <div class="recon-hud-overlay" id="recon-hud-overlay" style="display:none;">
         <div class="recon-objective-banner" id="recon-objective-banner">
-          🔭 ЗАДАЧА: Подлетите к светящемуся маркеру (&lt;45м) и сделайте снимок [ПРОБЕЛ]
+          🔭 ЗАДАЧА: Подлетите к светящемуся маркеру (&lt;45м) и сделайте снимок [ПРОБЕЛ / ТАП]
         </div>
+
+        <!-- 3D Navigation Compass Arrow (points towards nearest target) -->
+        <div class="recon-compass-arrow" id="recon-compass-arrow">
+          <div class="compass-pointer-icon" id="compass-pointer-icon">▲</div>
+          <div class="compass-label-text" id="recon-compass-label">КУРС: 0° // 85м</div>
+        </div>
+
+        <!-- Full-Screen Tap-To-Snap Zone (Mobile) -->
+        <div class="recon-screen-tap-zone" id="recon-screen-tap-zone" title="Тапните для снимка"></div>
+
         <div class="recon-waypoint-reticle" id="recon-waypoint-reticle" style="display:none;">
           <div class="wp-corner wp-tl"></div>
           <div class="wp-corner wp-tr"></div>
@@ -541,7 +555,7 @@
           <div class="wp-tag-pill" id="wp-target-tag">🎯 ЗРК "ТОР" // 65м</div>
         </div>
         <button class="btn-recon-snap" id="btn-recon-snap">
-          📸 ЗАФИКСИРОВАТЬ ЦЕЛЬ [ПРОБЕЛ]
+          📸 ЗАФИКСИРОВАТЬ ЦЕЛЬ [ПРОБЕЛ / ТАП]
         </button>
         <div class="recon-photo-card" id="recon-photo-card">
           <div class="photo-thumb">📸</div>
@@ -668,6 +682,67 @@
         </button>
         <button class="btn-victory-claim" id="btn-victory-claim">
           <span class="btn-icon">⚓</span> ЗАБРАТЬ КУШ И В ШТАБ
+        </button>
+  <!-- =========================================================================
+       MOBILE COMMAND DRAWER MODAL (Compact Mobile Menu)
+       ========================================================================= -->
+  <div id="mobile-drawer-modal" class="help-modal-overlay">
+    <div class="mobile-drawer-container">
+      <div class="mobile-drawer-header">
+        <div class="drawer-title-box">
+          <span class="drawer-icon">☰</span>
+          <h3>ТАКТИЧЕСКОЕ МЕНЮ</h3>
+        </div>
+        <button class="btn-close-modal" id="btn-close-mobile-drawer">✕</button>
+      </div>
+
+      <div class="mobile-drawer-grid">
+        <button class="drawer-action-btn" id="btn-drawer-tactical">
+          <span class="dab-icon">🛰️</span>
+          <div class="dab-meta">
+            <span class="dab-title">ТАКТИКА v3.5</span>
+            <span class="dab-sub">Сонар, ROV, VSA, Тесты</span>
+          </div>
+        </button>
+
+        <button class="drawer-action-btn" id="btn-drawer-map">
+          <span class="dab-icon">🗺️</span>
+          <div class="dab-meta">
+            <span class="dab-title">КАРТА СЕКТОРОВ</span>
+            <span class="dab-sub" id="drawer-sector-name">О. Змеиный</span>
+          </div>
+        </button>
+
+        <button class="drawer-action-btn" id="btn-drawer-dossier">
+          <span class="dab-icon">📁</span>
+          <div class="dab-meta">
+            <span class="dab-title">СЕКРЕТНОЕ ДОСЬЕ</span>
+            <span class="dab-sub">Документы и разведданные</span>
+          </div>
+        </button>
+
+        <button class="drawer-action-btn" id="btn-drawer-settings">
+          <span class="dab-icon">⚙️</span>
+          <div class="dab-meta">
+            <span class="dab-title">НАСТРОЙКИ</span>
+            <span class="dab-sub">Графика, звук, сброс</span>
+          </div>
+        </button>
+
+        <button class="drawer-action-btn" id="btn-drawer-help">
+          <span class="dab-icon">❓</span>
+          <div class="dab-meta">
+            <span class="dab-title">СПРАВКА И ПОМОЩЬ</span>
+            <span class="dab-sub">Управление и механики</span>
+          </div>
+        </button>
+
+        <button class="drawer-action-btn" id="btn-drawer-mute">
+          <span class="dab-icon" id="drawer-mute-icon">🔊</span>
+          <div class="dab-meta">
+            <span class="dab-title">ЗВУКОВЫЕ ЭФФЕКТЫ</span>
+            <span class="dab-sub" id="drawer-mute-status">ВКЛЮЧЕНЫ</span>
+          </div>
         </button>
       </div>
     </div>

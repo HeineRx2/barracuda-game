@@ -2339,7 +2339,7 @@ class BarracudaGame {
   // RANDOM EVENTS
   // =========================================================================
   updateRandomEvents(dt) {
-    if (this.minigameActive) return;
+    if (this.minigameActive || this.sortieActive) return;
 
     this.eventTimer -= dt;
     if (this.eventTimer <= 0 && !this.activeEvent) {
@@ -2847,12 +2847,11 @@ class BarracudaGame {
     }
     if (!found) return;
 
-    // AUTO-CLOSE campaign modal immediately
-    const campaignModal = document.getElementById('campaign-modal');
-    if (campaignModal) campaignModal.classList.remove('active');
+    // AUTO-CLOSE all modals immediately
+    document.querySelectorAll('.help-modal-overlay, .tactical-modal-overlay').forEach(el => el.classList.remove('active'));
 
-    // Show comms intro
-    if (found.commsIntro) {
+    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || window.innerWidth < 768;
+    if (found.commsIntro && !isMobile) {
       this.showCommsTransmission({
         speaker: found.commsIntro.speaker,
         role: found.commsIntro.role,
@@ -2868,6 +2867,9 @@ class BarracudaGame {
       });
     } else {
       this._launchMissionByType(found, foundAct);
+      if (found.commsIntro) {
+        this.addNotification(found.commsIntro.speaker, found.commsIntro.text);
+      }
     }
   }
 
@@ -3045,21 +3047,29 @@ class BarracudaGame {
       window.tacticalAudio.startFpvMotorSound();
     }
 
-    // Bind on-screen snap button and spacebar
+    // Bind on-screen snap button, screen tap zone, and spacebar
     const snapBtn = document.getElementById('btn-recon-snap');
+    const tapZone = document.getElementById('recon-screen-tap-zone');
+    const fpvPhotoBtn = document.getElementById('btn-fpv-photo');
+
+    const doSnap = (e) => {
+      if (e) { e.preventDefault(); e.stopPropagation(); }
+      this._attemptReconPhoto();
+    };
+
     if (snapBtn) {
-      snapBtn.onclick = (e) => {
-        e.stopPropagation();
-        this._attemptReconPhoto();
-      };
+      snapBtn.onpointerdown = doSnap;
+      snapBtn.onclick = doSnap;
     }
 
-    const fpvPhotoBtn = document.getElementById('btn-fpv-photo');
+    if (tapZone) {
+      tapZone.onpointerdown = doSnap;
+      tapZone.onclick = doSnap;
+    }
+
     if (fpvPhotoBtn) {
-      fpvPhotoBtn.onclick = (e) => {
-        e.stopPropagation();
-        this._attemptReconPhoto();
-      };
+      fpvPhotoBtn.onpointerdown = doSnap;
+      fpvPhotoBtn.onclick = doSnap;
     }
 
     this._reconPhotoHandler = (e) => {
@@ -3917,7 +3927,21 @@ class BarracudaGame {
       }
     }
 
-    // 2. Update 3D Screen Space Waypoint Reticle
+    // 2. Update Navigation Compass Arrow
+    const compassIcon = document.getElementById('compass-pointer-icon');
+    const compassLabel = document.getElementById('recon-compass-label');
+    if (compassIcon && compassLabel) {
+      const bDeg = nearest.bearingDeg || 0;
+      compassIcon.style.transform = `rotate(${bDeg}deg)`;
+      compassLabel.textContent = `КУРС: ${bDeg >= 0 ? '+' : ''}${bDeg}° // ${nearest.dist}м`;
+      if (nearest.dist <= 45) {
+        compassIcon.classList.add('locked');
+      } else {
+        compassIcon.classList.remove('locked');
+      }
+    }
+
+    // 3. Update 3D Screen Space Waypoint Reticle
     const reticleEl = document.getElementById('recon-waypoint-reticle');
     const tagEl = document.getElementById('wp-target-tag');
     const snapBtn = document.getElementById('btn-recon-snap');
@@ -3959,7 +3983,7 @@ class BarracudaGame {
       }
     }
 
-    // 3. Update FPV top OSD chip
+    // 4. Update FPV top OSD chip
     const reconOsd = document.getElementById('fpv-osd-recon-info');
     if (!reconOsd) {
       const topOsd = document.querySelector('.fpv-top-osd');
@@ -6236,17 +6260,95 @@ class BarracudaGame {
     const btnCloseTactical = document.getElementById('btn-close-tactical-hub');
     const tacticalModal = document.getElementById('tactical-hub-modal');
 
-    if (btnOpenTactical && tacticalModal) {
-      btnOpenTactical.addEventListener('click', (e) => {
-        e.stopPropagation();
-        tacticalModal.classList.add('active');
-      });
+    const openTacticalModal = (e) => {
+      if (e) { e.preventDefault(); e.stopPropagation(); }
+      if (tacticalModal) tacticalModal.classList.add('active');
+    };
+    const closeTacticalModal = (e) => {
+      if (e) { e.preventDefault(); e.stopPropagation(); }
+      if (tacticalModal) tacticalModal.classList.remove('active');
+    };
+
+    if (btnOpenTactical) {
+      btnOpenTactical.onpointerdown = openTacticalModal;
+      btnOpenTactical.onclick = openTacticalModal;
     }
-    if (btnCloseTactical && tacticalModal) {
-      btnCloseTactical.addEventListener('click', (e) => {
-        e.stopPropagation();
-        tacticalModal.classList.remove('active');
-      });
+    if (btnCloseTactical) {
+      btnCloseTactical.onpointerdown = closeTacticalModal;
+      btnCloseTactical.onclick = closeTacticalModal;
+    }
+
+    // Mobile Drawer Handlers
+    const btnOpenDrawer = document.getElementById('btn-open-mobile-drawer');
+    const btnCloseDrawer = document.getElementById('btn-close-mobile-drawer');
+    const drawerModal = document.getElementById('mobile-drawer-modal');
+
+    const openDrawer = (e) => {
+      if (e) { e.preventDefault(); e.stopPropagation(); }
+      if (drawerModal) drawerModal.classList.add('active');
+    };
+    const closeDrawer = (e) => {
+      if (e) { e.preventDefault(); e.stopPropagation(); }
+      if (drawerModal) drawerModal.classList.remove('active');
+    };
+
+    if (btnOpenDrawer) {
+      btnOpenDrawer.onpointerdown = openDrawer;
+      btnOpenDrawer.onclick = openDrawer;
+    }
+    if (btnCloseDrawer) {
+      btnCloseDrawer.onpointerdown = closeDrawer;
+      btnCloseDrawer.onclick = closeDrawer;
+    }
+
+    // Drawer internal buttons
+    const btnDrawerTactical = document.getElementById('btn-drawer-tactical');
+    if (btnDrawerTactical) {
+      btnDrawerTactical.onclick = (e) => {
+        closeDrawer(e);
+        openTacticalModal(e);
+      };
+    }
+    const btnDrawerMap = document.getElementById('btn-drawer-map');
+    if (btnDrawerMap) {
+      btnDrawerMap.onclick = (e) => {
+        closeDrawer(e);
+        const mapModal = document.getElementById('map-modal');
+        if (mapModal) mapModal.classList.add('active');
+      };
+    }
+    const btnDrawerDossier = document.getElementById('btn-drawer-dossier');
+    if (btnDrawerDossier) {
+      btnDrawerDossier.onclick = (e) => {
+        closeDrawer(e);
+        this.toggleDossier();
+      };
+    }
+    const btnDrawerSettings = document.getElementById('btn-drawer-settings');
+    if (btnDrawerSettings) {
+      btnDrawerSettings.onclick = (e) => {
+        closeDrawer(e);
+        const settingsModal = document.getElementById('settings-modal');
+        if (settingsModal) settingsModal.classList.add('active');
+      };
+    }
+    const btnDrawerHelp = document.getElementById('btn-drawer-help');
+    if (btnDrawerHelp) {
+      btnDrawerHelp.onclick = (e) => {
+        closeDrawer(e);
+        const helpModal = document.getElementById('help-modal');
+        if (helpModal) helpModal.classList.add('active');
+      };
+    }
+    const btnDrawerMute = document.getElementById('btn-drawer-mute');
+    if (btnDrawerMute) {
+      btnDrawerMute.onclick = (e) => {
+        this.toggleMute();
+        const muteStatus = document.getElementById('drawer-mute-status');
+        const muteIcon = document.getElementById('drawer-mute-icon');
+        if (muteStatus) muteStatus.textContent = this.isMuted ? 'ВЫКЛЮЧЕНЫ' : 'ВКЛЮЧЕНЫ';
+        if (muteIcon) muteIcon.textContent = this.isMuted ? '🔇' : '🔊';
+      };
     }
 
     // Quick Combat Action Bar buttons

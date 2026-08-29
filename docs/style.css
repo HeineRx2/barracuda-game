@@ -5607,11 +5607,245 @@ body {
   font-weight: 700;
   color: #fff;
 }
-.photo-status {
-  font-size: 10px;
-  color: #00ff88;
-  font-weight: 800;
+/* ==========================================================================
+   MOBILE COMMAND DRAWER & NAVIGATION COMPASS (v3.6)
+   ========================================================================== */
+.mobile-drawer-container {
+  width: min(440px, 92vw);
+  background: rgba(3, 14, 22, 0.96);
+  border: 1px solid rgba(0, 240, 255, 0.4);
+  border-radius: 14px;
+  box-shadow: 0 15px 50px rgba(0, 0, 0, 0.9), 0 0 30px rgba(0, 240, 255, 0.2);
+  padding: 16px;
+  backdrop-filter: blur(16px);
+  font-family: 'Rajdhani', sans-serif;
+  color: #e0e8ec;
 }
+.mobile-drawer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(0, 240, 255, 0.25);
+  padding-bottom: 10px;
+  margin-bottom: 12px;
+}
+.drawer-title-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.drawer-title-box h3 {
+  margin: 0;
+  font-size: 16px;
+  color: #00f0ff;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+.drawer-icon {
+  font-size: 18px;
+  color: #00f0ff;
+}
+.mobile-drawer-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.drawer-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(6, 24, 38, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  padding: 10px 12px;
+  cursor: pointer;
+  color: #e0e8ec;
+  font-family: 'Rajdhani', sans-serif;
+  text-align: left;
+  transition: all 0.2s ease;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.drawer-action-btn:hover,
+.drawer-action-btn:active {
+  background: rgba(0, 240, 255, 0.15);
+  border-color: #00f0ff;
+  transform: translateY(-1px);
+}
+.dab-icon {
+  font-size: 20px;
+}
+.dab-meta {
+  display: flex;
+  flex-direction: column;
+}
+.dab-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+}
+.dab-sub {
+  font-size: 9px;
+  color: #8da4af;
+  margin-top: 2px;
+}
+
+/* 3D Navigation Compass Arrow */
+.recon-compass-arrow {
+  position: absolute;
+  top: 90px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  pointer-events: none;
+  z-index: 160;
+  transition: transform 0.1s ease-out;
+}
+.compass-pointer-icon {
+  width: 32px;
+  height: 32px;
+  background: rgba(2, 12, 20, 0.85);
+  border: 1.5px solid #00f0ff;
+  border-radius: 50%;
+  color: #00f0ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 900;
+  box-shadow: 0 0 15px rgba(0, 240, 255, 0.5);
+  transition: transform 0.1s linear, color 0.2s ease, border-color 0.2s ease;
+}
+.compass-pointer-icon.locked {
+  border-color: #00ff88;
+  color: #00ff88;
+  box-shadow: 0 0 20px rgba(0, 255, 136, 0.8);
+}
+.compass-label-text {
+  background: rgba(3, 14, 22, 0.85);
+  border: 1px solid rgba(0, 240, 255, 0.4);
+  border-radius: 4px;
+  padding: 2px 8px;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px;
+  color: #00f0ff;
+  white-space: nowrap;
+}
+
+/* Recon Full-Screen Tap Zone */
+.recon-screen-tap-zone {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: auto;
+  z-index: 100;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ==========================================================================
+   MOBILE-FIRST SCREEN SPACE OPTIMIZATIONS (≤ 768px)
+   ========================================================================== */
+@media (max-width: 768px) {
+  /* Hide desktop-only buttons in top row */
+  .btn-desktop-only {
+    display: none !important;
+  }
+  .btn-nav-drawer-toggle {
+    display: flex !important;
+  }
+  
+  /* Top Nav Row Compact Layout */
+  .top-nav-row {
+    display: flex !important;
+    justify-content: space-between !important;
+    gap: 4px !important;
+    width: 100% !important;
+  }
+  .top-nav-row button {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    padding: 4px 6px !important;
+    font-size: 11px !important;
+  }
+  
+  /* Quick Combat Bar: sleek scrollable / compact */
+  .quick-combat-actions-bar {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    gap: 4px !important;
+    padding: 2px 4px !important;
+    -webkit-overflow-scrolling: touch;
+  }
+  .combat-quick-btn {
+    flex: 0 0 auto !important;
+    padding: 4px 8px !important;
+    font-size: 10px !important;
+  }
+
+  /* Maximize 3D canvas viewport space */
+  .middle-arena {
+    pointer-events: none !important;
+  }
+  .concept-dossier-panel,
+  .concept-action-rings {
+    pointer-events: auto !important;
+  }
+  .concept-action-rings {
+    gap: 6px !important;
+  }
+
+  /* During Gameplay / Sorties: Notification ticker at the very top */
+  #notification-container {
+    top: 6px !important;
+    left: 8px !important;
+    right: 8px !important;
+    bottom: auto !important;
+    max-width: none !important;
+    pointer-events: none !important;
+  }
+  .tactical-notification {
+    padding: 6px 10px !important;
+    font-size: 11px !important;
+    pointer-events: none !important;
+    background: rgba(2, 14, 22, 0.92) !important;
+    border-left-width: 3px !important;
+  }
+  .notif-title {
+    font-size: 11px !important;
+    margin-bottom: 1px !important;
+  }
+  .notif-text {
+    font-size: 10px !important;
+  }
+
+  /* Ensure all interactive buttons respond immediately to touch */
+  button,
+  .btn-recon-snap,
+  .btn-fpv-boost,
+  .combat-quick-btn,
+  .drawer-action-btn {
+    touch-action: manipulation !important;
+    -webkit-tap-highlight-color: transparent !important;
+    cursor: pointer !important;
+    pointer-events: auto !important;
+  }
+
+  /* FPV & Recon touch buttons on mobile */
+  .btn-recon-snap {
+    bottom: 60px !important;
+    padding: 12px 28px !important;
+    font-size: 15px !important;
+    z-index: 200 !important;
+  }
+}
+
 
 
 

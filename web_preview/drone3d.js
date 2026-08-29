@@ -472,14 +472,15 @@ class Barracuda3DEngine {
           }
         );
 
+        const waterRes = this.isMobile ? 512 : 1024;
         this.water = new THREE.Water(waterGeometry, {
-          textureWidth: 1024,
-          textureHeight: 1024,
+          textureWidth: waterRes,
+          textureHeight: waterRes,
           waterNormals: waterNormals,
           sunDirection: this.sun ? this.sun.clone().normalize() : new THREE.Vector3(0.5, 0.7, 0.5).normalize(),
           sunColor: 0xd4c490,
           waterColor: 0x1a3020, // Murky green-brown river color
-          distortionScale: 2.8,
+          distortionScale: this.isMobile ? 1.8 : 2.8,
           fog: true
         });
 
@@ -800,8 +801,17 @@ class Barracuda3DEngine {
     this.reconMarkers.forEach(m => {
       if (!m.parent) return;
       tempVec.set(m.position.x, 3, m.position.z);
-      const dist = this.fpvPos ? Math.hypot(this.fpvPos.x - m.position.x, this.fpvPos.z - m.position.z) : 999;
+      const dx = m.position.x - (this.fpvPos ? this.fpvPos.x : 0);
+      const dz = m.position.z - (this.fpvPos ? this.fpvPos.z : 0);
+      const dist = Math.hypot(dx, dz);
       
+      // Calculate 2D angle relative to drone heading/yaw
+      const targetAngle = Math.atan2(dx, -dz);
+      let relAngle = targetAngle - (this.fpvYaw || 0);
+      while (relAngle > Math.PI) relAngle -= Math.PI * 2;
+      while (relAngle < -Math.PI) relAngle += Math.PI * 2;
+      const bearingDeg = Math.round(THREE.MathUtils.radToDeg(relAngle));
+
       // Project to 2D normalized device coords (-1 to +1)
       tempVec.project(this.camera);
 
@@ -817,7 +827,8 @@ class Barracuda3DEngine {
         screenX: screenX,
         screenY: screenY,
         rawX: tempVec.x,
-        rawY: tempVec.y
+        rawY: tempVec.y,
+        bearingDeg: bearingDeg
       });
     });
 
