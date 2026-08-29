@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>BARRACUDA // Автономный Ударный Дрон</title>
   <meta name="description" content="Тактический симулятор боевого надводного дрона Барракуда с реалистичной 3D-моделью.">
-  <link rel="stylesheet" href="style.css?v=3.5.0_naval_tactics">
+  <link rel="stylesheet" href="style.css?v=3.5.2">
 
   <!-- Global Error Handler Overlay -->
   <script>
@@ -93,15 +93,15 @@
       <!-- Row 1: Nav Bar -->
       <div class="top-nav-row">
         <button class="btn-tactical-pause" id="btn-toggle-tma" title="Скрыть/Показать HUD">👁️</button>
-        <button class="btn-dossier-pill btn-nav-campaign" id="btn-open-campaign" title="Сюжетная кампания" style="border-color:rgba(0,255,136,0.6); background:rgba(0,255,136,0.15); color:#00ff88;">
+        <button class="btn-dossier-pill btn-nav-campaign" id="btn-open-campaign" title="Сюжетная кампания" style="border-color:rgba(0,255,136,0.6); background:rgba(0,255,136,0.15); color:#00ff88;" onclick="var m=document.getElementById('campaign-modal');if(m)m.classList.add('active');try{window.barracudaGame&&window.barracudaGame.renderCampaignDOM();}catch(e){}">
           <span class="dossier-pill-icon">⚔️</span>
           <span class="dossier-pill-text">ОПЕРАЦИИ</span>
         </button>
-        <button class="btn-dossier-pill btn-nav-hangar" id="btn-open-hangar" title="Ангар и крафт" style="border-color:rgba(0,240,255,0.6); background:rgba(0,240,255,0.12); color:#00f0ff;">
+        <button class="btn-dossier-pill btn-nav-hangar" id="btn-open-hangar" title="Ангар и крафт" style="border-color:rgba(0,240,255,0.6); background:rgba(0,240,255,0.12); color:#00f0ff;" onclick="var m=document.getElementById('hangar-modal');if(m)m.classList.add('active');try{window.barracudaGame&&window.barracudaGame.renderHangarDOM();}catch(e){}">
           <span class="dossier-pill-icon">⚓</span>
           <span class="dossier-pill-text">АНГАР</span>
         </button>
-        <button class="btn-dossier-pill btn-nav-tactical" id="btn-open-tactical-hub" title="Тактический арсенал и испытания v3.5" style="border-color:rgba(0,255,200,0.8); background:rgba(0,255,200,0.18); color:#00ffcc; font-weight:700;">
+        <button class="btn-dossier-pill btn-nav-tactical" id="btn-open-tactical-hub" title="Тактический арсенал" style="border-color:rgba(0,255,200,0.8); background:rgba(0,255,200,0.18); color:#00ffcc; font-weight:700;" onclick="var m=document.getElementById('tactical-hub-modal');if(m)m.classList.add('active');">
           <span class="dossier-pill-icon">🛰️</span>
           <span class="dossier-pill-text">ТАКТИКА</span>
         </button>
@@ -114,15 +114,15 @@
           <span class="dossier-pill-text">ДОСЬЕ</span>
           <span class="dossier-unread-dot" id="dossier-unread-beacon"></span>
         </button>
-        <button class="btn-sector-pill btn-desktop-only" id="btn-open-map" title="Карта спецопераций">
+        <button class="btn-sector-pill btn-desktop-only" id="btn-open-map" title="Карта спецопераций" onclick="var m=document.getElementById('map-modal');if(m)m.classList.add('active');">
           <span class="sector-badge-icon">🗺️</span>
           <span id="label-current-sector" class="sector-badge-name">О. ЗМЕИНЫЙ</span>
         </button>
-        <button class="btn-help-pill btn-desktop-only" id="btn-open-help" title="Справка">
+        <button class="btn-help-pill btn-desktop-only" id="btn-open-help" title="Справка" onclick="var m=document.getElementById('help-modal');if(m)m.classList.add('active');">
           <span class="help-pill-icon">❓</span>
           <span class="help-pill-text">СПРАВКА</span>
         </button>
-        <button class="btn-help-pill btn-desktop-only" id="btn-open-settings" title="Настройки">
+        <button class="btn-help-pill btn-desktop-only" id="btn-open-settings" title="Настройки" onclick="var m=document.getElementById('settings-modal');if(m)m.classList.add('active');try{window.barracudaGame&&window.barracudaGame.refreshSettingsUI();}catch(e){}">          
           <span class="help-pill-icon">⚙️</span>
           <span class="help-pill-text">ОПЦИИ</span>
         </button>
@@ -160,7 +160,7 @@
         <span class="cq-icon">🎯</span>
         <span class="cq-text">FLIR</span>
       </button>
-      <button class="combat-quick-btn reb-btn" id="btn-open-cyber" title="Взлом радиочастот РЭБ">
+      <button class="combat-quick-btn reb-btn" id="btn-open-cyber" title="Взлом радиочастот РЭБ" onclick="var m=document.getElementById('cyber-modal');if(m)m.classList.add('active');">
         <span class="cq-icon">📡</span>
         <span class="cq-text">ВЗЛОМ РЭБ</span>
       </button>
@@ -168,15 +168,15 @@
         <span class="cq-icon">🛸</span>
         <span class="cq-text">ПУСК FPV</span>
       </button>
-      <button class="combat-quick-btn sonar-btn" id="btn-quick-sonar" title="Открыть 3D-сонар бокового обзора">
+      <button class="combat-quick-btn sonar-btn" id="btn-quick-sonar" title="Открыть 3D-сонар бокового обзора" onclick="try{window.barracudaGame&&window.barracudaGame.start3DMissionSortie('sonar_test');}catch(e){console.error(e)}">
         <span class="cq-icon">📡</span>
         <span class="cq-text">СОНАР 3D</span>
       </button>
-      <button class="combat-quick-btn rov-btn" id="btn-quick-rov" title="Спустить подводный микро-ROV">
+      <button class="combat-quick-btn rov-btn" id="btn-quick-rov" title="Спустить подводный микро-ROV" onclick="try{window.barracudaGame&&window.barracudaGame._startRovMission({id:'m1_4',code:'OP-104',title:'ROV',timeLimit:180},{act:1,sector:'sector-1'});}catch(e){console.error(e)}">
         <span class="cq-icon">🔮</span>
         <span class="cq-text">МИКРО-ROV</span>
       </button>
-      <button class="combat-quick-btn boat-btn" id="btn-quick-boat" title="Тест-драйв катера (VSA / Дрифт)">
+      <button class="combat-quick-btn boat-btn" id="btn-quick-boat" title="Тест-драйв катера (VSA / Дрифт)" onclick="try{window.barracudaGame&&window.barracudaGame.start3DMissionSortie('drift_test');}catch(e){console.error(e)}">
         <span class="cq-icon">🚤</span>
         <span class="cq-text">ТЕСТ VSA</span>
       </button>
@@ -1609,8 +1609,8 @@
   </div>
 
   <!-- Audio, 3D Engine & Game Logic -->
-  <script src="audio.js?v=3.5.0_naval_tactics"></script>
-  <script src="drone3d.js?v=3.5.0_naval_tactics"></script>
-  <script src="game.js?v=3.5.0_naval_tactics"></script>
+  <script src="audio.js?v=3.5.2"></script>
+  <script src="drone3d.js?v=3.5.2"></script>
+  <script src="game.js?v=3.5.2"></script>
 </body>
 </html>
