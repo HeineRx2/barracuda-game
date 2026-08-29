@@ -9,24 +9,34 @@
 
   <!-- Global Error Handler Overlay -->
   <script>
-    // Global error handler - shows red banner with JS errors
-    window.addEventListener('error', function(e) {
-      console.error('[GLOBAL ERROR]', e);
+    // Show errors on-screen for debugging
+    function _showErrorBanner(msg, file, line) {
       var b = document.getElementById('debug-error-banner');
       if (!b) {
         b = document.createElement('div');
         b.id = 'debug-error-banner';
-        b.style.cssText = 'position:fixed; top:20px; left:20px; right:20px; z-index:999999; background:rgba(220,20,20,0.95); color:#fff; font-family:monospace; padding:15px; font-size:13px; border:2px solid #ffcc00; border-radius:6px; box-shadow:0 0 20px rgba(0,0,0,0.8);';
-        document.addEventListener('DOMContentLoaded', function() { document.body.appendChild(b); });
+        b.style.cssText = 'position:fixed; top:20px; left:20px; right:200px; z-index:999999; background:rgba(180,10,10,0.97); color:#fff; font-family:monospace; padding:12px; font-size:11px; border:2px solid #ffcc00; border-radius:6px; box-shadow:0 0 20px rgba(0,0,0,0.8); max-height:50vh; overflow:auto; cursor:pointer;';
+        b.title = 'Нажми чтобы закрыть';
+        b.onclick = function() { b.remove(); };
+        document.body ? document.body.appendChild(b) : document.addEventListener('DOMContentLoaded', function() { document.body.appendChild(b); });
       }
-      b.innerHTML += '<div style="margin-bottom:6px;">⚠️ <b>JS ОШИБКА:</b> ' + (e.message || e) + '<br><small style="color:#ffcccc;">Файл: ' + (e.filename ? e.filename.split('/').pop() : 'script') + ' : строка ' + e.lineno + '</small></div>';
+      b.innerHTML += '<div style="margin-bottom:4px; border-bottom:1px solid rgba(255,255,255,0.2); padding-bottom:4px;">⚠️ <b>' + msg + '</b>' + (file ? '<br><small style="color:#ffcccc">' + file + (line ? ':' + line : '') + '</small>' : '') + '</div>';
+    }
+    window.addEventListener('error', function(e) {
+      _showErrorBanner((e.message || e), e.filename ? e.filename.split('/').pop() : '', e.lineno);
     });
     window.addEventListener('unhandledrejection', function(e) {
-      console.error('[PROMISE ERROR]', e.reason);
+      _showErrorBanner('PROMISE: ' + (e.reason && e.reason.message ? e.reason.message : e.reason), '', '');
     });
+    // Intercept console.error so try/catch errors also appear on screen
+    var _origErr = console.error.bind(console);
+    console.error = function() {
+      _origErr.apply(console, arguments);
+      var msg = Array.from(arguments).map(function(a){ return (a && a.message) ? a.message : String(a); }).join(' ');
+      _showErrorBanner(msg, '', '');
+    };
 
     // Fallback proxy for tacticalAudio - prevents crashes if audio fails to init
-    // Any call like window.tacticalAudio.playX() will silently no-op
     window.tacticalAudio = new Proxy({}, {
       get: function(_, prop) {
         return function() {}; // no-op for all method calls

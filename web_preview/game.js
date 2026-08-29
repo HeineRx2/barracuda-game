@@ -2655,8 +2655,8 @@ class BarracudaGame {
     if (btnOpenCampaign) {
       btnOpenCampaign.addEventListener('click', (e) => {
         e.stopPropagation();
-        this.renderCampaignDOM();
-        if (campaignModal) campaignModal.classList.add('active');
+        if (campaignModal) campaignModal.classList.add('active'); // Open FIRST
+        try { this.renderCampaignDOM(); } catch(err) { console.error('[CAMPAIGN] render error:', err); }
       });
     }
     if (btnCloseCampaign) {
@@ -2668,7 +2668,7 @@ class BarracudaGame {
     document.querySelectorAll('.campaign-act-tab').forEach(tab => {
       tab.addEventListener('click', () => {
         const act = parseInt(tab.getAttribute('data-act'), 10);
-        this.selectCampaignAct(act);
+        try { this.selectCampaignAct(act); } catch(err) { console.error('[CAMPAIGN ACT] error:', err); }
       });
     });
 
@@ -2679,8 +2679,8 @@ class BarracudaGame {
     if (btnOpenHangar) {
       btnOpenHangar.addEventListener('click', (e) => {
         e.stopPropagation();
-        this.renderHangarDOM();
-        if (hangarModal) hangarModal.classList.add('active');
+        if (hangarModal) hangarModal.classList.add('active'); // Open FIRST
+        try { this.renderHangarDOM(); } catch(err) { console.error('[HANGAR] render error:', err); }
       });
     }
     if (btnCloseHangar) {
@@ -2694,8 +2694,8 @@ class BarracudaGame {
       btnCloseComms.addEventListener('click', () => this.closeCommsTransmission());
     }
 
-    this.renderCampaignDOM();
-    this.renderHangarDOM();
+    try { this.renderCampaignDOM(); } catch(e) { console.error('[INIT CAMPAIGN]', e); }
+    try { this.renderHangarDOM(); } catch(e) { console.error('[INIT HANGAR]', e); }
   }
 
   selectCampaignAct(actNum) {
