@@ -4641,14 +4641,14 @@ class BarracudaGame {
       this.btnToggleDossier.addEventListener('click', (e) => {
         e.stopPropagation();
         if (this.panelDossier) {
-          const isActive = this.panelDossier.classList.contains('active');
-          if (!isActive) {
-            this.panelDossier.classList.add('active');
+          const isCollapsed = this.panelDossier.classList.contains('collapsed');
+          if (isCollapsed) {
+            this.panelDossier.classList.remove('collapsed');
             this.btnToggleDossier.classList.add('active');
             this.dossierHasUnread = false;
             if (this.dossierBeacon) this.dossierBeacon.style.display = 'none';
           } else {
-            this.panelDossier.classList.remove('active');
+            this.panelDossier.classList.add('collapsed');
             this.btnToggleDossier.classList.remove('active');
           }
         }
@@ -4659,7 +4659,7 @@ class BarracudaGame {
       this.btnCloseDossier.addEventListener('click', (e) => {
         e.stopPropagation();
         if (this.panelDossier) {
-          this.panelDossier.classList.remove('active');
+          this.panelDossier.classList.add('collapsed');
           if (this.btnToggleDossier) this.btnToggleDossier.classList.remove('active');
         }
       });

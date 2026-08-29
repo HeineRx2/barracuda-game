@@ -218,83 +218,96 @@ class TacticalAudioEngine {
     this.init();
     const now = this.ctx.currentTime;
 
-    // High-tech pneumatic latch (two quick ascending chimes)
-    [0, 0.07].forEach((delay, idx) => {
-      const osc = this.ctx.createOscillator();
-      const g = this.ctx.createGain();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(idx === 0 ? 587.33 : 880, now + delay);
-      osc.frequency.exponentialRampToValueAtTime(idx === 0 ? 784 : 1174.66, now + delay + 0.08);
+    // Heavy hydraulic servo clamp — metallic impact + pressurized hiss
+    const { source: hiss, filter: hf } = this._filteredNoise('bandpass', 4000, 3, 0.15);
+    const hg = this.ctx.createGain();
+    hg.gain.setValueAtTime(0.001, now);
+    hg.gain.linearRampToValueAtTime(0.12, now + 0.01);
+    hg.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
+    hf.connect(hg);
+    hg.connect(this.masterGain);
+    hiss.start(now);
+    hiss.stop(now + 0.15);
 
-      g.gain.setValueAtTime(0.2, now + delay);
-      g.gain.exponentialRampToValueAtTime(0.001, now + delay + 0.12);
-
-      osc.connect(g);
-      g.connect(this.masterGain);
-      osc.start(now + delay);
-      osc.stop(now + delay + 0.13);
-    });
+    // Metallic clank
+    const clank = this.ctx.createOscillator();
+    const cg = this.ctx.createGain();
+    clank.type = 'square';
+    clank.frequency.setValueAtTime(180, now + 0.05);
+    clank.frequency.exponentialRampToValueAtTime(60, now + 0.12);
+    cg.gain.setValueAtTime(0.2, now + 0.05);
+    cg.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+    clank.connect(cg);
+    cg.connect(this.masterGain);
+    clank.start(now + 0.05);
+    clank.stop(now + 0.13);
   }
 
   playUpgradeSfx() {
     this.init();
     const now = this.ctx.currentTime;
 
-    // Smooth ascending triad chord (C5 - E5 - G5)
-    const freqs = [523.25, 659.25, 783.99, 1046.50];
-    freqs.forEach((f, i) => {
-      const osc = this.ctx.createOscillator();
-      const g = this.ctx.createGain();
-      const tStart = now + (i * 0.05);
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(f, tStart);
+    // Heavy industrial servo whine — descending then ascending sweep
+    const osc = this.ctx.createOscillator();
+    const g = this.ctx.createGain();
+    const lp = this.ctx.createBiquadFilter();
+    lp.type = 'lowpass';
+    lp.frequency.value = 2000;
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(800, now);
+    osc.frequency.exponentialRampToValueAtTime(200, now + 0.1);
+    osc.frequency.exponentialRampToValueAtTime(1200, now + 0.25);
+    g.gain.setValueAtTime(0.15, now);
+    g.gain.linearRampToValueAtTime(0.18, now + 0.12);
+    g.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+    osc.connect(lp);
+    lp.connect(g);
+    g.connect(this.masterGain);
+    osc.start(now);
+    osc.stop(now + 0.36);
 
-      g.gain.setValueAtTime(0.16, tStart);
-      g.gain.exponentialRampToValueAtTime(0.001, tStart + 0.22);
-
-      osc.connect(g);
-      g.connect(this.masterGain);
-      osc.start(tStart);
-      osc.stop(tStart + 0.24);
-    });
+    // Pressurized air release
+    const { source: air, filter: af } = this._filteredNoise('highpass', 6000, 2, 0.1);
+    const ag = this.ctx.createGain();
+    ag.gain.setValueAtTime(0.001, now + 0.2);
+    ag.gain.linearRampToValueAtTime(0.08, now + 0.22);
+    ag.gain.exponentialRampToValueAtTime(0.001, now + 0.32);
+    af.connect(ag);
+    ag.connect(this.masterGain);
+    air.start(now + 0.2);
+    air.stop(now + 0.33);
   }
 
   playContractSfx() {
     this.init();
     const now = this.ctx.currentTime;
 
-    // Military horn — two-note with distortion
-    const notes = [220, 330];
-    notes.forEach((f, i) => {
-      const osc = this.ctx.createOscillator();
-      const g = this.ctx.createGain();
-      const lp = this.ctx.createBiquadFilter();
-      lp.type = 'lowpass';
-      lp.frequency.value = 1800;
-      osc.type = 'sawtooth';
-      osc.frequency.value = f;
-      const t = now + i * 0.15;
-      g.gain.setValueAtTime(0.001, now);
-      g.gain.linearRampToValueAtTime(0.2, t + 0.03);
-      g.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
-      const sat = this._makeSaturation(1.5);
-      osc.connect(sat);
-      sat.connect(lp);
-      lp.connect(g);
-      g.connect(this.masterGain);
-      osc.start(t);
-      osc.stop(t + 0.35);
-    });
+    // Radio dispatch confirmation — low-frequency pulse + static burst
+    const osc = this.ctx.createOscillator();
+    const g = this.ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(440, now);
+    osc.frequency.setValueAtTime(440, now + 0.08);
+    osc.frequency.setValueAtTime(660, now + 0.12);
+    g.gain.setValueAtTime(0.18, now);
+    g.gain.setValueAtTime(0.18, now + 0.08);
+    g.gain.setValueAtTime(0.001, now + 0.09);
+    g.gain.setValueAtTime(0.18, now + 0.12);
+    g.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+    osc.connect(g);
+    g.connect(this.masterGain);
+    osc.start(now);
+    osc.stop(now + 0.26);
 
-    // Stamp noise
-    const { source: n, filter: flt } = this._filteredNoise('bandpass', 600, 2, 0.08);
+    // Radio static
+    const { source: n, filter: flt } = this._filteredNoise('bandpass', 2400, 4, 0.06);
     const ng = this.ctx.createGain();
-    ng.gain.setValueAtTime(0.2, now);
-    ng.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
+    ng.gain.setValueAtTime(0.08, now);
+    ng.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
     flt.connect(ng);
     ng.connect(this.masterGain);
     n.start(now);
-    n.stop(now + 0.08);
+    n.stop(now + 0.06);
   }
 
   // =========================================================================
