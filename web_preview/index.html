@@ -1336,6 +1336,42 @@
     </div>
   </div>
 
+  <!-- DOSSIER PANEL MODAL -->
+  <div id="panel-dossier" class="help-modal-overlay">
+    <div class="help-modal-content" style="max-width: 600px;">
+      <div class="help-modal-header">
+        <h2>📁 СЕКРЕТНОЕ ДОСЬЕ</h2>
+        <button class="btn-close-help" id="btn-close-dossier">×</button>
+      </div>
+      <div class="help-modal-body">
+        <div class="help-section">
+          <h3>КЛАССИФИЦИРОВАННАЯ ИНФОРМАЦИЯ</h3>
+          <p>Доступ к разведданным получен. Здесь будет отображаться собранная информация о противнике, логи перехватов и координаты скрытых объектов.</p>
+          <div id="dossier-timestamp" style="font-size: 10px; color: var(--credit-cyan); margin-bottom: 5px;"></div>
+          <div id="dossier-body" style="margin-top: 10px; padding: 10px; background: rgba(0, 255, 102, 0.1); border: 1px solid var(--tactical-green); color: var(--tactical-green); font-family: monospace;">
+            > ОЖИДАНИЕ СБОРА ДАННЫХ...
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAP MODAL -->
+  <div id="map-modal" class="help-modal-overlay">
+    <div class="help-modal-content" style="max-width: 800px; height: 80vh; display: flex; flex-direction: column;">
+      <div class="help-modal-header">
+        <h2>🗺️ ТАКТИЧЕСКАЯ КАРТА (О. ЗМЕИНЫЙ)</h2>
+        <button class="btn-close-help" id="btn-close-map">×</button>
+      </div>
+      <div class="help-modal-body" style="flex: 1; position: relative; background: #020810; border: 1px solid var(--hud-border); overflow: hidden;">
+        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; color: var(--tactical-green);">
+          <div style="font-size: 48px; opacity: 0.2;">🗺️</div>
+          <div style="font-family: 'Share Tech Mono', monospace; font-size: 14px; margin-top: 10px; opacity: 0.8;">СПУТНИКОВЫЙ СНИМОК НЕДОСТУПЕН<br>ВЕДЕТСЯ ЗАГРУЗКА ТОПОЛОГИИ...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- SETTINGS MODAL -->
   <div id="settings-modal" class="help-modal-overlay">
     <div class="help-modal-content" style="max-width: 480px;">

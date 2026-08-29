@@ -2137,6 +2137,13 @@ class Barracuda3DEngine {
 
     this.scene.add(this.boatModel);
     this.boatBaseY = 0.0;
+    this.modelScale = 1.0;
+    this.modelBBox = {
+      min: new THREE.Vector3(-1, -0.5, -2.5),
+      max: new THREE.Vector3(1, 1, 2.5),
+      size: new THREE.Vector3(2, 1.5, 5),
+      center: new THREE.Vector3(0, 0.25, 0)
+    };
   }
 
   syncActiveUpgrades(hw, cyber) {

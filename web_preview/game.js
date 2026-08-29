@@ -4163,17 +4163,13 @@ class BarracudaGame {
 
       // ROV Magnetometer HUD update
       if (telem.rovActive) {
-        const magVal = document.getElementById('rov-val-mag');
-        const magFill = document.getElementById('rov-fill-mag');
-        const siphonPct = document.getElementById('rov-siphon-pct');
-        const siphonFill = document.getElementById('rov-siphon-fill');
-        if (magVal) magVal.textContent = `${telem.magnetometerNt.toLocaleString()} nT`;
-        if (magFill) {
+        if (this.rovMagVal) this.rovMagVal.textContent = `${telem.magnetometerNt.toLocaleString()} nT`;
+        if (this.rovMagFill) {
           const norm = Math.min(100, Math.max(0, (telem.magnetometerNt - 48000) / 40));
-          magFill.style.width = `${norm}%`;
+          this.rovMagFill.style.width = `${norm}%`;
         }
-        if (siphonPct) siphonPct.textContent = `${telem.siphonProgress}%`;
-        if (siphonFill) siphonFill.style.width = `${telem.siphonProgress}%`;
+        if (this.rovSiphonPct) this.rovSiphonPct.textContent = `${telem.siphonProgress}%`;
+        if (this.rovSiphonFill) this.rovSiphonFill.style.width = `${telem.siphonProgress}%`;
       }
     }
   }
@@ -4585,6 +4581,14 @@ class BarracudaGame {
     this.helpModal = document.getElementById('help-modal');
     this.btnOpenHelp = document.getElementById('btn-open-help');
     this.btnCloseHelp = document.getElementById('btn-close-help');
+
+    // Telemetry and HUD DOM Cache
+    this.sonarCanvas = document.getElementById('sonar-waterfall-canvas');
+    this.sonarDepthEl = document.getElementById('sonar-telemetry-depth');
+    this.rovMagVal = document.getElementById('rov-val-mag');
+    this.rovMagFill = document.getElementById('rov-fill-mag');
+    this.rovSiphonPct = document.getElementById('rov-siphon-pct');
+    this.rovSiphonFill = document.getElementById('rov-siphon-fill');
   }
 
   // =========================================================================
@@ -4637,14 +4641,14 @@ class BarracudaGame {
       this.btnToggleDossier.addEventListener('click', (e) => {
         e.stopPropagation();
         if (this.panelDossier) {
-          const isCollapsed = this.panelDossier.classList.contains('collapsed');
-          if (isCollapsed) {
-            this.panelDossier.classList.remove('collapsed');
+          const isActive = this.panelDossier.classList.contains('active');
+          if (!isActive) {
+            this.panelDossier.classList.add('active');
             this.btnToggleDossier.classList.add('active');
             this.dossierHasUnread = false;
             if (this.dossierBeacon) this.dossierBeacon.style.display = 'none';
           } else {
-            this.panelDossier.classList.add('collapsed');
+            this.panelDossier.classList.remove('active');
             this.btnToggleDossier.classList.remove('active');
           }
         }
@@ -4655,7 +4659,7 @@ class BarracudaGame {
       this.btnCloseDossier.addEventListener('click', (e) => {
         e.stopPropagation();
         if (this.panelDossier) {
-          this.panelDossier.classList.add('collapsed');
+          this.panelDossier.classList.remove('active');
           if (this.btnToggleDossier) this.btnToggleDossier.classList.remove('active');
         }
       });
@@ -4949,6 +4953,33 @@ class BarracudaGame {
         this.checkAllAchievements();
         this._uiDirty = true;
       });
+    }
+  }
+
+  drawSonarWaterfall() {
+    const canvas = this.sonarCanvas;
+    if (!canvas || canvas.offsetParent === null) return;
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width;
+    const H = canvas.height;
+
+    // Scroll canvas down
+    const imgData = ctx.getImageData(0, 0, W, H - 3);
+    ctx.putImageData(imgData, 0, 3);
+
+    // Top scanline
+    const depth = parseFloat((this.engine3D && this.engine3D.currentDepth) || 12.4);
+    const speed = Math.abs((this.engine3D && this.engine3D.pilotSpeed) || 0);
+    const isClean = speed < 18;
+
+    const depthEl = this.sonarDepthEl;
+    if (depthEl) depthEl.textContent = `ГЛУБИНА: ${depth.toFixed(1)} м`;
+
+    ctx.fillStyle = isClean ? '#003300' : '#330000';
+    ctx.fillRect(0, 0, W, 3);
+    if (!isClean) {
+      ctx.fillStyle = '#ff0000';
+      ctx.fillRect(Math.random() * W, 0, 2, 3);
     }
   }
 

@@ -91,67 +91,107 @@ body {
 }
 
 /* =========================================================================
-   QUICK COMBAT ACTIONS BAR (FLIR, РЭБ, РАКЕТА)
+   GLOBAL INTERACTIVE ELEMENTS (Fix for PC and Mobile)
+   ========================================================================= */
+button,
+.ring-action-btn,
+.btn-buy-action,
+.btn-recon-snap,
+.btn-fpv-boost,
+.combat-quick-btn,
+.drawer-action-btn,
+.btn-dossier-pill,
+.btn-sector-pill,
+.btn-help-pill,
+.btn-tactical-pause {
+  pointer-events: auto !important;
+  cursor: pointer !important;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* =========================================================================
+   QUICK COMBAT ACTIONS BAR (FLIR, ВЗЛОМ РЭБ, ПУСК FPV, СОНАР)
    ========================================================================= */
 .quick-combat-actions-bar {
-  position: relative;
-  margin-top: 8px;
+  position: absolute;
+  top: 70px;
+  right: 12px;
   display: flex;
-  gap: 8px;
-  z-index: 30;
+  flex-direction: column;
+  gap: 12px;
+  z-index: 40;
   pointer-events: auto;
-  align-self: flex-start;
 }
 
 .combat-quick-btn {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  border-radius: 4px;
+  justify-content: center;
+  gap: 2px;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
   font-family: 'Rajdhani', sans-serif;
-  font-size: 12px;
+  font-size: 8px;
   font-weight: 800;
   cursor: pointer;
-  backdrop-filter: blur(10px);
-  transition: all 0.2s ease;
-  box-shadow: 0 4px 14px rgba(0,0,0,0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.4);
+}
+
+.combat-quick-btn .cq-icon {
+  font-size: 18px;
 }
 
 .combat-quick-btn.flir-btn {
-  background: rgba(0, 30, 20, 0.88);
-  border: 1.5px solid var(--tactical-green);
+  background: rgba(0, 30, 20, 0.45);
+  border: 1px solid rgba(0, 255, 102, 0.5);
   color: var(--tactical-green);
 }
 .combat-quick-btn.flir-btn:hover {
-  background: var(--tactical-green);
+  background: rgba(0, 255, 102, 0.8);
   color: #000;
   box-shadow: 0 0 16px var(--tactical-green);
-  transform: scale(1.04);
+  transform: scale(1.08);
 }
 
 .combat-quick-btn.reb-btn {
-  background: rgba(0, 25, 35, 0.88);
-  border: 1.5px solid var(--credit-cyan);
+  background: rgba(0, 25, 35, 0.45);
+  border: 1px solid rgba(0, 229, 255, 0.5);
   color: var(--credit-cyan);
 }
 .combat-quick-btn.reb-btn:hover {
-  background: var(--credit-cyan);
+  background: rgba(0, 229, 255, 0.8);
   color: #000;
   box-shadow: 0 0 16px var(--credit-cyan);
-  transform: scale(1.04);
+  transform: scale(1.08);
 }
 
 .combat-quick-btn.missile-btn {
-  background: rgba(45, 15, 10, 0.88);
-  border: 1.5px solid var(--alarm-red);
+  background: rgba(45, 15, 10, 0.45);
+  border: 1px solid rgba(255, 42, 42, 0.5);
   color: #fff;
 }
 .combat-quick-btn.missile-btn:hover {
-  background: var(--alarm-red);
+  background: rgba(255, 42, 42, 0.8);
   color: #000;
   box-shadow: 0 0 18px var(--alarm-red);
-  transform: scale(1.04);
+  transform: scale(1.08);
+}
+
+.combat-quick-btn.sonar-btn {
+  background: rgba(10, 20, 45, 0.45);
+  border: 1px solid rgba(100, 150, 255, 0.5);
+  color: #fff;
+}
+.combat-quick-btn.sonar-btn:hover {
+  background: rgba(100, 150, 255, 0.8);
+  box-shadow: 0 0 18px rgba(100, 150, 255, 0.8);
+  color: #000;
+  transform: scale(1.08);
 }
 
 /* =========================================================================
@@ -367,25 +407,28 @@ body {
   display: flex;
   align-items: center;
   gap: 6px;
-  background: var(--hud-bg-glass);
-  border: 1px solid var(--hud-border);
+  background: rgba(8, 22, 30, 0.45);
+  border: 1px solid rgba(0, 255, 102, 0.25);
   color: var(--tactical-green);
   padding: 0 12px;
   height: 38px;
-  border-radius: 4px;
+  border-radius: 6px;
   font-family: 'Share Tech Mono', monospace;
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.8px;
   cursor: pointer;
-  backdrop-filter: blur(8px);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   transition: all 0.2s ease;
   position: relative;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
 }
 .btn-dossier-pill:hover, .btn-dossier-pill.active {
-  background: rgba(0, 255, 102, 0.2);
+  background: rgba(0, 255, 102, 0.25);
   border-color: var(--tactical-green);
   box-shadow: 0 0 14px var(--tactical-green-glow);
+  transform: translateY(-1px);
 }
 
 .btn-sector-pill {
@@ -955,18 +998,20 @@ body {
   .top-right-telemetry { margin-right: 80px; gap: 4px; }
 
   .quick-combat-actions-bar {
-    top: 50px;
-    left: 10px;
-    right: 10px;
-    justify-content: space-between;
-    gap: 6px;
+    top: 65px;
+    right: 8px;
+    left: auto;
+    flex-direction: column;
+    width: auto;
   }
   .combat-quick-btn {
-    flex: 1;
-    padding: 6px 4px;
-    font-size: 10px;
-    justify-content: center;
+    width: 44px;
+    height: 44px;
   }
+  .combat-quick-btn .cq-icon { font-size: 16px; }
+  .combat-quick-btn .cq-text { font-size: 7px; display: none; }
+  
+  .btn-desktop-only { display: none !important; }
 
   .booster-floating-widget { top: 10px; right: 10px; }
   .booster-inner-btn { padding: 3px 8px 3px 5px; gap: 4px; }
@@ -1566,18 +1611,12 @@ body {
     border-radius: 6px;
   }
 
-  /* ------------------- QUICK COMBAT ACTIONS BAR (PINNED DIRECTLY UNDER TOP HUD) ------------------- */
+  /* ------------------- QUICK COMBAT ACTIONS BAR ------------------- */
   .quick-combat-actions-bar {
-    flex-shrink: 0;
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 4px;
-    width: 100%;
-    height: 28px;
-    margin: 4px 0 0 0;
-    align-self: stretch;
-    pointer-events: auto;
-    z-index: 15;
+    top: 60px;
+    right: 8px;
+    display: flex;
+    flex-direction: column;
   }
 
   .combat-quick-btn {
@@ -5836,8 +5875,6 @@ body {
   .drawer-action-btn {
     touch-action: manipulation !important;
     -webkit-tap-highlight-color: transparent !important;
-    cursor: pointer !important;
-    pointer-events: auto !important;
   }
 
   /* FPV & Recon touch buttons on mobile */
