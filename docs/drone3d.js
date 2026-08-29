@@ -185,12 +185,13 @@ class Barracuda3DEngine {
     this.scene.background = new THREE.Color(0x05131e);
     this.scene.fog = new THREE.FogExp2(0x061826, 0.0018);
 
-    this.camera = new THREE.PerspectiveCamera(34, W / H, 0.1, 20000);
-    this.camera.position.set(7, 4.5, 10);
-    this.camera.lookAt(0, 0, 0);
-
     // Mobile detection for performance optimization
     this.isMobile = /Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || ('ontouchstart' in window && window.innerWidth < 900);
+    const initFov = (W < H) ? 50 : 34;
+
+    this.camera = new THREE.PerspectiveCamera(initFov, W / H, 0.1, 20000);
+    this.camera.position.set(7, 4.5, 10);
+    this.camera.lookAt(0, 0, 0);
 
     this.renderer = new THREE.WebGLRenderer({
       antialias: !this.isMobile,  // Disable antialiasing on mobile
@@ -1979,9 +1980,10 @@ class Barracuda3DEngine {
   // LOAD GLB MODEL & HIGH-TECH BOAT SHADERS
   // =========================================================================
   loadGLBModel() {
+    // Create procedural boat immediately so screen is never blank
+    this.createProceduralBoat();
+
     if (typeof THREE.GLTFLoader === 'undefined') {
-      console.warn('[BARRACUDA 3D] GLTFLoader undefined, creating sleek procedural boat.');
-      this.createProceduralBoat();
       return;
     }
 
@@ -2038,13 +2040,11 @@ class Barracuda3DEngine {
 
         } catch (e) {
           console.error('Error during 3D model initialization:', e);
-          this.createProceduralBoat();
         }
       },
       undefined,
       (err) => {
-        console.warn('Failed to load GLB, building procedural boat:', err);
-        this.createProceduralBoat();
+        console.log('GLB model not present, running with procedural high-tech stealth USV.');
       }
     );
   }
@@ -2418,8 +2418,9 @@ class Barracuda3DEngine {
       this.currentRotation.x += (this.targetRotation.x - this.currentRotation.x) * 0.08;
       this.currentRotation.y += (this.targetRotation.y - this.currentRotation.y) * 0.08;
 
-      const trackCenter = this.boatModel ? this.boatModel.position : new THREE.Vector3(0, 0, 0);
-      const R = 11.5;
+      const trackCenter = new THREE.Vector3(0, 0, 0);
+      const isPortrait = window.innerWidth < window.innerHeight;
+      const R = isPortrait ? 9.2 : 11.2;
       const camX = trackCenter.x + R * Math.sin(this.currentRotation.y) * Math.cos(this.currentRotation.x);
       const camZ = trackCenter.z + R * Math.cos(this.currentRotation.y) * Math.cos(this.currentRotation.x);
       const camY = Math.max(1.2, R * Math.sin(this.currentRotation.x));
@@ -2728,33 +2729,23 @@ class Barracuda3DEngine {
       this.updateMissionWorld(dt, t);
     } else if (this.boatModel) {
       // =========================================================================
-      // AUTONOMOUS LIVING LOBBY CRUISE (ДРОН ЛЕТИТ / ПЛЫВЁТ САМ В ЛОББИ)
+      // AUTONOMOUS LIVING LOBBY (ДРОН ЦЕНТРИРОВАН И ПЛАВАЕТ НА ВОЛНАХ В ЛОББИ)
       // =========================================================================
-      const cruiseR = 14.0;
-      const cruiseSpeed = 0.28;
-      const cruiseAngle = t * cruiseSpeed;
-      const lobbyX = Math.sin(cruiseAngle) * cruiseR;
-      const lobbyZ = Math.cos(cruiseAngle * 0.8) * (cruiseR * 0.85);
+      const lobbyHeading = Math.sin(t * 0.4) * 0.35;
+      const lobbyHeave = Math.sin(t * 2.2) * 0.08 + Math.cos(t * 1.4) * 0.03;
+      const lobbyPitch = 0.03 + Math.sin(t * 1.8) * 0.025;
+      const lobbyRoll = Math.sin(t * 0.8) * 0.05;
 
-      // Instantaneous tangent heading
-      const nextX = Math.sin(cruiseAngle + 0.04) * cruiseR;
-      const nextZ = Math.cos((cruiseAngle + 0.04) * 0.8) * (cruiseR * 0.85);
-      const lobbyHeading = Math.atan2(nextX - lobbyX, nextZ - lobbyZ);
-
-      const lobbyHeave = Math.sin(t * 2.2) * 0.05 + Math.cos(t * 1.4) * 0.02;
-      const lobbyPitch = 0.04 + Math.sin(t * 1.8) * 0.02;
-      const lobbyRoll = -Math.sin(cruiseAngle) * 0.12;
-
-      this.boatModel.position.set(lobbyX, this.boatBaseY + lobbyHeave - (this.bounceImpulse * 0.05), lobbyZ);
+      this.boatModel.position.set(0, this.boatBaseY + lobbyHeave - (this.bounceImpulse * 0.05), 0);
       this.boatModel.rotation.set(lobbyPitch + (this.bounceImpulse * 0.012), lobbyHeading, lobbyRoll);
 
       // Waterjet spray in lobby
-      if (Math.random() > 0.35) {
+      if (Math.random() > 0.4) {
         const sternDist = 2.2;
-        const wakeX = lobbyX - Math.sin(lobbyHeading) * sternDist;
-        const wakeZ = lobbyZ - Math.cos(lobbyHeading) * sternDist;
-        this.emitWakeParticle(wakeX - Math.cos(lobbyHeading) * 0.35, wakeZ + Math.sin(lobbyHeading) * 0.35, 1.4);
-        this.emitWakeParticle(wakeX + Math.cos(lobbyHeading) * 0.35, wakeZ - Math.sin(lobbyHeading) * 0.35, 1.4);
+        const wakeX = -Math.sin(lobbyHeading) * sternDist;
+        const wakeZ = -Math.cos(lobbyHeading) * sternDist;
+        this.emitWakeParticle(wakeX - Math.cos(lobbyHeading) * 0.35, wakeZ + Math.sin(lobbyHeading) * 0.35, 1.2);
+        this.emitWakeParticle(wakeX + Math.cos(lobbyHeading) * 0.35, wakeZ - Math.sin(lobbyHeading) * 0.35, 1.2);
       }
 
       // Module position sync (modules follow moving boat in lobby)

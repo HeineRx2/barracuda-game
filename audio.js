@@ -143,170 +143,120 @@ class TacticalAudioEngine {
   }
 
   // =========================================================================
-  // CORE CLICK SOUNDS — Tactical toggle clicks
+  // CORE CLICK SOUNDS — Tactical toggle clicks & pleasant UI tones
   // =========================================================================
   playPing() {
     this.init();
     const now = this.ctx.currentTime;
 
-    // Metallic click — bandpass noise impulse
-    const { source: n, filter: f } = this._filteredNoise('bandpass', 3200, 4, 0.06);
-    const g = this.ctx.createGain();
-    g.gain.setValueAtTime(0.3, now);
-    g.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
-    f.connect(g);
-    g.connect(this.masterGain);
-    n.start(now);
-    n.stop(now + 0.06);
+    // High-tech resonant pulse — pure sine with smooth decay
+    const osc1 = this.ctx.createOscillator();
+    const g1 = this.ctx.createGain();
+    osc1.type = 'sine';
+    osc1.frequency.setValueAtTime(1320, now);
+    osc1.frequency.exponentialRampToValueAtTime(660, now + 0.05);
 
-    // Sub-thump body
-    const osc = this.ctx.createOscillator();
-    const og = this.ctx.createGain();
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(180, now);
-    osc.frequency.exponentialRampToValueAtTime(60, now + 0.06);
-    og.gain.setValueAtTime(0.15, now);
-    og.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
-    osc.connect(og);
-    og.connect(this.masterGain);
-    osc.start(now);
-    osc.stop(now + 0.07);
+    g1.gain.setValueAtTime(0.22, now);
+    g1.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+
+    osc1.connect(g1);
+    g1.connect(this.masterGain);
+    osc1.start(now);
+    osc1.stop(now + 0.055);
+
+    // Warm sub-thump for tactile feel
+    const osc2 = this.ctx.createOscillator();
+    const g2 = this.ctx.createGain();
+    osc2.type = 'sine';
+    osc2.frequency.setValueAtTime(220, now);
+    osc2.frequency.exponentialRampToValueAtTime(80, now + 0.045);
+
+    g2.gain.setValueAtTime(0.18, now);
+    g2.gain.exponentialRampToValueAtTime(0.001, now + 0.045);
+
+    osc2.connect(g2);
+    g2.connect(this.masterGain);
+    osc2.start(now);
+    osc2.stop(now + 0.05);
   }
 
   playCritPing() {
     this.init();
     const now = this.ctx.currentTime;
 
-    // Heavy sub-bass thump
+    // Heavy sub-bass punch
     const sub = this.ctx.createOscillator();
     const subG = this.ctx.createGain();
-    const sat = this._makeSaturation(3.0);
     sub.type = 'sine';
-    sub.frequency.setValueAtTime(55, now);
-    sub.frequency.exponentialRampToValueAtTime(28, now + 0.25);
-    subG.gain.setValueAtTime(0.6, now);
-    subG.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
-    sub.connect(sat);
-    sat.connect(subG);
+    sub.frequency.setValueAtTime(110, now);
+    sub.frequency.exponentialRampToValueAtTime(38, now + 0.22);
+    subG.gain.setValueAtTime(0.5, now);
+    subG.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+    sub.connect(subG);
     subG.connect(this.masterGain);
     sub.start(now);
-    sub.stop(now + 0.3);
+    sub.stop(now + 0.25);
 
-    // Noise crack
-    const { source: n, filter: f } = this._filteredNoise('bandpass', 1800, 2, 0.12);
-    const ng = this.ctx.createGain();
-    ng.gain.setValueAtTime(0.35, now);
-    ng.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
-    f.connect(ng);
-    ng.connect(this.masterGain);
-    n.start(now);
-    n.stop(now + 0.12);
-
-    // Metallic ring (distant impact feel)
-    const ring = this.ctx.createOscillator();
-    const rg = this.ctx.createGain();
-    ring.type = 'triangle';
-    ring.frequency.setValueAtTime(1200, now + 0.02);
-    ring.frequency.exponentialRampToValueAtTime(400, now + 0.2);
-    rg.gain.setValueAtTime(0.08, now + 0.02);
-    rg.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
-    ring.connect(rg);
-    rg.connect(this.masterGain);
-    ring.start(now + 0.02);
-    ring.stop(now + 0.25);
+    // Bright harmonic ping
+    const ping = this.ctx.createOscillator();
+    const pingG = this.ctx.createGain();
+    ping.type = 'triangle';
+    ping.frequency.setValueAtTime(1760, now);
+    ping.frequency.exponentialRampToValueAtTime(880, now + 0.12);
+    pingG.gain.setValueAtTime(0.28, now);
+    pingG.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
+    ping.connect(pingG);
+    pingG.connect(this.masterGain);
+    ping.start(now);
+    ping.stop(now + 0.15);
   }
 
   // =========================================================================
-  // UPGRADE & PURCHASE — Mechanical hydraulic sounds
+  // UPGRADE & PURCHASE — Mechanical hydraulic & clean high-tech sounds
   // =========================================================================
   playMountingSfx() {
     this.init();
     const now = this.ctx.currentTime;
 
-    // Hydraulic clamp — lowpass noise impulse
-    const { source: n1, filter: f1 } = this._filteredNoise('lowpass', 400, 1, 0.2);
-    const g1 = this.ctx.createGain();
-    const dist = this._makeDistortion(20);
-    g1.gain.setValueAtTime(0.4, now);
-    g1.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
-    f1.connect(dist);
-    dist.connect(g1);
-    g1.connect(this.masterGain);
-    n1.start(now);
-    n1.stop(now + 0.2);
+    // High-tech pneumatic latch (two quick ascending chimes)
+    [0, 0.07].forEach((delay, idx) => {
+      const osc = this.ctx.createOscillator();
+      const g = this.ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(idx === 0 ? 587.33 : 880, now + delay);
+      osc.frequency.exponentialRampToValueAtTime(idx === 0 ? 784 : 1174.66, now + delay + 0.08);
 
-    // Pneumatic hiss
-    const { source: n2, filter: f2 } = this._filteredNoise('highpass', 5000, 0.7, 0.25);
-    const g2 = this.ctx.createGain();
-    g2.gain.setValueAtTime(0.001, now + 0.04);
-    g2.gain.linearRampToValueAtTime(0.15, now + 0.08);
-    g2.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
-    f2.connect(g2);
-    g2.connect(this.masterGain);
-    n2.start(now + 0.04);
-    n2.stop(now + 0.28);
+      g.gain.setValueAtTime(0.2, now + delay);
+      g.gain.exponentialRampToValueAtTime(0.001, now + delay + 0.12);
 
-    // Metal latch click
-    const osc = this.ctx.createOscillator();
-    const og = this.ctx.createGain();
-    osc.type = 'triangle';
-    osc.frequency.setValueAtTime(280, now + 0.1);
-    osc.frequency.exponentialRampToValueAtTime(80, now + 0.16);
-    og.gain.setValueAtTime(0.25, now + 0.1);
-    og.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
-    const sat = this._makeSaturation(2.5);
-    osc.connect(sat);
-    sat.connect(og);
-    og.connect(this.masterGain);
-    osc.start(now + 0.1);
-    osc.stop(now + 0.2);
+      osc.connect(g);
+      g.connect(this.masterGain);
+      osc.start(now + delay);
+      osc.stop(now + delay + 0.13);
+    });
   }
 
   playUpgradeSfx() {
     this.init();
     const now = this.ctx.currentTime;
 
-    // Servo motor whir
-    const osc = this.ctx.createOscillator();
-    const g = this.ctx.createGain();
-    osc.type = 'sawtooth';
-    osc.frequency.setValueAtTime(120, now);
-    osc.frequency.linearRampToValueAtTime(400, now + 0.3);
-    osc.frequency.linearRampToValueAtTime(350, now + 0.4);
-    g.gain.setValueAtTime(0.08, now);
-    g.gain.linearRampToValueAtTime(0.12, now + 0.2);
-    g.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
-    const lp = this.ctx.createBiquadFilter();
-    lp.type = 'lowpass';
-    lp.frequency.value = 1200;
-    osc.connect(lp);
-    lp.connect(g);
-    g.connect(this.masterGain);
-    osc.start(now);
-    osc.stop(now + 0.45);
+    // Smooth ascending triad chord (C5 - E5 - G5)
+    const freqs = [523.25, 659.25, 783.99, 1046.50];
+    freqs.forEach((f, i) => {
+      const osc = this.ctx.createOscillator();
+      const g = this.ctx.createGain();
+      const tStart = now + (i * 0.05);
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(f, tStart);
 
-    // Confirmation beep — military two-tone
-    const b1 = this.ctx.createOscillator();
-    const b1g = this.ctx.createGain();
-    b1.type = 'sine';
-    b1.frequency.value = 520;
-    b1g.gain.setValueAtTime(0.15, now + 0.3);
-    b1g.gain.exponentialRampToValueAtTime(0.001, now + 0.42);
-    b1.connect(b1g);
-    b1g.connect(this.masterGain);
-    b1.start(now + 0.3);
-    b1.stop(now + 0.42);
+      g.gain.setValueAtTime(0.16, tStart);
+      g.gain.exponentialRampToValueAtTime(0.001, tStart + 0.22);
 
-    const b2 = this.ctx.createOscillator();
-    const b2g = this.ctx.createGain();
-    b2.type = 'sine';
-    b2.frequency.value = 780;
-    b2g.gain.setValueAtTime(0.15, now + 0.36);
-    b2g.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
-    b2.connect(b2g);
-    b2g.connect(this.masterGain);
-    b2.start(now + 0.36);
-    b2.stop(now + 0.5);
+      osc.connect(g);
+      g.connect(this.masterGain);
+      osc.start(tStart);
+      osc.stop(tStart + 0.24);
+    });
   }
 
   playContractSfx() {

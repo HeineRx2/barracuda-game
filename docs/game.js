@@ -6261,21 +6261,19 @@ class BarracudaGame {
     const tacticalModal = document.getElementById('tactical-hub-modal');
 
     const openTacticalModal = (e) => {
-      if (e) { e.preventDefault(); e.stopPropagation(); }
+      if (e) e.stopPropagation();
       if (tacticalModal) tacticalModal.classList.add('active');
     };
     const closeTacticalModal = (e) => {
-      if (e) { e.preventDefault(); e.stopPropagation(); }
+      if (e) e.stopPropagation();
       if (tacticalModal) tacticalModal.classList.remove('active');
     };
 
     if (btnOpenTactical) {
-      btnOpenTactical.onpointerdown = openTacticalModal;
-      btnOpenTactical.onclick = openTacticalModal;
+      btnOpenTactical.addEventListener('click', openTacticalModal);
     }
     if (btnCloseTactical) {
-      btnCloseTactical.onpointerdown = closeTacticalModal;
-      btnCloseTactical.onclick = closeTacticalModal;
+      btnCloseTactical.addEventListener('click', closeTacticalModal);
     }
 
     // Mobile Drawer Handlers
@@ -6284,21 +6282,19 @@ class BarracudaGame {
     const drawerModal = document.getElementById('mobile-drawer-modal');
 
     const openDrawer = (e) => {
-      if (e) { e.preventDefault(); e.stopPropagation(); }
+      if (e) e.stopPropagation();
       if (drawerModal) drawerModal.classList.add('active');
     };
     const closeDrawer = (e) => {
-      if (e) { e.preventDefault(); e.stopPropagation(); }
+      if (e) e.stopPropagation();
       if (drawerModal) drawerModal.classList.remove('active');
     };
 
     if (btnOpenDrawer) {
-      btnOpenDrawer.onpointerdown = openDrawer;
-      btnOpenDrawer.onclick = openDrawer;
+      btnOpenDrawer.addEventListener('click', openDrawer);
     }
     if (btnCloseDrawer) {
-      btnCloseDrawer.onpointerdown = closeDrawer;
-      btnCloseDrawer.onclick = closeDrawer;
+      btnCloseDrawer.addEventListener('click', closeDrawer);
     }
 
     // Drawer internal buttons

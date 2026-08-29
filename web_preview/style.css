@@ -5789,16 +5789,17 @@ body {
     font-size: 10px !important;
   }
 
-  /* Maximize 3D canvas viewport space */
+  /* Clean mobile layout with fully clickable controls */
   .middle-arena {
-    pointer-events: none !important;
-  }
-  .concept-dossier-panel,
-  .concept-action-rings {
     pointer-events: auto !important;
   }
   .concept-action-rings {
     gap: 6px !important;
+    pointer-events: auto !important;
+  }
+  .concept-dossier-card,
+  .concept-slide-panel {
+    pointer-events: auto !important;
   }
 
   /* During Gameplay / Sorties: Notification ticker at the very top */
@@ -5827,6 +5828,8 @@ body {
 
   /* Ensure all interactive buttons respond immediately to touch */
   button,
+  .ring-action-btn,
+  .btn-buy-action,
   .btn-recon-snap,
   .btn-fpv-boost,
   .combat-quick-btn,
