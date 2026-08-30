@@ -704,9 +704,9 @@ export const RANDOM_EVENTS = [
 // DAILY QUEST TEMPLATES
 // =========================================================================
 export const DAILY_QUEST_TEMPLATES = [
-  { id: 'dq_clicks', type: 'clicks', target: 500, rewardUSD: 500, rewardMB: 100, desc: 'Выполнить 500 кликов (SIGINT)' },
-  { id: 'dq_hacks', type: 'hacks', target: 10, rewardUSD: 800, rewardMB: 150, desc: 'Успешно взломать 10 частот РЭБ' },
-  { id: 'dq_fpv', type: 'fpv', target: 3, rewardUSD: 1000, rewardMB: 200, desc: 'Успешно завершить 3 FPV-штурма' },
-  { id: 'dq_boss', type: 'boss', target: 1, rewardUSD: 2000, rewardMB: 500, desc: 'Потопить 1 корабль класса БОСС' },
-  { id: 'dq_craft', type: 'craft', target: 1, rewardUSD: 600, rewardMB: 50, desc: 'Скрафтить любой модуль в Ангаре' }
+  { id: 'dq_clicks', type: 'clicks', icon: '📡', getN: (p) => 500 + p * 100, desc: 'Выполнить {n} кликов (SIGINT)' },
+  { id: 'dq_hacks', type: 'hacks', icon: '⚡', getN: (p) => 10 + p * 2, desc: 'Успешно взломать {n} частот РЭБ' },
+  { id: 'dq_fpv', type: 'fpv', icon: '🚁', getN: (p) => 3 + p, desc: 'Успешно завершить {n} FPV-штурма' },
+  { id: 'dq_boss', type: 'boss', icon: '💀', getN: (p) => 1, desc: 'Потопить {n} корабль класса БОСС' },
+  { id: 'dq_craft', type: 'craft', icon: '🔧', getN: (p) => 1 + Math.floor(p/2), desc: 'Скрафтить {n} модуль в Ангаре' }
 ];
