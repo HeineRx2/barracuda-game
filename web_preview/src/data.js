@@ -704,9 +704,9 @@ export const RANDOM_EVENTS = [
 // DAILY QUEST TEMPLATES
 // =========================================================================
 export const DAILY_QUEST_TEMPLATES = [
-  { id: 'dq_clicks', type: 'clicks', icon: '📡', getN: (p) => 500 + p * 100, desc: 'Выполнить {n} кликов (SIGINT)' },
-  { id: 'dq_hacks', type: 'hacks', icon: '⚡', getN: (p) => 10 + p * 2, desc: 'Успешно взломать {n} частот РЭБ' },
-  { id: 'dq_fpv', type: 'fpv', icon: '🚁', getN: (p) => 3 + p, desc: 'Успешно завершить {n} FPV-штурма' },
-  { id: 'dq_boss', type: 'boss', icon: '💀', getN: (p) => 1, desc: 'Потопить {n} корабль класса БОСС' },
-  { id: 'dq_craft', type: 'craft', icon: '🔧', getN: (p) => 1 + Math.floor(p/2), desc: 'Скрафтить {n} модуль в Ангаре' }
+  { id: 'dq_clicks', type: 'clicks', icon: '📡', getN: (p) => 500 + p * 100, desc: 'Выполнить {n} кликов (SIGINT)', check: (g, target) => (g.dailyClicks || 0) >= target },
+  { id: 'dq_hacks', type: 'hacks', icon: '⚡', getN: (p) => 10 + p * 2, desc: 'Успешно взломать {n} частот РЭБ', check: (g, target) => (g.dailyHacks || 0) >= target },
+  { id: 'dq_fpv', type: 'fpv', icon: '🚁', getN: (p) => 3 + p, desc: 'Успешно завершить {n} FPV-штурма', check: (g, target) => (g.dailyAssaults || 0) >= target },
+  { id: 'dq_boss', type: 'boss', icon: '💀', getN: (p) => 1, desc: 'Потопить {n} корабль класса БОСС', check: (g, target) => (g.bossesDefeated || 0) >= target },
+  { id: 'dq_craft', type: 'craft', icon: '🔧', getN: (p) => 1 + Math.floor(p/2), desc: 'Скрафтить {n} модуль в Ангаре', check: (g, target) => (g.dailyCrafts || 0) >= target }
 ];
