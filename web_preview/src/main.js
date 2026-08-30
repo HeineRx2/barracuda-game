@@ -240,23 +240,23 @@ class BarracudaGame {
       store.state.totalCrits = data.totalCrits || 0;
       store.state.totalHacks = data.totalHacks || 0;
       store.state.overclockUses = data.overclockUses || 0;
-      store.state.visitedSectors = new Set(data.visitedSectors || ['sector-1']);
+      store.state.visitedSectors = Array.from(data.visitedSectors || ['sector-1']);
       store.state.shieldSaves = data.shieldSaves || 0;
       this.currentSector = data.currentSector || 'sector-1';
 
       store.state.selectedPrototype = data.selectedPrototype || 'phantom';
-      store.state.unlockedPrototypes = new Set(data.unlockedPrototypes || ['phantom']);
+      store.state.unlockedPrototypes = Array.from(data.unlockedPrototypes || ['phantom']);
       store.state.salvage = Object.assign({ box: 0, chips: 0, titanium: 0, aicore: 0 }, data.salvage || {});
-      store.state.craftedModules = new Set(data.craftedModules || []);
+      store.state.craftedModules = Array.from(data.craftedModules || []);
       store.state.campaignAct = data.campaignAct || 1;
-      store.state.completedMissions = new Set(data.completedMissions || []);
+      store.state.completedMissions = Array.from(data.completedMissions || []);
 
       store.state.hw = data.hw || store.state.hw;
       store.state.cyber = data.cyber || store.state.cyber;
       store.state.tech = data.tech || store.state.tech;
       this.contractGenCounter = data.contractGenCounter || 0;
       this.currentDossierStage = data.currentDossierStage || 0;
-      store.state.unlockedAchievements = new Set(data.unlockedAchievements || []);
+      store.state.unlockedAchievements = Array.from(data.unlockedAchievements || []);
       this.bossesDefeated = data.bossesDefeated || 0;
       this.dailyQuestDate = data.dailyQuestDate || '';
       this.dailyQuests = data.dailyQuests || [];
