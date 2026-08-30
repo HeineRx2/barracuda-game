@@ -1,0 +1,28 @@
+{
+  "name": "barracuda",
+  "version": "1.0.0",
+  "description": "[![Live Game](https://img.shields.io/badge/Play_Now-GitHub_Pages-00f0ff?style=for-the-badge&logo=github)](https://heinerx2.github.io/barracuda-game/) [![Status](https://img.shields.io/badge/Status-Combat_Ready-00ff66?style=for-the-badge)](https://heinerx2.github.io/barracuda-game/)",
+  "main": "audio.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/HeineRx2/barracuda-game.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/HeineRx2/barracuda-game/issues"
+  },
+  "homepage": "https://github.com/HeineRx2/barracuda-game#readme",
+  "devDependencies": {
+    "vite": "^8.2.2"
+  }
+}

@@ -217,6 +217,7 @@ class Barracuda3DEngine {
     this.createWakeSystem();
     this.setupLighting();
     this.createEnemyWarship();
+    this._loadGLBEnemyFleet();   // Load real GLB ship models on top of procedural
     this.createLightningSystem();
     this.createRainSystem();
     this.createParticlePools();
@@ -513,41 +514,27 @@ class Barracuda3DEngine {
   }
 
   // =========================================================================
-  // RIVER BANKS — Terrain strips on both sides to create the Dnipro feeling
+  // RIVER BANKS v2 — AAA Shoreline: Animated reeds, rocks, debris, watchtowers
   // =========================================================================
   _createRiverBanks() {
     this.riverBanks = new THREE.Group();
-    
-    // River width ~240 units, banks on each side
-    const bankLength = 4000;
-    const bankWidth = 1500;
+
+    const bankLength   = 4000;
+    const bankWidth    = 1500;
     const riverHalfWidth = 120;
 
-    // Bank material — dark silty mud with grass patches
-    const bankMat = new THREE.MeshStandardMaterial({
-      color: 0x2e3820, // Dark earthy green-brown (Dnipro floodplain)
-      roughness: 0.92,
-      metalness: 0.05
-    });
+    // Terrain materials
+    const bankMat = new THREE.MeshStandardMaterial({ color: 0x2e3820, roughness: 0.92, metalness: 0.05 });
+    const mudMat  = new THREE.MeshStandardMaterial({ color: 0x1c1f12, roughness: 0.97, metalness: 0.0  });
 
-    // Mud/silt near water edge
-    const mudMat = new THREE.MeshStandardMaterial({
-      color: 0x1e2015,
-      roughness: 0.95,
-      metalness: 0.0
-    });
-
-    // Left bank (North/enemy side) — higher, more fortified
+    // Left bank — higher, enemy side
     const leftBankGeo = new THREE.PlaneGeometry(bankLength, bankWidth, 60, 30);
-    const leftVerts = leftBankGeo.attributes.position;
-    for (let i = 0; i < leftVerts.count; i++) {
-      const x = leftVerts.getX(i);
-      const y = leftVerts.getY(i);
-      const distFromEdge = Math.max(0, -y);
-      const slope = Math.min(1, distFromEdge / 40);
-      const noise = Math.sin(x * 0.02) * 1.5 + Math.sin(x * 0.07) * 0.8 + Math.sin(x * 0.15 + y * 0.1) * 0.4;
-      const height = slope * (2.5 + noise + Math.random() * 0.3);
-      leftVerts.setZ(i, height);
+    const lv = leftBankGeo.attributes.position;
+    for (let i = 0; i < lv.count; i++) {
+      const x = lv.getX(i), y = lv.getY(i);
+      const d = Math.max(0, -y);
+      const h = Math.min(1, d / 40) * (2.5 + Math.sin(x * 0.02) * 1.5 + Math.sin(x * 0.07 + y * 0.1) * 0.8 + Math.random() * 0.3);
+      lv.setZ(i, h);
     }
     leftBankGeo.computeVertexNormals();
     const leftBank = new THREE.Mesh(leftBankGeo, bankMat);
@@ -555,39 +542,35 @@ class Barracuda3DEngine {
     leftBank.position.set(0, 0.05, -(riverHalfWidth + bankWidth / 2));
     this.riverBanks.add(leftBank);
 
-    // Right bank (South/friendly side) — lower, marshy
+    // Right bank — marshy, friendly side
     const rightBankGeo = new THREE.PlaneGeometry(bankLength, bankWidth, 60, 30);
-    const rightVerts = rightBankGeo.attributes.position;
-    for (let i = 0; i < rightVerts.count; i++) {
-      const x = rightVerts.getX(i);
-      const y = rightVerts.getY(i);
-      const distFromEdge = Math.max(0, y);
-      const slope = Math.min(1, distFromEdge / 50);
-      const noise = Math.cos(x * 0.018) * 1.2 + Math.sin(x * 0.06) * 0.6;
-      const height = slope * (1.8 + noise + Math.random() * 0.3);
-      rightVerts.setZ(i, height);
+    const rv = rightBankGeo.attributes.position;
+    for (let i = 0; i < rv.count; i++) {
+      const x = rv.getX(i), y = rv.getY(i);
+      const d = Math.max(0, y);
+      const h = Math.min(1, d / 50) * (1.8 + Math.cos(x * 0.018) * 1.2 + Math.sin(x * 0.06) * 0.6 + Math.random() * 0.3);
+      rv.setZ(i, h);
     }
     rightBankGeo.computeVertexNormals();
     const rightBank = new THREE.Mesh(rightBankGeo, bankMat);
     rightBank.rotation.x = -Math.PI / 2;
-    rightBank.position.set(0, 0.05, (riverHalfWidth + bankWidth / 2));
+    rightBank.position.set(0, 0.05, riverHalfWidth + bankWidth / 2);
     this.riverBanks.add(rightBank);
 
-    // ===== MUD STRIPS along water edge =====
-    for (let side = -1; side <= 1; side += 2) {
-      const mudGeo = new THREE.PlaneGeometry(bankLength, 20, 20, 1);
-      const mudStrip = new THREE.Mesh(mudGeo, mudMat);
+    // Mud strips
+    for (const side of [-1, 1]) {
+      const mudStrip = new THREE.Mesh(new THREE.PlaneGeometry(bankLength, 22, 20, 1), mudMat);
       mudStrip.rotation.x = -Math.PI / 2;
-      mudStrip.position.set(0, 0.08, side * (riverHalfWidth + 10));
+      mudStrip.position.set(0, 0.08, side * (riverHalfWidth + 11));
       this.riverBanks.add(mudStrip);
     }
 
-    // ===== DENSE REED / ТРОСТНИК CLUSTERS =====
-    const reedColors = [0x4a6028, 0x506830, 0x3d5020, 0x5a7035, 0x445825];
-    const reedStemGeo = new THREE.CylinderGeometry(0.06, 0.12, 1, 4); // Thin stem
-    const reedTopGeo = new THREE.ConeGeometry(0.2, 0.6, 4); // Bushy top
-    const reedTallStemGeo = new THREE.CylinderGeometry(0.05, 0.1, 1, 4);
     const reedBrushGeo = new THREE.ConeGeometry(0.35, 0.8, 5); // Thick cattail head
+
+    // ── REED COLORS & GEOMETRIES (must be defined before the loop)
+    const reedColors = [0x4a6628, 0x3d5520, 0x567030, 0x8a9a40, 0x6b7a30];
+    const reedStemGeo = new THREE.CylinderGeometry(0.04, 0.06, 1, 4); // Scale Y per reed
+    const reedTopGeo  = new THREE.ConeGeometry(0.12, 0.6, 5);          // Leaf tip
 
     for (let side = -1; side <= 1; side += 2) {
       // Dense reed patches along entire water edge
@@ -763,6 +746,20 @@ class Barracuda3DEngine {
       const camo = new THREE.Mesh(camoGeo, camoMat);
       camo.position.y = 3.7;
       compound.add(camo);
+
+      // Try loading real 3D GLB models if available
+      try {
+        if (typeof THREE.GLTFLoader !== 'undefined') {
+          const loader = new THREE.GLTFLoader();
+          const modelUrl = idx % 2 === 0 ? 'assets/models/ural_4320.glb' : 'assets/models/anntenna01.glb';
+          loader.load(modelUrl, (gltf) => {
+            const m = gltf.scene;
+            m.scale.set(2.0, 2.0, 2.0);
+            m.position.set(idx % 2 === 0 ? 8 : -8, 0.2, 0);
+            compound.add(m);
+          }, undefined, () => {});
+        }
+      } catch(e) {}
 
       group.add(compound);
 
@@ -1095,6 +1092,119 @@ class Barracuda3DEngine {
 
     this.enemyShip.scale.setScalar(scale);
     this._enemyShipClass = className;
+
+    // Swap to the correct GLB model based on level if already loaded
+    if (this._glbFleetLoaded && this._glbKotor && this._glbBarge && this._glbHurricane) {
+      this._glbKotor.visible   = (level > 5);
+      this._glbBarge.visible   = (level <= 5);
+    }
+  }
+
+  // =========================================================================
+  // GLB ENEMY FLEET LOADER — loads real ship models from assets/models/
+  // =========================================================================
+  _loadGLBEnemyFleet() {
+    if (typeof THREE.GLTFLoader === 'undefined') return;
+    const loader = new THREE.GLTFLoader();
+    this._glbFleetLoaded = false;
+
+    // ── MAIN ENEMY: Kotor-class frigate (primary target) ──────────────────
+    loader.load('assets/models/kotor-class_frigate.glb', (gltf) => {
+      try {
+        const model = gltf.scene;
+        model.traverse(child => {
+          if (child.isMesh) {
+            child.castShadow = true;
+            child.receiveShadow = true;
+            // Tone down any over-bright materials
+            if (child.material) {
+              child.material.roughness = Math.max(child.material.roughness || 0.4, 0.35);
+              child.material.metalness = Math.min(child.material.metalness || 0.6, 0.85);
+            }
+          }
+        });
+
+        // Fit model scale to match our scene scale
+        const box = new THREE.Box3().setFromObject(model);
+        const size = new THREE.Vector3();
+        box.getSize(size);
+        const maxDim = Math.max(size.x, size.y, size.z);
+        const targetSize = 35; // world units
+        const scaleFactor = targetSize / maxDim;
+        model.scale.setScalar(scaleFactor);
+
+        // Center on origin, sit on waterline
+        const center = new THREE.Vector3();
+        box.getCenter(center);
+        model.position.set(-center.x * scaleFactor, -box.min.y * scaleFactor - 0.3, -center.z * scaleFactor);
+
+        // Add to the existing enemy ship group (keeps all hitbox subsystems)
+        // Hide procedural hull meshes
+        this.enemyShip.traverse(child => {
+          if (child.isMesh && child.geometry && child.geometry.type === 'BoxGeometry') {
+            child.visible = false;
+          }
+        });
+        this.enemyShip.add(model);
+        this._glbKotor = model;
+
+        console.log('[3D] Kotor-class frigate GLB loaded ✓ scale:', scaleFactor.toFixed(3));
+      } catch (e) { console.warn('[3D] Kotor GLB setup error:', e); }
+    }, undefined, (e) => console.warn('[3D] Kotor GLB load error:', e));
+
+    // ── BACKGROUND SHIP 1: Barge (moored at enemy dock) ───────────────────
+    loader.load('assets/models/barge_ship.glb', (gltf) => {
+      try {
+        const model = gltf.scene;
+        model.traverse(child => {
+          if (child.isMesh) { child.castShadow = true; child.receiveShadow = true; }
+        });
+        const box = new THREE.Box3().setFromObject(model);
+        const size = new THREE.Vector3(); box.getSize(size);
+        const sc = 40 / Math.max(size.x, size.y, size.z);
+        model.scale.setScalar(sc);
+        const center = new THREE.Vector3(); box.getCenter(center);
+        model.position.set(-center.x * sc, -box.min.y * sc - 0.3, -center.z * sc);
+
+        // Place barge to the left, partially behind reeds
+        const bargeGroup = new THREE.Group();
+        bargeGroup.add(model);
+        bargeGroup.position.set(-180, 0, -95);
+        bargeGroup.rotation.y = THREE.MathUtils.degToRad(25);
+        this.scene.add(bargeGroup);
+        this._glbBarge = model;
+
+        console.log('[3D] Barge GLB loaded ✓');
+      } catch (e) { console.warn('[3D] Barge GLB setup error:', e); }
+    }, undefined, (e) => console.warn('[3D] Barge GLB load error:', e));
+
+    // ── BACKGROUND SHIP 2: Hurricane patrol boat (moving patrol) ──────────
+    loader.load('assets/models/lowpoly_uss_hurricane_pc-3.glb', (gltf) => {
+      try {
+        const model = gltf.scene;
+        model.traverse(child => {
+          if (child.isMesh) { child.castShadow = true; child.receiveShadow = true; }
+        });
+        const box = new THREE.Box3().setFromObject(model);
+        const size = new THREE.Vector3(); box.getSize(size);
+        const sc = 18 / Math.max(size.x, size.y, size.z);
+        model.scale.setScalar(sc);
+        const center = new THREE.Vector3(); box.getCenter(center);
+        model.position.set(-center.x * sc, -box.min.y * sc - 0.1, -center.z * sc);
+
+        const patrolGroup = new THREE.Group();
+        patrolGroup.add(model);
+        patrolGroup.position.set(90, 0, -140);
+        patrolGroup.rotation.y = THREE.MathUtils.degToRad(195);
+        this.scene.add(patrolGroup);
+        this._glbHurricane = patrolGroup;
+        this._glbHurricaneAngle = 0; // for animated patrol path
+
+        console.log('[3D] Hurricane PC-3 GLB loaded ✓');
+      } catch (e) { console.warn('[3D] Hurricane GLB setup error:', e); }
+    }, undefined, (e) => console.warn('[3D] Hurricane GLB load error:', e));
+
+    this._glbFleetLoaded = true;
   }
 
   // =========================================================================
@@ -2137,6 +2247,13 @@ class Barracuda3DEngine {
 
     this.scene.add(this.boatModel);
     this.boatBaseY = 0.0;
+    this.modelScale = 1.0;
+    this.modelBBox = {
+      min: new THREE.Vector3(-1, -0.5, -2.5),
+      max: new THREE.Vector3(1, 1, 2.5),
+      size: new THREE.Vector3(2, 1.5, 5),
+      center: new THREE.Vector3(0, 0.25, 0)
+    };
   }
 
   syncActiveUpgrades(hw, cyber) {
@@ -2452,6 +2569,38 @@ class Barracuda3DEngine {
     // Water
     if (this.water && this.water.material && this.water.material.uniforms['time']) {
       this.water.material.uniforms['time'].value += dt * 0.9;
+    }
+
+    // ── REED WIND SHADER — update time uniform on all reed stem materials ──
+    if (this._reedMeshes && this._reedMeshes.length > 0) {
+      // Only update every other frame on mobile
+      if (!this.isMobile || Math.floor(t * 60) % 2 === 0) {
+        const windStr  = 0.14 + Math.sin(t * 0.18) * 0.07;  // gusting wind
+        const windFreq = 1.1 + Math.sin(t * 0.09) * 0.3;
+        // Share one uniform update per frame — all reed meshes share clones
+        for (let i = 0; i < this._reedMeshes.length; i++) {
+          const mat = this._reedMeshes[i].material;
+          if (mat && mat.uniforms) {
+            mat.uniforms.uTime.value    = t;
+            mat.uniforms.uWindStr.value = windStr;
+            mat.uniforms.uWindFreq.value = windFreq;
+          }
+        }
+      }
+    }
+
+    // ── PATROL BOAT (Hurricane GLB) — slow oval patrol circuit ────────────
+    if (this._glbHurricane) {
+      this._glbHurricaneAngle = (this._glbHurricaneAngle || 0) + dt * 0.05;
+      const ang = this._glbHurricaneAngle;
+      const px = 80 + Math.sin(ang) * 55;
+      const pz = -130 + Math.cos(ang * 0.7) * 35;
+      // Face direction of travel
+      const prevX = 80 + Math.sin(ang - 0.001) * 55;
+      const prevZ = -130 + Math.cos((ang - 0.001) * 0.7) * 35;
+      const heading = Math.atan2(px - prevX, pz - prevZ);
+      this._glbHurricane.position.set(px, 0, pz);
+      this._glbHurricane.rotation.y = heading;
     }
 
     // Enemy Warship animation & searchlight sweep

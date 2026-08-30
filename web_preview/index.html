@@ -79,7 +79,7 @@
         <span class="lock-bracket">🎯 МАШИННОЕ ОТДЕЛЕНИЕ [x4 КРИТ]</span>
       </button>
     </div>
-    <button id="btn-exit-flir" class="btn-flir-exit" onclick="event.stopPropagation();var o=document.getElementById('flir-overlay');if(o)o.classList.remove('active');if(window.barracudaGame&amp;&amp;window.barracudaGame.engine3D)window.barracudaGame.engine3D.cameraMode='orbit';">✕ ВЫХОД ИЗ ПРИЦЕЛА</button>
+    <button id="btn-exit-flir" class="btn-flir-exit">✕ ВЫХОД ИЗ ПРИЦЕЛА</button>
   </div>
 
   <!-- Screen Flash for Kinetic Strike -->
@@ -93,15 +93,15 @@
       <!-- Row 1: Nav Bar -->
       <div class="top-nav-row">
         <button class="btn-tactical-pause" id="btn-toggle-tma" title="Скрыть/Показать HUD">👁️</button>
-        <button class="btn-dossier-pill btn-nav-campaign" id="btn-open-campaign" title="Операции" style="border-color:rgba(0,255,136,0.6); background:rgba(0,255,136,0.15); color:#00ff88;" onclick="event.stopPropagation();var m=document.getElementById('campaign-modal');if(m)m.classList.add('active');try{window.barracudaGame&amp;&amp;window.barracudaGame.renderCampaignDOM();}catch(e){}">
+        <button class="btn-dossier-pill btn-nav-campaign" id="btn-open-campaign" title="Операции" style="border-color:rgba(0,255,136,0.6); background:rgba(0,255,136,0.15); color:#00ff88;">
           <span class="dossier-pill-icon">⚔️</span>
           <span class="dossier-pill-text">ОПЕРАЦИИ</span>
         </button>
-        <button class="btn-dossier-pill btn-nav-hangar" id="btn-open-hangar" title="Ангар" style="border-color:rgba(0,240,255,0.6); background:rgba(0,240,255,0.12); color:#00f0ff;" onclick="event.stopPropagation();var m=document.getElementById('hangar-modal');if(m)m.classList.add('active');try{window.barracudaGame&amp;&amp;window.barracudaGame.renderHangarDOM();}catch(e){}">
+        <button class="btn-dossier-pill btn-nav-hangar" id="btn-open-hangar" title="Ангар" style="border-color:rgba(0,240,255,0.6); background:rgba(0,240,255,0.12); color:#00f0ff;">
           <span class="dossier-pill-icon">⚓</span>
           <span class="dossier-pill-text">АНГАР</span>
         </button>
-        <button class="btn-dossier-pill btn-nav-tactical" id="btn-open-tactical-hub" title="Тактика" style="border-color:rgba(0,255,200,0.8); background:rgba(0,255,200,0.18); color:#00ffcc; font-weight:700;" onclick="event.stopPropagation();var m=document.getElementById('tactical-hub-modal');if(m)m.classList.add('active');">
+        <button class="btn-dossier-pill btn-nav-tactical" id="btn-open-tactical-hub" title="Тактика" style="border-color:rgba(0,255,200,0.8); background:rgba(0,255,200,0.18); color:#00ffcc; font-weight:700;">
           <span class="dossier-pill-icon">🛰️</span>
           <span class="dossier-pill-text">ТАКТИКА</span>
         </button>
@@ -114,15 +114,15 @@
           <span class="dossier-pill-text">ДОСЬЕ</span>
           <span class="dossier-unread-dot" id="dossier-unread-beacon"></span>
         </button>
-        <button class="btn-sector-pill btn-desktop-only" id="btn-open-map" title="Карта" onclick="event.stopPropagation();var m=document.getElementById('map-modal');if(m)m.classList.add('active');">
+        <button class="btn-sector-pill btn-desktop-only" id="btn-open-map" title="Карта">
           <span class="sector-badge-icon">🗺️</span>
           <span id="label-current-sector" class="sector-badge-name">О. ЗМЕИНЫЙ</span>
         </button>
-        <button class="btn-help-pill btn-desktop-only" id="btn-open-help" title="Справка" onclick="event.stopPropagation();var m=document.getElementById('help-modal');if(m)m.classList.add('active');">
+        <button class="btn-help-pill btn-desktop-only" id="btn-open-help" title="Справка">
           <span class="help-pill-icon">❓</span>
           <span class="help-pill-text">СПРАВКА</span>
         </button>
-        <button class="btn-help-pill btn-desktop-only" id="btn-open-settings" title="Настройки" onclick="event.stopPropagation();var m=document.getElementById('settings-modal');if(m)m.classList.add('active');">
+        <button class="btn-help-pill btn-desktop-only" id="btn-open-settings" title="Настройки">
           <span class="help-pill-icon">⚙️</span>
           <span class="help-pill-text">ОПЦИИ</span>
         </button>
@@ -156,11 +156,11 @@
 
     <!-- QUICK COMBAT ACTIONS BAR (FLIR, SIGINT РЭБ, ПУСК FPV, СОНАР, ROV, ТЕСТ VSA) -->
     <div class="quick-combat-actions-bar">
-      <button class="combat-quick-btn flir-btn" id="btn-open-flir" title="FLIR тепловизор" onclick="event.stopPropagation();var o=document.getElementById('flir-overlay');if(o)o.classList.add('active');if(window.barracudaGame&amp;&amp;window.barracudaGame.engine3D)window.barracudaGame.engine3D.cameraMode='flir';if(window.tacticalAudio)window.tacticalAudio.playThermalModeSfx();">
+      <button class="combat-quick-btn flir-btn" id="btn-open-flir" title="FLIR тепловизор">
         <span class="cq-icon">🎯</span>
         <span class="cq-text">FLIR</span>
       </button>
-      <button class="combat-quick-btn reb-btn" id="btn-open-cyber" title="Взлом РЭБ" onclick="event.stopPropagation();var m=document.getElementById('cyber-modal');if(m)m.classList.add('active');">
+      <button class="combat-quick-btn reb-btn" id="btn-open-cyber" title="Взлом РЭБ">
         <span class="cq-icon">📡</span>
         <span class="cq-text">ВЗЛОМ РЭБ</span>
       </button>
@@ -168,15 +168,15 @@
         <span class="cq-icon">🛸</span>
         <span class="cq-text">ПУСК FPV</span>
       </button>
-      <button class="combat-quick-btn sonar-btn" id="btn-quick-sonar" title="Сонар 3D" onclick="event.stopPropagation();try{window.barracudaGame&amp;&amp;window.barracudaGame.start3DMissionSortie('sonar_test');}catch(e){console.error(e)}">
+      <button class="combat-quick-btn sonar-btn" id="btn-quick-sonar" title="Сонар 3D">
         <span class="cq-icon">📡</span>
         <span class="cq-text">СОНАР 3D</span>
       </button>
-      <button class="combat-quick-btn rov-btn" id="btn-quick-rov" title="Микро-ROV" onclick="event.stopPropagation();try{window.barracudaGame&amp;&amp;window.barracudaGame._startRovMission({id:'m1_4',code:'OP-104',title:'ROV',timeLimit:180},{act:1,sector:'sector-1'});}catch(e){console.error(e)}">
+      <button class="combat-quick-btn rov-btn" id="btn-quick-rov" title="Микро-ROV">
         <span class="cq-icon">🔮</span>
         <span class="cq-text">МИКРО-ROV</span>
       </button>
-      <button class="combat-quick-btn boat-btn" id="btn-quick-boat" title="Тест VSA" onclick="event.stopPropagation();try{window.barracudaGame&amp;&amp;window.barracudaGame.start3DMissionSortie('drift_test');}catch(e){console.error(e)}">
+      <button class="combat-quick-btn boat-btn" id="btn-quick-boat" title="Тест VSA">
         <span class="cq-icon">🚤</span>
         <span class="cq-text">ТЕСТ VSA</span>
       </button>
@@ -205,23 +205,23 @@
 
       <!-- Right / Bottom-dock Action Ring Buttons -->
       <nav class="concept-action-rings" id="main-nav-dock">
-        <button class="ring-action-btn" data-panel="panel-vessel" onclick="event.stopPropagation();var p=document.getElementById('panel-vessel');var was=p&amp;&amp;p.classList.contains('active');document.querySelectorAll('.concept-slide-panel').forEach(function(x){x.classList.remove('active');});document.querySelectorAll('.ring-action-btn').forEach(function(x){x.classList.remove('active');});if(!was&amp;&amp;p){p.classList.add('active');this.classList.add('active');}">
+        <button class="ring-action-btn" data-panel="panel-vessel">
           <div class="ring-circle-icon">⚡</div>
           <span class="ring-label">СТЕЛС-ДРОН</span>
         </button>
-        <button class="ring-action-btn" data-panel="panel-modules" onclick="event.stopPropagation();var p=document.getElementById('panel-modules');var was=p&amp;&amp;p.classList.contains('active');document.querySelectorAll('.concept-slide-panel').forEach(function(x){x.classList.remove('active');});document.querySelectorAll('.ring-action-btn').forEach(function(x){x.classList.remove('active');});if(!was&amp;&amp;p){p.classList.add('active');this.classList.add('active');}">
+        <button class="ring-action-btn" data-panel="panel-modules">
           <div class="ring-circle-icon">⚙️</div>
           <span class="ring-label">МОДУЛИ</span>
         </button>
-        <button class="ring-action-btn" data-panel="panel-weapons" onclick="event.stopPropagation();var p=document.getElementById('panel-weapons');var was=p&amp;&amp;p.classList.contains('active');document.querySelectorAll('.concept-slide-panel').forEach(function(x){x.classList.remove('active');});document.querySelectorAll('.ring-action-btn').forEach(function(x){x.classList.remove('active');});if(!was&amp;&amp;p){p.classList.add('active');this.classList.add('active');}">
+        <button class="ring-action-btn" data-panel="panel-weapons">
           <div class="ring-circle-icon">🎯</div>
           <span class="ring-label">ВООРУЖЕНИЕ</span>
         </button>
-        <button class="ring-action-btn" data-panel="panel-contracts" onclick="event.stopPropagation();var p=document.getElementById('panel-contracts');var was=p&amp;&amp;p.classList.contains('active');document.querySelectorAll('.concept-slide-panel').forEach(function(x){x.classList.remove('active');});document.querySelectorAll('.ring-action-btn').forEach(function(x){x.classList.remove('active');});if(!was&amp;&amp;p){p.classList.add('active');this.classList.add('active');}">
+        <button class="ring-action-btn" data-panel="panel-contracts">
           <div class="ring-circle-icon">📜</div>
           <span class="ring-label">КОНТРАКТЫ</span>
         </button>
-        <button class="ring-action-btn" id="btn-open-techtree" onclick="event.stopPropagation();var m=document.getElementById('techtree-modal');if(m)m.classList.add('active');try{window.barracudaGame&amp;&amp;window.barracudaGame.refreshTechTree();}catch(e){}">
+        <button class="ring-action-btn" id="btn-open-techtree">
           <div class="ring-circle-icon">🔬</div>
           <span class="ring-label">ДЕРЕВО ТЕХНОЛОГИЙ</span>
         </button>
@@ -409,7 +409,7 @@
       </div>
       <div class="bottom-mission-subrow">
         <span class="mission-tag">СТЕХ-УДАР: FPV-ДРОН ВЫСОКОЙ ДАЛЬНОСТИ</span>
-        <button id="btn-assault" class="btn-concept-strike" onclick="event.stopPropagation();if(window.barracudaGame)window.barracudaGame.startAssault();">ЗАПУСК FPV-ШТУРМА</button>
+        <button id="btn-assault" class="btn-concept-strike">ЗАПУСК FPV-ШТУРМА</button>
       </div>
     </footer>
 
@@ -705,6 +705,10 @@
         <button class="btn-victory-claim" id="btn-victory-claim">
           <span class="btn-icon">⚓</span> ЗАБРАТЬ КУШ И В ШТАБ
         </button>
+      </div>
+    </div>
+  </div>
+
   <!-- =========================================================================
        MOBILE COMMAND DRAWER MODAL (Compact Mobile Menu)
        ========================================================================= -->
@@ -775,7 +779,7 @@
     <div class="tactical-modal-card">
       <div class="modal-card-header">
         <h2 class="modal-card-title">🗺️ ТЕАТР БОЕВЫХ ДЕЙСТВИЙ // ЧЁРНОЕ МОРЕ</h2>
-        <button class="btn-close-modal" id="btn-close-map" onclick="event.stopPropagation();var m=document.getElementById('map-modal');if(m)m.classList.remove('active');">✕</button>
+        <button class="btn-close-modal" id="btn-close-map">✕</button>
       </div>
       <p class="modal-card-desc">Выберите сектор развёртывания. Каждый район меняет погоду 3D-океана, вражеские корабли и множители наград.</p>
       <div class="sector-cards-grid">
@@ -813,7 +817,7 @@
     <div class="tactical-modal-card cyber-card">
       <div class="modal-card-header">
         <h2 class="modal-card-title">📡 РЭБ // ДЕШИФРОВКА РАДИОСПЕКТРА</h2>
-        <button class="btn-close-modal" id="btn-close-cyber" onclick="event.stopPropagation();var m=document.getElementById('cyber-modal');if(m)m.classList.remove('active');if(window.barracudaGame)window.barracudaGame.cyberHackActive=false;">✕</button>
+        <button class="btn-close-modal" id="btn-close-cyber">✕</button>
       </div>
       <p class="modal-card-desc">Совместите частоту перехвата с несущей волной вражеского радара для извлечения разведданных. <strong>Время ограничено!</strong></p>
       <p id="cyber-timer-label" class="cyber-timer-display">ТАЙМЕР: 30с</p>
@@ -875,7 +879,7 @@
   <!-- HELP / TACTICAL MANUAL MODAL -->
   <div id="help-modal" class="help-modal-overlay">
     <div class="help-modal-content">
-      <button class="help-close-btn" id="btn-close-help" title="Закрыть руководство" onclick="event.stopPropagation();var m=document.getElementById('help-modal');if(m)m.classList.remove('active');">✕</button>
+      <button class="help-close-btn" id="btn-close-help" title="Закрыть руководство">✕</button>
       
       <div class="help-header">
         <div class="help-badge">ИНСТРУКЦИЯ ОПЕРАТОРА // СЕКРЕТНО</div>
@@ -948,7 +952,7 @@
   <!-- TECH TREE MODAL (TACTICAL R&D MATRIX) -->
   <div id="techtree-modal" class="help-modal-overlay">
     <div class="help-modal-content tt-modal-container">
-      <button class="help-close-btn" id="btn-close-techtree" title="Закрыть НИОКР" onclick="event.stopPropagation();var m=document.getElementById('techtree-modal');if(m)m.classList.remove('active');">✕</button>
+      <button class="help-close-btn" id="btn-close-techtree" title="Закрыть НИОКР">✕</button>
       
       <!-- Tech Tree Top Header -->
       <div class="tt-top-header">
@@ -1205,7 +1209,7 @@
     <div class="help-modal-content" style="max-width: 480px;">
       <div class="help-modal-header">
         <h2>⚙️ НАСТРОЙКИ СИСТЕМЫ</h2>
-        <button class="btn-close-help" id="btn-close-settings" onclick="event.stopPropagation();var m=document.getElementById('settings-modal');if(m)m.classList.remove('active');">✕</button>
+        <button class="btn-close-help" id="btn-close-settings">✕</button>
       </div>
       <div class="help-modal-body">
         <div class="help-section">
@@ -1252,7 +1256,7 @@
   <!-- CAMPAIGN STORY OPERATIONS MODAL -->
   <div id="campaign-modal" class="help-modal-overlay">
     <div class="help-modal-content campaign-modal-container">
-      <button class="help-close-btn" id="btn-close-campaign" title="Закрыть операции" onclick="event.stopPropagation();var m=document.getElementById('campaign-modal');if(m)m.classList.remove('active');">✕</button>
+      <button class="help-close-btn" id="btn-close-campaign" title="Закрыть операции">✕</button>
       
       <div style="text-align:center; margin-bottom:16px;">
         <div style="font-family:'Rajdhani',monospace; font-size:11px; color:#00ff88; letter-spacing:2px;">OPERATIONAL COMMAND // DNIPRO RIVER THEATER</div>
@@ -1291,7 +1295,7 @@
   <!-- DRONE HANGAR & SALVAGE/CRAFTING FORGE MODAL -->
   <div id="hangar-modal" class="help-modal-overlay">
     <div class="help-modal-content hangar-modal-container">
-      <button class="help-close-btn" id="btn-close-hangar" title="Закрыть ангар" onclick="event.stopPropagation();var m=document.getElementById('hangar-modal');if(m)m.classList.remove('active');">✕</button>
+      <button class="help-close-btn" id="btn-close-hangar" title="Закрыть ангар">✕</button>
 
       <div style="text-align:center; margin-bottom:18px;">
         <div style="font-family:'Rajdhani',monospace; font-size:11px; color:#00f0ff; letter-spacing:2px;">NAVAL DRONE YARD // PROTOYPE HANGAR</div>
@@ -1520,7 +1524,7 @@
           <span class="th-badge">АРСЕНАЛ v3.5</span>
           <h2>🛰️ ЦЕНТР ТАКТИЧЕСКИХ СИСТЕМ И ИСПЫТАНИЙ</h2>
         </div>
-        <button class="btn-close-modal" id="btn-close-tactical-hub" onclick="event.stopPropagation();var m=document.getElementById('tactical-hub-modal');if(m)m.classList.remove('active');">✕</button>
+        <button class="btn-close-modal" id="btn-close-tactical-hub">✕</button>
       </div>
       <p class="tactical-hub-sub">Прямой доступ к новым тактическим модулям симулятора БПА «Барракуда». Протестируйте каждую систему в действии:</p>
       
@@ -1611,6 +1615,6 @@
   <!-- Audio, 3D Engine & Game Logic -->
   <script src="audio.js?v=3.5.4"></script>
   <script src="drone3d.js?v=3.5.4"></script>
-  <script src="game.js?v=3.5.4"></script>
+  <script type="module" src="./src/main.js"></script>
 </body>
 </html>

@@ -4,21 +4,42 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>BARRACUDA // Автономный Ударный Дрон</title>
-  <meta name="description" content="Тактический симулятор боевого надводного дрона Барракуда с реалистичной 3D-моделью.">
-  <link rel="stylesheet" href="style.css?v=3.5.0_naval_tactics">
+  <meta name="description" content="Тактический симулятор боевого надводного дрона Барракуда с реалистичной 3D-моделью.">
 
   <!-- Global Error Handler Overlay -->
   <script>
-    window.addEventListener('error', function(e) {
-      console.error('[GLOBAL ERROR]', e);
+    // Show errors on-screen for debugging
+    function _showErrorBanner(msg, file, line) {
       var b = document.getElementById('debug-error-banner');
       if (!b) {
         b = document.createElement('div');
         b.id = 'debug-error-banner';
-        b.style.cssText = 'position:fixed; top:20px; left:20px; right:20px; z-index:999999; background:rgba(220,20,20,0.95); color:#fff; font-family:monospace; padding:15px; font-size:13px; border:2px solid #ffcc00; border-radius:6px; box-shadow:0 0 20px rgba(0,0,0,0.8);';
-        document.addEventListener('DOMContentLoaded', function() { document.body.appendChild(b); });
+        b.style.cssText = 'position:fixed; bottom:80px; left:20px; right:20px; z-index:999999; background:rgba(180,10,10,0.97); color:#fff; font-family:monospace; padding:12px; font-size:11px; border:2px solid #ffcc00; border-radius:6px; box-shadow:0 0 20px rgba(0,0,0,0.8); max-height:40vh; overflow:auto; cursor:pointer;';
+        b.title = 'Нажми чтобы закрыть';
+        b.onclick = function() { b.remove(); };
+        document.body ? document.body.appendChild(b) : document.addEventListener('DOMContentLoaded', function() { document.body.appendChild(b); });
       }
-      b.innerHTML += '<div style="margin-bottom:6px;">⚠️ <b>JS ОШИБКА:</b> ' + (e.message || e) + '<br><small style="color:#ffcccc;">Файл: ' + (e.filename ? e.filename.split('/').pop() : 'script') + ' : строка ' + e.lineno + '</small></div>';
+      b.innerHTML += '<div style="margin-bottom:4px; border-bottom:1px solid rgba(255,255,255,0.2); padding-bottom:4px;">⚠️ <b>' + msg + '</b>' + (file ? '<br><small style="color:#ffcccc">' + file + (line ? ':' + line : '') + '</small>' : '') + '</div>';
+    }
+    window.addEventListener('error', function(e) {
+      _showErrorBanner((e.message || e), e.filename ? e.filename.split('/').pop() : '', e.lineno);
+    });
+    window.addEventListener('unhandledrejection', function(e) {
+      _showErrorBanner('PROMISE: ' + (e.reason && e.reason.message ? e.reason.message : e.reason), '', '');
+    });
+    // Intercept console.error so try/catch errors also appear on screen
+    var _origErr = console.error.bind(console);
+    console.error = function() {
+      _origErr.apply(console, arguments);
+      var msg = Array.from(arguments).map(function(a){ return (a && a.message) ? a.message : String(a); }).join(' ');
+      _showErrorBanner(msg, '', '');
+    };
+
+    // Fallback proxy for tacticalAudio - prevents crashes if audio fails to init
+    window.tacticalAudio = new Proxy({}, {
+      get: function(_, prop) {
+        return function() {}; // no-op for all method calls
+      }
     });
   </script>
 
@@ -27,6 +48,8 @@
   <script src="libs/GLTFLoader.js"></script>
   <script src="libs/Water.js"></script>
   <script src="libs/Sky.js"></script>
+  <script type="module" crossorigin src="/assets/index-DnFTHnG6.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-D5nOej_3.css">
 </head>
 <body>
 
@@ -71,15 +94,15 @@
       <!-- Row 1: Nav Bar -->
       <div class="top-nav-row">
         <button class="btn-tactical-pause" id="btn-toggle-tma" title="Скрыть/Показать HUD">👁️</button>
-        <button class="btn-dossier-pill btn-nav-campaign" id="btn-open-campaign" title="Сюжетная кампания" style="border-color:rgba(0,255,136,0.6); background:rgba(0,255,136,0.15); color:#00ff88;">
+        <button class="btn-dossier-pill btn-nav-campaign" id="btn-open-campaign" title="Операции" style="border-color:rgba(0,255,136,0.6); background:rgba(0,255,136,0.15); color:#00ff88;">
           <span class="dossier-pill-icon">⚔️</span>
           <span class="dossier-pill-text">ОПЕРАЦИИ</span>
         </button>
-        <button class="btn-dossier-pill btn-nav-hangar" id="btn-open-hangar" title="Ангар и крафт" style="border-color:rgba(0,240,255,0.6); background:rgba(0,240,255,0.12); color:#00f0ff;">
+        <button class="btn-dossier-pill btn-nav-hangar" id="btn-open-hangar" title="Ангар" style="border-color:rgba(0,240,255,0.6); background:rgba(0,240,255,0.12); color:#00f0ff;">
           <span class="dossier-pill-icon">⚓</span>
           <span class="dossier-pill-text">АНГАР</span>
         </button>
-        <button class="btn-dossier-pill btn-nav-tactical" id="btn-open-tactical-hub" title="Тактический арсенал и испытания v3.5" style="border-color:rgba(0,255,200,0.8); background:rgba(0,255,200,0.18); color:#00ffcc; font-weight:700;">
+        <button class="btn-dossier-pill btn-nav-tactical" id="btn-open-tactical-hub" title="Тактика" style="border-color:rgba(0,255,200,0.8); background:rgba(0,255,200,0.18); color:#00ffcc; font-weight:700;">
           <span class="dossier-pill-icon">🛰️</span>
           <span class="dossier-pill-text">ТАКТИКА</span>
         </button>
@@ -92,7 +115,7 @@
           <span class="dossier-pill-text">ДОСЬЕ</span>
           <span class="dossier-unread-dot" id="dossier-unread-beacon"></span>
         </button>
-        <button class="btn-sector-pill btn-desktop-only" id="btn-open-map" title="Карта спецопераций">
+        <button class="btn-sector-pill btn-desktop-only" id="btn-open-map" title="Карта">
           <span class="sector-badge-icon">🗺️</span>
           <span id="label-current-sector" class="sector-badge-name">О. ЗМЕИНЫЙ</span>
         </button>
@@ -134,27 +157,27 @@
 
     <!-- QUICK COMBAT ACTIONS BAR (FLIR, SIGINT РЭБ, ПУСК FPV, СОНАР, ROV, ТЕСТ VSA) -->
     <div class="quick-combat-actions-bar">
-      <button class="combat-quick-btn flir-btn" id="btn-open-flir" title="Включить оптический тепловизор FLIR">
+      <button class="combat-quick-btn flir-btn" id="btn-open-flir" title="FLIR тепловизор">
         <span class="cq-icon">🎯</span>
         <span class="cq-text">FLIR</span>
       </button>
-      <button class="combat-quick-btn reb-btn" id="btn-open-cyber" title="Взлом радиочастот РЭБ">
+      <button class="combat-quick-btn reb-btn" id="btn-open-cyber" title="Взлом РЭБ">
         <span class="cq-icon">📡</span>
         <span class="cq-text">ВЗЛОМ РЭБ</span>
       </button>
-      <button class="combat-quick-btn missile-btn" id="btn-direct-missile" title="Пуск боевого FPV-дрона по судну">
+      <button class="combat-quick-btn missile-btn" id="btn-direct-missile" title="Пуск FPV-дрона">
         <span class="cq-icon">🛸</span>
         <span class="cq-text">ПУСК FPV</span>
       </button>
-      <button class="combat-quick-btn sonar-btn" id="btn-quick-sonar" title="Открыть 3D-сонар бокового обзора">
+      <button class="combat-quick-btn sonar-btn" id="btn-quick-sonar" title="Сонар 3D">
         <span class="cq-icon">📡</span>
         <span class="cq-text">СОНАР 3D</span>
       </button>
-      <button class="combat-quick-btn rov-btn" id="btn-quick-rov" title="Спустить подводный микро-ROV">
+      <button class="combat-quick-btn rov-btn" id="btn-quick-rov" title="Микро-ROV">
         <span class="cq-icon">🔮</span>
         <span class="cq-text">МИКРО-ROV</span>
       </button>
-      <button class="combat-quick-btn boat-btn" id="btn-quick-boat" title="Тест-драйв катера (VSA / Дрифт)">
+      <button class="combat-quick-btn boat-btn" id="btn-quick-boat" title="Тест VSA">
         <span class="cq-icon">🚤</span>
         <span class="cq-text">ТЕСТ VSA</span>
       </button>
@@ -683,6 +706,10 @@
         <button class="btn-victory-claim" id="btn-victory-claim">
           <span class="btn-icon">⚓</span> ЗАБРАТЬ КУШ И В ШТАБ
         </button>
+      </div>
+    </div>
+  </div>
+
   <!-- =========================================================================
        MOBILE COMMAND DRAWER MODAL (Compact Mobile Menu)
        ========================================================================= -->
@@ -1178,164 +1205,6 @@
     </div>
   </div>
 
-  <div id="help-modal" class="help-modal-overlay">
-    <div class="help-modal-content">
-      <div class="help-modal-header">
-        <h2>📖 ТАКТИЧЕСКОЕ РУКОВОДСТВО — BARRACUDA</h2>
-        <button class="btn-close-help" id="btn-close-help">✕</button>
-      </div>
-      <div class="help-modal-body">
-
-        <div class="help-section">
-          <h3>🎮 ОБЗОР ИГРЫ</h3>
-          <p>Вы управляете боевым морским дроном <strong>«Баракуда»</strong> — тактическим беспилотным катером для разведки и ударных операций. Собирайте <strong>разведданные (МБ)</strong>, зарабатывайте <strong>кредиты ($)</strong>, улучшайте корабль и выполняйте миссии.</p>
-        </div>
-
-        <div class="help-section">
-          <h3>💰 РЕСУРСЫ</h3>
-          <div class="help-grid">
-            <div class="help-item">
-              <span class="help-icon">📊</span>
-              <div><strong>Буфер (МБ)</strong> — разведданные. Заполни буфер кликами и пассивным доходом. Когда буфер полон — можно запускать FPV-штурм.</div>
-            </div>
-            <div class="help-item">
-              <span class="help-icon">💵</span>
-              <div><strong>Кредиты ($)</strong> — валюта для покупки улучшений. Зарабатывается от пассивного дохода, контрактов и мини-игр.</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="help-section">
-          <h3>🖱️ ОСНОВНЫЕ ДЕЙСТВИЯ</h3>
-          <div class="help-grid">
-            <div class="help-item">
-              <span class="help-icon">👆</span>
-              <div><strong>Клик по дрону</strong> — основной способ сбора данных. Каждый клик = +МБ в буфер. Бывают <em>критические удары</em> (x2 урон, зелёная вспышка).</div>
-            </div>
-            <div class="help-item">
-              <span class="help-icon">⚡</span>
-              <div><strong>Разгон</strong> — временный буст (x2.5 к пассиву на 8 секунд). Кнопка внизу экрана. Кулдаун 25 секунд.</div>
-            </div>
-            <div class="help-item">
-              <span class="help-icon">🚀</span>
-              <div><strong>FPV-Штурм</strong> — главная мини-игра. Доступна когда буфер заполнен на 100%. Поражение = потеря данных.</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="help-section">
-          <h3>🚀 FPV-ШТУРМ (Мини-игра)</h3>
-          <p>Мини-игра из 5 фаз:</p>
-          <div class="help-grid">
-            <div class="help-item">
-              <span class="help-icon">1️⃣</span>
-              <div><strong>Катапульта</strong> — нажмите <kbd>ПРОБЕЛ</kbd> когда маркер в зелёной зоне. Попадание в центр = «Идеальный запуск» (бонус).</div>
-            </div>
-            <div class="help-item">
-              <span class="help-icon">2️⃣</span>
-              <div><strong>Прорыв ПВО</strong> — жмите <kbd>ПРОБЕЛ</kbd> для подъёма дрона. Уклоняйтесь от стен, радарных лучей и ракет-перехватчиков. Собирайте 💠 данные.</div>
-            </div>
-            <div class="help-item">
-              <span class="help-icon">3️⃣</span>
-              <div><strong>Термальный захват</strong> — наведите мышь на корабль-цель и удерживайте прицел 2 секунды для захвата.</div>
-            </div>
-            <div class="help-item">
-              <span class="help-icon">4️⃣</span>
-              <div><strong>Взрыв</strong> — кинематическая сцена поражения цели.</div>
-            </div>
-            <div class="help-item">
-              <span class="help-icon">5️⃣</span>
-              <div><strong>Рейтинг S/A/B/C</strong> — оценка по скорости, точности и бонусам. S = x2 награды!</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="help-section">
-          <h3>📡 ВЗЛОМ РЭБ (SIGINT)</h3>
-          <p>Совместите <strong>частоту</strong> и <strong>амплитуду</strong> волны с вражеским сигналом. Есть <strong>30 секунд</strong> на каждый канал. Всего 3 канала — каждый следующий сложнее. Остерегайтесь <em>помех</em>!</p>
-        </div>
-
-        <div class="help-section">
-          <h3>🛠️ УЛУЧШЕНИЯ</h3>
-          <p>Панель слева — кнопка <strong>ДОСЬЕ</strong>. Там два раздела:</p>
-          <div class="help-grid">
-            <div class="help-item">
-              <span class="help-icon">⚙️</span>
-              <div><strong>Вооружение</strong> — ракеты, оптика, броня, водомёты. Каждое улучшение отображается на 3D-модели корабля.</div>
-            </div>
-            <div class="help-item">
-              <span class="help-icon">💻</span>
-              <div><strong>Кибер-модули</strong> — SATCOM, анализатор, квантовый процессор, авто-сифон. Улучшают пассивный доход и сбор данных.</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="help-section">
-          <h3>🗺️ СЕКТОРЫ</h3>
-          <p>4 сектора с уникальной погодой и бонусами. Разблокируются за кредиты:</p>
-          <div class="help-grid">
-            <div class="help-item">
-              <span class="help-icon">🌊</span>
-              <div><strong>О. Змеиный</strong> — шторм, начальный сектор. Бонус: +10% к данным.</div>
-            </div>
-            <div class="help-item">
-              <span class="help-icon">🌙</span>
-              <div><strong>Севастополь</strong> — ночь. Бонус: +15% к кредитам.</div>
-            </div>
-            <div class="help-item">
-              <span class="help-icon">🌅</span>
-              <div><strong>Новороссийск</strong> — закат. Бонус: +20% к пассиву.</div>
-            </div>
-            <div class="help-item">
-              <span class="help-icon">🌄</span>
-              <div><strong>Керчь</strong> — рассвет. Бонус: +25% ко всему.</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="help-section">
-          <h3>📐 ПРЕСТИЖ (Чертежи)</h3>
-          <p>Когда заполните <strong>10 кораблей</strong> (потопите 10 целей) — можно сделать <strong>Престиж</strong>. Это сбросит прогресс, но даст <strong>Чертёж</strong> — постоянный множитель ко всему. Каждый престиж делает игру сложнее, но награднее.</p>
-        </div>
-
-        <div class="help-section">
-          <h3>⚡ СЛУЧАЙНЫЕ СОБЫТИЯ</h3>
-          <p>Каждые 30–75 секунд может случиться случайное событие:</p>
-          <div class="help-grid">
-            <div class="help-item">
-              <span class="help-icon">⚠️</span>
-              <div><strong>Вражеский патруль</strong> — кликните 20 раз за 12 секунд или потеряете данные!</div>
-            </div>
-            <div class="help-item">
-              <span class="help-icon">📡</span>
-              <div><strong>Подводный кабель</strong> — бесплатные данные и кредиты.</div>
-            </div>
-            <div class="help-item">
-              <span class="help-icon">⚡</span>
-              <div><strong>ЭМ-помеха</strong> — пассив отключится, затем усилится в 3 раза.</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="help-section">
-          <h3>🏆 ДОСТИЖЕНИЯ</h3>
-          <p>15 достижений за различные действия. Уведомления появляются в правом верхнем углу. Прогресс сохраняется автоматически.</p>
-        </div>
-
-        <div class="help-section help-tips">
-          <h3>💡 СОВЕТЫ</h3>
-          <ul>
-            <li>Кликайте быстрее во время <strong>Разгона</strong> — эффект суммируется!</li>
-            <li>В FPV-штурме собирайте <strong>💠 дата-пакеты</strong> — они дают МБ-бонус</li>
-            <li>Взлом РЭБ — <strong>3 канала подряд</strong> дают x3 награду</li>
-            <li>Контракты — <strong>пассивный заработок</strong>, запускайте всегда когда возможно</li>
-            <li>Прогресс <strong>автосохраняется</strong> каждые 30 секунд</li>
-          </ul>
-        </div>
-      </div>
-    </div>
-  </div>
-
   <!-- SETTINGS MODAL -->
   <div id="settings-modal" class="help-modal-overlay">
     <div class="help-modal-content" style="max-width: 480px;">
@@ -1745,8 +1614,7 @@
   </div>
 
   <!-- Audio, 3D Engine & Game Logic -->
-  <script src="audio.js?v=3.5.0_naval_tactics"></script>
-  <script src="drone3d.js?v=3.5.0_naval_tactics"></script>
-  <script src="game.js?v=3.5.0_naval_tactics"></script>
+  <script src="audio.js?v=3.5.4"></script>
+  <script src="drone3d.js?v=3.5.4"></script>
 </body>
 </html>
