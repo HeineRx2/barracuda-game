@@ -2680,17 +2680,17 @@ class BarracudaGame {
     this.btnCloseMap = document.getElementById('btn-close-map');
     this.lblCurrentSector = document.getElementById('label-current-sector');
 
-    store.state.cyberModal = document.getElementById('cyber-modal');
+    this.cyberModal = document.getElementById('cyber-modal');
     this.btnOpenCyber = document.getElementById('btn-open-cyber');
     this.btnCloseCyber = document.getElementById('btn-close-cyber');
-    store.state.cyberCanvas = document.getElementById('cyber-wave-canvas');
-    store.state.cyberSliderFreq = document.getElementById('cyber-slider-freq');
-    store.state.cyberSliderAmp = document.getElementById('cyber-slider-amp');
-    store.state.cyberFreqVal = document.getElementById('cyber-freq-val');
-    store.state.cyberAmpVal = document.getElementById('cyber-amp-val');
-    store.state.cyberMatchStatus = document.getElementById('cyber-match-status');
+    this.cyberCanvas = document.getElementById('cyber-wave-canvas');
+    this.cyberSliderFreq = document.getElementById('cyber-slider-freq');
+    this.cyberSliderAmp = document.getElementById('cyber-slider-amp');
+    this.cyberFreqVal = document.getElementById('cyber-freq-val');
+    this.cyberAmpVal = document.getElementById('cyber-amp-val');
+    this.cyberMatchStatus = document.getElementById('cyber-match-status');
     this.btnCyberSubmit = document.getElementById('btn-cyber-submit');
-    store.state.cyberTimerLabel = document.getElementById('cyber-timer-label');
+    this.cyberTimerLabel = document.getElementById('cyber-timer-label');
 
     this.assaultModal = document.getElementById('assault-modal');
     this.modalTimer = document.getElementById('modal-timer');
@@ -2872,36 +2872,36 @@ class BarracudaGame {
     // SIGINT Cyber Hack Modal — Enhanced
     if (this.btnOpenCyber) {
       this.btnOpenCyber.addEventListener('click', () => {
-        store.state.cyberModal?.classList.add('active');
+        this.cyberModal?.classList.add('active');
         if (window.tacticalAudio) window.tacticalAudio.playSonarPing();
         this.targetFreq = 80 + Math.floor(Math.random() * 140);
         this.targetAmp = +(0.5 + Math.random() * 1.2).toFixed(1);
-        store.state.cyberHackTimer = 30;
-        store.state.cyberHackActive = true;
-        store.state.cyberComboChannel = 0;
-        store.state.cyberInterferenceTimer = 5 + Math.random() * 5;
+        this.cyberHackTimer = 30;
+        this.cyberHackActive = true;
+        this.cyberComboChannel = 0;
+        this.cyberInterferenceTimer = 5 + Math.random() * 5;
       });
     }
 
     if (this.btnCloseCyber) {
       this.btnCloseCyber.addEventListener('click', () => {
-        store.state.cyberModal?.classList.remove('active');
-        store.state.cyberHackActive = false;
+        this.cyberModal?.classList.remove('active');
+        this.cyberHackActive = false;
       });
     }
 
-    if (store.state.cyberSliderFreq) {
-      store.state.cyberSliderFreq.addEventListener('input', (e) => {
+    if (this.cyberSliderFreq) {
+      this.cyberSliderFreq.addEventListener('input', (e) => {
         this.currentFreq = parseFloat(e.target.value);
-        if (store.state.cyberFreqVal) store.state.cyberFreqVal.textContent = this.currentFreq.toFixed(1);
+        if (this.cyberFreqVal) this.cyberFreqVal.textContent = this.currentFreq.toFixed(1);
         this.checkCyberMatch();
       });
     }
 
-    if (store.state.cyberSliderAmp) {
-      store.state.cyberSliderAmp.addEventListener('input', (e) => {
+    if (this.cyberSliderAmp) {
+      this.cyberSliderAmp.addEventListener('input', (e) => {
         this.currentAmp = parseFloat(e.target.value);
-        if (store.state.cyberAmpVal) store.state.cyberAmpVal.textContent = this.currentAmp.toFixed(1);
+        if (this.cyberAmpVal) this.cyberAmpVal.textContent = this.currentAmp.toFixed(1);
         this.checkCyberMatch();
       });
     }
@@ -2916,21 +2916,21 @@ class BarracudaGame {
           this.addData(50 * mult);
           store.state.totalHacks++;
           this.dailyHacks++;
-          store.state.cyberComboChannel++;
+          this.cyberComboChannel++;
 
-          if (store.state.cyberComboChannel < 3) {
+          if (this.cyberComboChannel < 3) {
             // Spawn next channel
             this.targetFreq = 80 + Math.floor(Math.random() * 140);
             this.targetAmp = +(0.5 + Math.random() * 1.2).toFixed(1);
-            store.state.cyberHackTimer = Math.max(15, 30 - store.state.cyberComboChannel * 5);
-            this.addNotification('📡 КАНАЛ ВЗЛОМАН', `Combo x${store.state.cyberComboChannel}! Следующий канал...`);
+            this.cyberHackTimer = Math.max(15, 30 - this.cyberComboChannel * 5);
+            this.addNotification('📡 КАНАЛ ВЗЛОМАН', `Combo x${this.cyberComboChannel}! Следующий канал...`);
           } else {
             // All channels hacked — big reward
             store.state.creditsUSD += 10000 * mult;
             this.addData(150 * mult);
             this.addNotification('🏆 ПОЛНЫЙ ВЗЛОМ', 'Все 3 канала дешифрованы! Мега-бонус!');
-            store.state.cyberModal?.classList.remove('active');
-            store.state.cyberHackActive = false;
+            this.cyberModal?.classList.remove('active');
+            this.cyberHackActive = false;
 
             // Check if active campaign mission in phase 1
             if (this.activeMission && this.missionPhase === 1) {
@@ -3107,9 +3107,9 @@ class BarracudaGame {
 
   checkCyberMatch() {
     const match = this.getCyberMatchPercent();
-    if (store.state.cyberMatchStatus) {
-      store.state.cyberMatchStatus.textContent = `СОВПАДЕНИЕ: ${match.toFixed(0)}% ${store.state.cyberComboChannel > 0 ? '// COMBO x' + store.state.cyberComboChannel : ''}`;
-      store.state.cyberMatchStatus.style.color = match >= 85 ? '#00ff66' : (match >= 50 ? '#ffcc00' : '#ff4444');
+    if (this.cyberMatchStatus) {
+      this.cyberMatchStatus.textContent = `СОВПАДЕНИЕ: ${match.toFixed(0)}% ${this.cyberComboChannel > 0 ? '// COMBO x' + this.cyberComboChannel : ''}`;
+      this.cyberMatchStatus.style.color = match >= 85 ? '#00ff66' : (match >= 50 ? '#ffcc00' : '#ff4444');
     }
   }
 
@@ -3122,10 +3122,10 @@ class BarracudaGame {
   }
 
   drawCyberWave(t) {
-    if (!store.state.cyberCanvas) return;
-    const ctx = store.state.cyberCanvas.getContext('2d');
-    const W = store.state.cyberCanvas.width;
-    const H = store.state.cyberCanvas.height;
+    if (!this.cyberCanvas) return;
+    const ctx = this.cyberCanvas.getContext('2d');
+    const W = this.cyberCanvas.width;
+    const H = this.cyberCanvas.height;
 
     ctx.fillStyle = '#05140e';
     ctx.fillRect(0, 0, W, H);
@@ -3137,7 +3137,7 @@ class BarracudaGame {
     for (let y = 0; y < H; y += 30) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
 
     // Interference noise overlay
-    if (store.state.cyberInterferenceActive) {
+    if (this.cyberInterferenceActive) {
       ctx.fillStyle = 'rgba(255, 40, 40, 0.06)';
       for (let i = 0; i < 30; i++) {
         ctx.fillRect(Math.random() * W, Math.random() * H, Math.random() * 40, 2);
@@ -3145,12 +3145,12 @@ class BarracudaGame {
     }
 
     // Target Wave (Cyan)
-    ctx.strokeStyle = store.state.cyberInterferenceActive ? '#ff4444' : '#00e5ff';
+    ctx.strokeStyle = this.cyberInterferenceActive ? '#ff4444' : '#00e5ff';
     ctx.lineWidth = 2;
     ctx.beginPath();
     for (let x = 0; x < W; x++) {
       let y = H / 2 + Math.sin(x * (this.targetFreq / 2500) + t * 4) * (this.targetAmp * 40);
-      if (store.state.cyberInterferenceActive) y += (Math.random() - 0.5) * 15;
+      if (this.cyberInterferenceActive) y += (Math.random() - 0.5) * 15;
       if (x === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
     }
     ctx.stroke();
@@ -3168,16 +3168,16 @@ class BarracudaGame {
     ctx.setLineDash([]);
 
     // Timer display on canvas
-    if (store.state.cyberHackActive) {
-      ctx.fillStyle = store.state.cyberHackTimer < 10 ? '#ff4444' : '#ffcc00';
+    if (this.cyberHackActive) {
+      ctx.fillStyle = this.cyberHackTimer < 10 ? '#ff4444' : '#ffcc00';
       ctx.font = 'bold 14px monospace';
       ctx.textAlign = 'right';
-      ctx.fillText(`ТАЙМЕР: ${Math.ceil(store.state.cyberHackTimer)}с`, W - 10, 20);
+      ctx.fillText(`ТАЙМЕР: ${Math.ceil(this.cyberHackTimer)}с`, W - 10, 20);
 
       // Channel indicator
       ctx.fillStyle = '#00e5ff';
       ctx.textAlign = 'left';
-      ctx.fillText(`КАНАЛ: ${store.state.cyberComboChannel + 1} / 3`, 10, 20);
+      ctx.fillText(`КАНАЛ: ${this.cyberComboChannel + 1} / 3`, 10, 20);
       ctx.textAlign = 'left';
     }
   }
@@ -3654,21 +3654,21 @@ class BarracudaGame {
       this.refreshContracts();
 
       // SIGINT Cyber Hack timer & interference
-      if (store.state.cyberHackActive) {
-        store.state.cyberHackTimer -= dt;
-        if (store.state.cyberHackTimer <= 0) {
-          store.state.cyberHackActive = false;
-          store.state.cyberModal?.classList.remove('active');
+      if (this.cyberHackActive) {
+        this.cyberHackTimer -= dt;
+        if (this.cyberHackTimer <= 0) {
+          this.cyberHackActive = false;
+          this.cyberModal?.classList.remove('active');
           this.addNotification('❌ ВРЕМЯ ВЫШЛО', 'Сигнал потерян! Взлом провален.');
         }
 
         // Interference bursts
-        store.state.cyberInterferenceTimer -= dt;
-        if (store.state.cyberInterferenceTimer <= 0) {
-          store.state.cyberInterferenceActive = true;
-          store.state.cyberInterferenceTimer = 4 + Math.random() * 6;
+        this.cyberInterferenceTimer -= dt;
+        if (this.cyberInterferenceTimer <= 0) {
+          this.cyberInterferenceActive = true;
+          this.cyberInterferenceTimer = 4 + Math.random() * 6;
           window.tacticalAudio.playCyberInterference();
-          setTimeout(() => { store.state.cyberInterferenceActive = false; }, 1500 + Math.random() * 1500);
+          setTimeout(() => { this.cyberInterferenceActive = false; }, 1500 + Math.random() * 1500);
         }
 
         // Only draw cyber wave when modal is visible
@@ -3838,7 +3838,7 @@ class BarracudaGame {
   // TECH TREE (TACTICAL R&D MATRIX)
   // =========================================================================
   initTechTree() {
-    store.state.techTreeModal = document.getElementById('techtree-modal');
+    this.techTreeModal = document.getElementById('techtree-modal');
     const openBtn = document.getElementById('btn-open-techtree');
     const closeBtn = document.getElementById('btn-close-techtree');
 
@@ -3846,7 +3846,7 @@ class BarracudaGame {
       openBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         this.refreshTechTree();
-        if (store.state.techTreeModal) store.state.techTreeModal.classList.add('active');
+        if (this.techTreeModal) this.techTreeModal.classList.add('active');
         if (this.allNodeIds && this.allNodeIds.length > 0) {
           this.selectTechNode(this.allNodeIds[this.selectedNodeIndex || 0]);
         }
@@ -3854,7 +3854,7 @@ class BarracudaGame {
     }
     if (closeBtn) {
       closeBtn.addEventListener('click', () => {
-        if (store.state.techTreeModal) store.state.techTreeModal.classList.remove('active');
+        if (this.techTreeModal) this.techTreeModal.classList.remove('active');
       });
     }
 
@@ -3876,7 +3876,7 @@ class BarracudaGame {
     });
 
     // Tech node extended specifications & lore
-    store.state.techDescriptions = {
+    this.techDescriptions = {
       sniffer: {
         icon: '📡',
         tier: 'TIER 1',
@@ -4021,7 +4021,7 @@ class BarracudaGame {
     node.classList.add('tt-selected');
 
     // Update inspector terminal
-    const info = store.state.techDescriptions[id] || {};
+    const info = this.techDescriptions[id] || {};
     const nameEl = document.getElementById('tt-detail-name');
     const iconEl = document.getElementById('tt-detail-icon');
     const tierEl = document.getElementById('tt-detail-tier');
