@@ -5,7 +5,7 @@ function safeAdd(arr, item) {
     }
 }
 
-import { DOSSIER_LORE, SECTOR_INFO, ACHIEVEMENTS_DEF, ENEMY_SHIP_CLASSES, getEnemyShipData, DRONE_PROTOTYPES_DEF, SALVAGE_CRAFT_RECIPES, CAMPAIGN_ACTS_DEF, BOSS_SHIPS, shuffleArray, RANDOM_EVENTS } from './data.js';
+import { DOSSIER_LORE, SECTOR_INFO, ACHIEVEMENTS_DEF, ENEMY_SHIP_CLASSES, getEnemyShipData, DRONE_PROTOTYPES_DEF, SALVAGE_CRAFT_RECIPES, CAMPAIGN_ACTS_DEF, BOSS_SHIPS, shuffleArray, RANDOM_EVENTS, DAILY_QUEST_TEMPLATES } from './data.js';
 import { FPVMinigame } from './fpvMinigame.js';
 import { store } from './store.js';
 
@@ -100,7 +100,7 @@ class BarracudaGame {
     this.dailyCrits = 0;
     this.dailyOverclocks = 0;
 
-    try { store.subscribe(() => this.updateHUD()); } catch(e) { console.error('[INIT] loadGame error:', e); }
+    try { store.subscribe(() => { this.updateUI(); this.updateUIElements(); }); } catch(e) { console.error('[INIT] loadGame error:', e); }
     try { this.processOfflineIncome(); } catch(e) { console.error('[INIT] processOfflineIncome error:', e); }
     try { this.initDailyQuests(); } catch(e) { console.error('[INIT] initDailyQuests error:', e); }
     try { this.init3D(); } catch(e) { console.error('[INIT] init3D error:', e); }
@@ -385,11 +385,11 @@ class BarracudaGame {
   // ACHIEVEMENTS
   // =========================================================================
   checkAchievement(id) {
-    if (store.state.unlockedAchievements.has(id)) return;
+    if (store.state.unlockedAchievements.includes(id)) return;
     const def = ACHIEVEMENTS_DEF.find(a => a.id === id);
     if (!def) return;
 
-    store.state.unlockedAchievements.add(id);
+    safeAdd(store.state.unlockedAchievements, id);
     this.addNotification(`${def.icon} ДОСТИЖЕНИЕ`, def.name);
     window.tacticalAudio.playAchievementUnlock();
     this.saveGame();
@@ -596,7 +596,7 @@ class BarracudaGame {
     const base = 5000; // 5.0 GB default capacity
     const satcomBonus = (store.state.hw.satcom || 0) * 2500;
     const snifferBonus = (store.state.cyber.sniffer || 0) * 5000;
-    const quantumBonus = (store.state.craftedModules && store.state.craftedModules.has('quantum_booster') ? 25000 : 0);
+    const quantumBonus = (store.state.craftedModules && store.state.craftedModules.includes('quantum_booster') ? 25000 : 0);
     const prestigeBonus = (store.state.blueprintsBP || 0) * 10000;
     return base + satcomBonus + snifferBonus + quantumBonus + prestigeBonus;
   }
@@ -623,7 +623,7 @@ class BarracudaGame {
 
   getCritChance() {
     let base = 0.05 + store.state.hw.optics * 0.08 + store.state.cyber.quantum * 0.12;
-    if (store.state.craftedModules && store.state.craftedModules.has('quantum_booster')) base += 0.20;
+    if (store.state.craftedModules && store.state.craftedModules.includes('quantum_booster')) base += 0.20;
     return Math.min(0.85, base);
   }
 
@@ -631,7 +631,7 @@ class BarracudaGame {
     let rate = (store.state.hw.armor * 0.2) + (store.state.hw.waterjets * 0.8) + (store.state.cyber.sniffer * 1.5);
     const proto = DRONE_PROTOTYPES_DEF[store.state.selectedPrototype] || DRONE_PROTOTYPES_DEF.phantom;
     rate *= (proto.passiveMult || 1.0);
-    if (store.state.craftedModules && store.state.craftedModules.has('escort_wingman')) rate *= 2.0;
+    if (store.state.craftedModules && store.state.craftedModules.includes('escort_wingman')) rate *= 2.0;
     if (store.state.tech.swarmAI) rate *= 2.0;
     if (this.isOverclocked) rate *= 2.0;
 
@@ -648,7 +648,7 @@ class BarracudaGame {
     let rate = 5 + store.state.cyber.autosiphon * 15;
     const proto = DRONE_PROTOTYPES_DEF[store.state.selectedPrototype] || DRONE_PROTOTYPES_DEF.phantom;
     rate *= (proto.passiveMult || 1.0);
-    if (store.state.craftedModules && store.state.craftedModules.has('escort_wingman')) rate *= 2.0;
+    if (store.state.craftedModules && store.state.craftedModules.includes('escort_wingman')) rate *= 2.0;
     rate *= this.getGlobalMultiplier();
     if (this.empState && this.empState.phase === 'down') return 0;
     if (this.empState && this.empState.phase === 'boost') rate *= 3.0;
@@ -825,9 +825,9 @@ class BarracudaGame {
     list.innerHTML = '';
 
     actData.missions.forEach((m, idx) => {
-      const isCompleted = store.state.completedMissions.has(m.id);
+      const isCompleted = store.state.completedMissions.includes(m.id);
       const isActive = this.activeMission && this.activeMission.id === m.id;
-      const isUnlocked = idx === 0 || store.state.completedMissions.has(actData.missions[idx - 1].id) || isCompleted;
+      const isUnlocked = idx === 0 || store.state.completedMissions.includes(actData.missions[idx - 1].id) || isCompleted;
 
       const card = document.createElement('div');
       card.className = `campaign-mission-card ${isActive ? 'active' : ''} ${isCompleted ? 'completed' : ''}`;
@@ -1504,7 +1504,7 @@ class BarracudaGame {
 
     if (success) {
       // Mark mission as completed + give rewards
-      store.state.completedMissions.add(this.activeMission.id);
+      safeAdd(store.state.completedMissions, this.activeMission.id);
       const m = this.activeMission;
       const usdEarned = Math.floor(m.reward.usd * this.getGlobalMultiplier());
       const mbEarned = Math.floor(m.reward.mb * this.getGlobalMultiplier());
@@ -2332,7 +2332,7 @@ class BarracudaGame {
 
     if (isVictory) {
       // 🏆 VICTORY TRIUMPH MODAL
-      if (m && m.id) store.state.completedMissions.add(m.id);
+      if (m && m.id) safeAdd(store.state.completedMissions, m.id);
 
       const scoreMult = currentSortieStats.scoreMult || 1.5;
       const usdEarned = Math.floor(m.reward.usd * 1.8 * scoreMult * this.getGlobalMultiplier());
@@ -2450,7 +2450,7 @@ class BarracudaGame {
     document.querySelectorAll('.proto-card').forEach(card => {
       const pid = card.getAttribute('data-proto');
       const isSelected = store.state.selectedPrototype === pid;
-      const isUnlocked = store.state.unlockedPrototypes.has(pid);
+      const isUnlocked = store.state.unlockedPrototypes.includes(pid);
       const proto = DRONE_PROTOTYPES_DEF[pid];
 
       card.classList.toggle('selected', isSelected);
@@ -2498,7 +2498,7 @@ class BarracudaGame {
     if (craftGrid) {
       craftGrid.innerHTML = '';
       SALVAGE_CRAFT_RECIPES.forEach(r => {
-        const isCrafted = store.state.craftedModules.has(r.id);
+        const isCrafted = store.state.craftedModules.includes(r.id);
         const card = document.createElement('div');
         card.className = 'craft-card';
 
@@ -2548,7 +2548,7 @@ class BarracudaGame {
     const proto = DRONE_PROTOTYPES_DEF[protoId];
     if (!proto) return;
 
-    if (!store.state.unlockedPrototypes.has(protoId)) {
+    if (!store.state.unlockedPrototypes.includes(protoId)) {
       if (proto.reqShips && store.state.sunkenShips < proto.reqShips) {
         this.addNotification('🔒 ЗАБЛОКИРОВАНО', `Требуется потопить ${proto.reqShips} вымпелов (Ваш счет: ${store.state.sunkenShips})`);
         return;
@@ -2573,7 +2573,7 @@ class BarracudaGame {
         }
       }
 
-      store.state.unlockedPrototypes.add(protoId);
+      safeAdd(store.state.unlockedPrototypes, protoId);
       this.addNotification('⚓ НОВЫЙ КОРПУС', `Разблокирован: ${proto.name}!`);
       if (window.tacticalAudio) window.tacticalAudio.playMountingSfx();
     }
@@ -2591,7 +2591,7 @@ class BarracudaGame {
 
   craftModule(recipeId) {
     const r = SALVAGE_CRAFT_RECIPES.find(item => item.id === recipeId);
-    if (!r || store.state.craftedModules.has(recipeId)) return;
+    if (!r || store.state.craftedModules.includes(recipeId)) return;
 
     if (r.cost.box && (store.state.salvage.box || 0) < r.cost.box) return;
     if (r.cost.chips && (store.state.salvage.chips || 0) < r.cost.chips) return;
@@ -2603,7 +2603,7 @@ class BarracudaGame {
     if (r.cost.titanium) store.state.salvage.titanium -= r.cost.titanium;
     if (r.cost.aicore) store.state.salvage.aicore -= r.cost.aicore;
 
-    store.state.craftedModules.add(recipeId);
+    safeAdd(store.state.craftedModules, recipeId);
     if (window.tacticalAudio) window.tacticalAudio.playSalvagePickup();
     this.addNotification('🛠️ МОДУЛЬ СОБРАН', `${r.name}\n${r.desc}`);
     this.checkAchievement('salvage_master');
@@ -3035,7 +3035,7 @@ class BarracudaGame {
   // =========================================================================
   changeSector(sectorId) {
     this.currentSector = sectorId;
-    store.state.visitedSectors.add(sectorId);
+    safeAdd(store.state.visitedSectors, sectorId);
     const info = SECTOR_INFO[sectorId];
     if (info && this.lblCurrentSector) {
       this.lblCurrentSector.textContent = info.name;
@@ -3405,7 +3405,7 @@ class BarracudaGame {
 
     const proto = DRONE_PROTOTYPES_DEF[store.state.selectedPrototype] || DRONE_PROTOTYPES_DEF.phantom;
     let extraArmor = store.state.hw.armor + (proto.fpvExtraLives || 0) * 2;
-    if (store.state.craftedModules && store.state.craftedModules.has('armor_titan')) extraArmor += 2;
+    if (store.state.craftedModules && store.state.craftedModules.includes('armor_titan')) extraArmor += 2;
 
     this.fpvGame.setDifficulty(store.state.blueprintsBP, extraArmor, store.state.tech.ghost_protocol || proto.id === 'phantom');
     this.fpvGame.start(this.fpvCanvas);
@@ -3484,7 +3484,7 @@ class BarracudaGame {
       const ratingMults = { S: 2.0, A: 1.5, B: 1.2, C: 1.0 };
       const rMult = ratingMults[this.lastAssaultRating] || 1.0;
       let bossMult = this.bossActive && this.currentBoss ? this.currentBoss.rewardMult : 1.0;
-      if (store.state.craftedModules && store.state.craftedModules.has('plasma_warhead')) bossMult *= 2.0;
+      if (store.state.craftedModules && store.state.craftedModules.includes('plasma_warhead')) bossMult *= 2.0;
 
       store.state.blueprintsBP++;
       store.state.creditsUSD += Math.floor(15000 * rMult * bossMult);
@@ -3688,7 +3688,7 @@ class BarracudaGame {
         this._uiThrottleAccum = 0;
         this._uiDirty = false;
         this.updateUI();
-        this.updateUIElements();
+        this.updateUI(); this.updateUIElements();
       }
 
       // === THROTTLED ACHIEVEMENT CHECK (every 2 sec) ===
@@ -4125,7 +4125,7 @@ class BarracudaGame {
     
     this.refreshTechTree();
     this.selectTechNode(id);
-    this.updateUIElements();
+    this.updateUI(); this.updateUIElements();
     this.saveGame();
     this._uiDirty = true;
   }
@@ -4626,10 +4626,10 @@ class BarracudaGame {
     }
 
     // Apply crafted upgrades
-    if (store.state.craftedModules.has('non_magnetic_hull') && this.engine3D) {
+    if (store.state.craftedModules.includes('non_magnetic_hull') && this.engine3D) {
       this.engine3D.setNonMagneticHull(true);
     }
-    if (store.state.craftedModules.has('ai_jetson_module') && this.engine3D) {
+    if (store.state.craftedModules.includes('ai_jetson_module') && this.engine3D) {
       this.engine3D.setFpvAiModule(true);
     }
   }

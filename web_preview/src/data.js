@@ -698,3 +698,15 @@ export const RANDOM_EVENTS = [
 // ==============================================
 // FPV DRONE MULTI-PHASE MINIGAME ENGINE v2
 // ==============================================
+
+
+// =========================================================================
+// DAILY QUEST TEMPLATES
+// =========================================================================
+export const DAILY_QUEST_TEMPLATES = [
+  { id: 'dq_clicks', type: 'clicks', target: 500, rewardUSD: 500, rewardMB: 100, desc: 'Выполнить 500 кликов (SIGINT)' },
+  { id: 'dq_hacks', type: 'hacks', target: 10, rewardUSD: 800, rewardMB: 150, desc: 'Успешно взломать 10 частот РЭБ' },
+  { id: 'dq_fpv', type: 'fpv', target: 3, rewardUSD: 1000, rewardMB: 200, desc: 'Успешно завершить 3 FPV-штурма' },
+  { id: 'dq_boss', type: 'boss', target: 1, rewardUSD: 2000, rewardMB: 500, desc: 'Потопить 1 корабль класса БОСС' },
+  { id: 'dq_craft', type: 'craft', target: 1, rewardUSD: 600, rewardMB: 50, desc: 'Скрафтить любой модуль в Ангаре' }
+];
