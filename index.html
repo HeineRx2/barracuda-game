@@ -88,6 +88,8 @@
   <!-- Main Military HUD Frame -->
   <div id="game-frame">
 
+  <!-- Main Interface Layer (Hides during minigames) -->
+  <div id="main-hud-layer">
     <!-- TOP BAR: Controls, Balances, Booster, Mini-Radar -->
     <header class="top-hud-bar">
       <!-- Row 1: Nav Bar -->
@@ -517,6 +519,8 @@
     </div>
   </div>
 
+  </div> <!-- End main-hud-layer -->
+
   <!-- =========================================================================
        1ST-PERSON FPV KAMIKAZE DRONE OSD HUD OVERLAY
        ========================================================================= -->
@@ -533,6 +537,35 @@
       <div class="fpv-osd-chip" id="fpv-osd-rssi">📶 RSSI: -42dBm (98%)</div>
       <div class="fpv-osd-chip" id="fpv-osd-timer">⏱️ 00:00</div>
     </header>
+
+    <!-- FPV Gyro Stabilization Minigame Overlay -->
+    <div id="fpv-gyro-minigame" class="fpv-gyro-container" style="display: none; position: absolute; top: 15%; left: 50%; transform: translateX(-50%); z-index: 1000; width: 90vw; max-width: 400px; text-align: center; background: rgba(10,0,0,0.8); border: 2px solid red; padding: 20px; border-radius: 12px; box-shadow: 0 0 30px rgba(255,0,0,0.4); backdrop-filter: blur(10px);">
+      <div style="color: #ff3333; font-weight: bold; font-size: 18px; margin-bottom: 5px;">⚠️ ПРЕДУПРЕЖДЕНИЕ: СБОЙ ГИРОСКОПА ⚠️</div>
+      <div style="color: #ccc; font-size: 13px; margin-bottom: 20px;">Калибровка перед ударом: удерживайте маркер в центре!</div>
+      
+      <div style="position: relative; width: 200px; height: 200px; border: 2px solid #555; border-radius: 50%; margin: 0 auto 20px auto; background: repeating-radial-gradient(circle at center, rgba(0,255,0,0.1) 0, rgba(0,255,0,0.1) 20px, transparent 20px, transparent 40px);">
+        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 40px; height: 40px; border: 2px solid #0f0; border-radius: 50%; box-shadow: 0 0 10px #0f0;"></div>
+        <div id="gyro-marker" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 16px; height: 16px; background: red; border-radius: 50%; box-shadow: 0 0 10px red;"></div>
+      </div>
+
+      <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+        <div style="flex: 1;">
+          <div style="color: #0fc; font-size: 12px; margin-bottom: 5px;">ТАНГАЖ</div>
+          <input type="range" id="gyro-slider-pitch" min="-50" max="50" value="0" style="width: 100%;">
+        </div>
+        <div style="flex: 1;">
+          <div style="color: #0fc; font-size: 12px; margin-bottom: 5px;">КРЕН</div>
+          <input type="range" id="gyro-slider-roll" min="-50" max="50" value="0" style="width: 100%;">
+        </div>
+      </div>
+      
+      <div style="background: rgba(0,255,0,0.1); border: 1px solid #0f0; border-radius: 6px; padding: 10px;">
+        <div style="color: #0f0; font-size: 14px; margin-bottom: 5px;">КАЛИБРОВКА: <b id="gyro-pct">0%</b></div>
+        <div style="height: 8px; background: rgba(255,255,255,0.2); border-radius: 4px; overflow: hidden;">
+          <div id="gyro-fill" style="width: 0%; height: 100%; background: #0f0; transition: width 0.1s;"></div>
+        </div>
+      </div>
+    </div>
 
     <!-- Center Pitch Ladder & Artificial Horizon -->
     <div class="fpv-center-osd">
