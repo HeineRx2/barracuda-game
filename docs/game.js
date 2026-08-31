@@ -6586,6 +6586,8 @@ class BarracudaGame {
         }
       });
     }
+  }
+
   initGyroMinigame() {
     this.gyroActive = false;
     this.gyroPitchTrim = 0;
@@ -6657,7 +6659,6 @@ class BarracudaGame {
       if (window.tacticalAudio) window.tacticalAudio.playSonarPing();
     }
   }
-}
 }
 
 window.addEventListener('DOMContentLoaded', () => {
