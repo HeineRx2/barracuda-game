@@ -1,16 +1,43 @@
 @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700;800&family=Share+Tech+Mono&display=swap');
 
 :root {
-  --tactical-green: #00ff66;
-  --tactical-green-dim: #00883a;
-  --tactical-green-glow: rgba(0, 255, 102, 0.45);
-  --hud-bg-glass: rgba(6, 16, 22, 0.86);
-  --hud-bg-elevated: rgba(8, 22, 30, 0.94);
-  --hud-border: rgba(0, 255, 102, 0.35);
-  --hud-border-cyan: rgba(0, 229, 255, 0.45);
-  --credit-cyan: #00e5ff;
-  --hazard-yellow: #ffcc00;
-  --alarm-red: #ff2a2a;
+  /* Premium Sci-Fi Palette */
+  --tactical-green: #00ff88;
+  --tactical-green-dim: #008844;
+  --tactical-green-glow: rgba(0, 255, 136, 0.45);
+  
+  --credit-cyan: #00f0ff;
+  --credit-cyan-glow: rgba(0, 240, 255, 0.45);
+  
+  --hazard-yellow: #ffb700;
+  --hazard-orange: #ff5500;
+  --alarm-red: #ff2233;
+  --alarm-red-glow: rgba(255, 34, 51, 0.5);
+
+  /* Deep Sea / Military HUD Backgrounds */
+  --hud-bg-glass: rgba(2, 8, 14, 0.65);
+  --hud-bg-elevated: rgba(4, 12, 20, 0.85);
+  
+  /* Borders and Highlights */
+  --hud-border: rgba(0, 255, 136, 0.3);
+  --hud-border-cyan: rgba(0, 240, 255, 0.3);
+  --hud-border-bright: rgba(0, 255, 136, 0.8);
+
+  /* Typography */
+  --font-hud: 'Share Tech Mono', monospace;
+  --font-ui: 'Rajdhani', sans-serif;
+  
+  /* Glow FX */
+  --text-glow-green: 0 0 5px var(--tactical-green-glow), 0 0 10px var(--tactical-green-glow);
+  --text-glow-cyan: 0 0 5px var(--credit-cyan-glow), 0 0 10px var(--credit-cyan-glow);
+  --box-glow-green: 0 0 15px var(--tactical-green-glow), inset 0 0 10px rgba(0, 255, 136, 0.1);
+  --box-glow-cyan: 0 0 15px var(--credit-cyan-glow), inset 0 0 10px rgba(0, 240, 255, 0.1);
+  
+  /* Hard Edge / Cut Corner Polygons */
+  --cut-corner: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+  --cut-corner-reverse: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+  --cut-corner-bottom: polygon(0 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 12px 100%, 0 calc(100% - 12px));
+  
   --text-outline: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
 }
 
@@ -5853,4 +5880,186 @@ body {
 
 
 
+
+
+.svg-icon { width: 1.2em; height: 1.2em; vertical-align: text-bottom; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+
+
+/* ================== PREMIUM HUD OVERHAUL ================== */
+.top-hud-bar {
+  background: var(--hud-bg-glass);
+  border-bottom: 1px solid var(--hud-border-cyan);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  padding: 6px 10px;
+  clip-path: var(--cut-corner-bottom);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  margin-bottom: 4px;
+}
+
+.top-nav-row button, .btn-dossier-pill, .btn-sector-pill, .btn-help-pill, .balance-pill, .combat-quick-btn {
+  background: var(--hud-bg-elevated) !important;
+  border: 1px solid var(--hud-border) !important;
+  color: var(--tactical-green) !important;
+  border-radius: 0 !important;
+  clip-path: var(--cut-corner);
+  transition: all 0.2s ease-out;
+  text-shadow: var(--text-glow-green);
+  box-shadow: var(--box-glow-green);
+}
+
+.top-nav-row button:hover, .combat-quick-btn:hover {
+  background: var(--tactical-green-glow) !important;
+  color: #fff !important;
+  box-shadow: 0 0 15px var(--tactical-green);
+  cursor: crosshair;
+}
+
+.balance-pill {
+  border-color: var(--hud-border-cyan) !important;
+  color: var(--credit-cyan) !important;
+  text-shadow: var(--text-glow-cyan);
+  box-shadow: var(--box-glow-cyan);
+}
+.pill-value {
+  color: #fff !important;
+  text-shadow: 0 0 5px #fff, 0 0 10px var(--credit-cyan);
+}
+
+/* Hover Glitch Effect */
+@keyframes glitch-skew {
+  0% { transform: skew(0deg); }
+  20% { transform: skew(-10deg); }
+  40% { transform: skew(10deg); }
+  60% { transform: skew(-5deg); }
+  80% { transform: skew(5deg); }
+  100% { transform: skew(0deg); }
+}
+.btn-dossier-pill:active {
+  animation: glitch-skew 0.3s linear;
+}
+
+/* Redesign Bottom HUD Bar */
+.bottom-concept-bar {
+  background: var(--hud-bg-glass) !important;
+  border: 1px solid var(--hud-border-cyan) !important;
+  border-bottom: none !important;
+  border-radius: 0 !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  clip-path: polygon(12px 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 0 100%, 0 12px);
+  padding: 10px 15px !important;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.5);
+}
+
+/* Ring Actions Dock */
+.concept-action-rings {
+  bottom: 80px !important;
+  right: 20px !important;
+}
+.ring-action-btn {
+  background: var(--hud-bg-glass) !important;
+  border: 1px solid var(--hud-border) !important;
+  border-radius: 50% !important;
+  box-shadow: var(--box-glow-green) !important;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.ring-action-btn:hover {
+  transform: scale(1.15);
+  background: var(--tactical-green-glow) !important;
+  border-color: var(--tactical-green) !important;
+}
+
+/* Scanning Line Overlay (Micro-Animation) */
+body::after {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0) 50%, rgba(0,255,136,0.05) 50%, rgba(0,255,136,0.05));
+  background-size: 100% 4px;
+  z-index: 9999;
+  pointer-events: none;
+  opacity: 0.4;
+}
+
+
+/* ================== MODAL & PANEL OVERHAUL ================== */
+.concept-slide-panel, .concept-dossier-card, .concept-techtree-modal {
+  background: var(--hud-bg-elevated) !important;
+  border: 1px solid var(--hud-border-cyan) !important;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  clip-path: var(--cut-corner);
+  box-shadow: 0 0 30px rgba(0, 240, 255, 0.15), inset 0 0 20px rgba(0, 240, 255, 0.05);
+}
+
+/* Holographic Grid Background */
+.concept-slide-panel::before, .concept-dossier-card::before, .concept-techtree-modal::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-image: 
+    linear-gradient(rgba(0, 240, 255, 0.1) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 240, 255, 0.1) 1px, transparent 1px);
+  background-size: 20px 20px;
+  pointer-events: none;
+  z-index: -1;
+  opacity: 0.5;
+}
+
+/* Modal Headers */
+.panel-header-title, .concept-dossier-header, .techtree-header {
+  background: linear-gradient(90deg, rgba(0,240,255,0.2) 0%, transparent 100%) !important;
+  border-bottom: 1px solid var(--hud-border-cyan) !important;
+  text-shadow: var(--text-glow-cyan);
+  font-weight: 800;
+  letter-spacing: 2px;
+}
+
+/* Add an initializing animation for modals */
+@keyframes init-modal {
+  0% { transform: scaleY(0.01) scaleX(0); opacity: 0; }
+  50% { transform: scaleY(0.01) scaleX(1); opacity: 1; }
+  100% { transform: scaleY(1) scaleX(1); opacity: 1; }
+}
+.concept-slide-panel:not(.hidden), .concept-techtree-modal {
+  animation: init-modal 0.4s cubic-bezier(0.165, 0.84, 0.44, 1) forwards;
+  transform-origin: center;
+}
+
+
+/* ================== FPV VIEW OVERHAUL ================== */
+#fpv-flight-overlay {
+  /* Chromatic Aberration & Noise on FPV */
+  text-shadow: 2px 0 0 rgba(255,0,0,0.7), -2px 0 0 rgba(0,255,255,0.7);
+  box-shadow: inset 0 0 100px rgba(0, 0, 0, 0.9);
+}
+
+.fpv-reticle-center::before, .fpv-reticle-center::after {
+  box-shadow: 0 0 10px var(--tactical-green);
+}
+
+.fpv-pitch-ladder {
+  color: rgba(0, 255, 136, 0.8) !important;
+  text-shadow: var(--text-glow-green);
+}
+
+.fpv-telemetry-side {
+  background: rgba(0, 20, 10, 0.3) !important;
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(0, 255, 136, 0.2);
+  clip-path: var(--cut-corner);
+}
+
+/* Add a digital noise overlay specifically for FPV */
+#fpv-flight-overlay::after {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: url('data:image/svg+xml;utf8,<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><filter id="noiseFilter"><feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" stitchTiles="stitch"/></filter><rect width="100%" height="100%" filter="url(%23noiseFilter)"/></svg>');
+  opacity: 0.15;
+  pointer-events: none;
+  z-index: -1;
+  mix-blend-mode: overlay;
+}
 

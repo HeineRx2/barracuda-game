@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>BARRACUDA // Автономный Ударный Дрон</title>
   <meta name="description" content="Тактический симулятор боевого надводного дрона Барракуда с реалистичной 3D-моделью.">
-  <link rel="stylesheet" href="style.css?v=3.5.8">
+  <link rel="stylesheet" href="style.css?v=4.0.0">
 
   <!-- Global Error Handler Overlay -->
   <script>
@@ -70,13 +70,13 @@
     </div>
     <div class="flir-weakspots-container">
       <button class="flir-lock-point" data-target="radar" title="Радарный комплекс (Крит x4)">
-        <span class="lock-bracket">🎯 РАДАРНЫЙ ПОСТ [x4 КРИТ]</span>
+        <span class="lock-bracket"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg> РАДАРНЫЙ ПОСТ [x4 КРИТ]</span>
       </button>
       <button class="flir-lock-point" data-target="missile" title="Ракетные шахты (Крит x4)">
-        <span class="lock-bracket">🎯 ПУСКОВЫЕ ШАХТЫ [x4 КРИТ]</span>
+        <span class="lock-bracket"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg> ПУСКОВЫЕ ШАХТЫ [x4 КРИТ]</span>
       </button>
       <button class="flir-lock-point" data-target="engine" title="Машинное отделение (Крит x4)">
-        <span class="lock-bracket">🎯 МАШИННОЕ ОТДЕЛЕНИЕ [x4 КРИТ]</span>
+        <span class="lock-bracket"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg> МАШИННОЕ ОТДЕЛЕНИЕ [x4 КРИТ]</span>
       </button>
     </div>
     <button id="btn-exit-flir" class="btn-flir-exit">✕ ВЫХОД ИЗ ПРИЦЕЛА</button>
@@ -92,38 +92,40 @@
     <header class="top-hud-bar">
       <!-- Row 1: Nav Bar -->
       <div class="top-nav-row">
-        <button class="btn-tactical-pause" id="btn-toggle-tma" title="Скрыть/Показать HUD">👁️</button>
+        <button class="btn-tactical-pause" id="btn-toggle-tma" title="Скрыть/Показать HUD">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>
         <button class="btn-dossier-pill btn-nav-campaign" id="btn-open-campaign" title="Операции" style="border-color:rgba(0,255,136,0.6); background:rgba(0,255,136,0.15); color:#00ff88;">
-          <span class="dossier-pill-icon">⚔️</span>
+          <span class="dossier-pill-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></span>
           <span class="dossier-pill-text">ОПЕРАЦИИ</span>
         </button>
         <button class="btn-dossier-pill btn-nav-hangar" id="btn-open-hangar" title="Ангар" style="border-color:rgba(0,240,255,0.6); background:rgba(0,240,255,0.12); color:#00f0ff;">
-          <span class="dossier-pill-icon">⚓</span>
+          <span class="dossier-pill-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M12 22V8"/><path d="M5 12H2a10 10 0 0 0 20 0h-3"/><circle cx="12" cy="5" r="3"/></svg></span>
           <span class="dossier-pill-text">АНГАР</span>
         </button>
         <button class="btn-dossier-pill btn-nav-tactical" id="btn-open-tactical-hub" title="Тактика" style="border-color:rgba(0,255,200,0.8); background:rgba(0,255,200,0.18); color:#00ffcc; font-weight:700;">
-          <span class="dossier-pill-icon">🛰️</span>
+          <span class="dossier-pill-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M12 2v20M2 12h20M12 7a5 5 0 1 0 0 10 5 5 0 1 0 0-10zM12 12l5-5"/></svg></span>
           <span class="dossier-pill-text">ТАКТИКА</span>
         </button>
         <button class="btn-dossier-pill btn-nav-drawer-toggle" id="btn-open-mobile-drawer" title="Меню и опции" style="display:none;">
-          <span class="dossier-pill-icon">☰</span>
+          <span class="dossier-pill-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg></span>
           <span class="dossier-pill-text">МЕНЮ</span>
         </button>
         <button class="btn-dossier-pill btn-desktop-only" id="btn-toggle-dossier" title="Секретное досье">
-          <span class="dossier-pill-icon">📁</span>
+          <span class="dossier-pill-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg></span>
           <span class="dossier-pill-text">ДОСЬЕ</span>
           <span class="dossier-unread-dot" id="dossier-unread-beacon"></span>
         </button>
         <button class="btn-sector-pill btn-desktop-only" id="btn-open-map" title="Карта">
-          <span class="sector-badge-icon">🗺️</span>
+          <span class="sector-badge-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg></span>
           <span id="label-current-sector" class="sector-badge-name">О. ЗМЕИНЫЙ</span>
         </button>
         <button class="btn-help-pill btn-desktop-only" id="btn-open-help" title="Справка">
-          <span class="help-pill-icon">❓</span>
+          <span class="help-pill-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span>
           <span class="help-pill-text">СПРАВКА</span>
         </button>
         <button class="btn-help-pill btn-desktop-only" id="btn-open-settings" title="Настройки">
-          <span class="help-pill-icon">⚙️</span>
+          <span class="help-pill-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>
           <span class="help-pill-text">ОПЦИИ</span>
         </button>
       </div>
@@ -140,7 +142,7 @@
         </div>
         <div id="booster-widget" class="booster-floating-widget" title="Тактический разгон мощности">
           <div class="booster-inner-btn" id="btn-overclock">
-            <span class="booster-icon">⚡</span>
+            <span class="booster-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></span>
             <div class="booster-info">
               <span class="booster-title" id="booster-status-title">РАЗГОН +200%</span>
               <span class="booster-sub" id="booster-status-sub">ГОТОВ</span>
@@ -154,30 +156,30 @@
       </div>
     </header>
 
-    <!-- QUICK COMBAT ACTIONS BAR (FLIR, SIGINT РЭБ, ПУСК FPV, СОНАР, ROV, ТЕСТ VSA) -->
+    <!-- QUICK COMBAT ACTIONS BAR -->
     <div class="quick-combat-actions-bar">
       <button class="combat-quick-btn flir-btn" id="btn-open-flir" title="FLIR тепловизор">
-        <span class="cq-icon">🎯</span>
+        <span class="cq-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></span>
         <span class="cq-text">FLIR</span>
       </button>
       <button class="combat-quick-btn reb-btn" id="btn-open-cyber" title="Взлом РЭБ">
-        <span class="cq-icon">📡</span>
+        <span class="cq-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242M12 12v9"/></svg></span>
         <span class="cq-text">ВЗЛОМ РЭБ</span>
       </button>
       <button class="combat-quick-btn missile-btn" id="btn-direct-missile" title="Пуск FPV-дрона">
-        <span class="cq-icon">🛸</span>
+        <span class="cq-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M12 3a9 9 0 0 0-9 9 9 9 0 0 0 9 9 9 9 0 0 0 9-9 9 9 0 0 0-9-9z"/><path d="M12 8a4 4 0 0 0-4 4M8 16h8"/></svg></span>
         <span class="cq-text">ПУСК FPV</span>
       </button>
       <button class="combat-quick-btn sonar-btn" id="btn-quick-sonar" title="Сонар 3D">
-        <span class="cq-icon">📡</span>
+        <span class="cq-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242M12 12v9"/></svg></span>
         <span class="cq-text">СОНАР 3D</span>
       </button>
       <button class="combat-quick-btn rov-btn" id="btn-quick-rov" title="Микро-ROV">
-        <span class="cq-icon">🔮</span>
+        <span class="cq-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/></svg></span>
         <span class="cq-text">МИКРО-ROV</span>
       </button>
       <button class="combat-quick-btn boat-btn" id="btn-quick-boat" title="Тест VSA">
-        <span class="cq-icon">🚤</span>
+        <span class="cq-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M2 12l2 6h16l2-6-4-4-6 2-6-2-4 4z"/></svg></span>
         <span class="cq-text">ТЕСТ VSA</span>
       </button>
     </div>
@@ -206,23 +208,23 @@
       <!-- Right / Bottom-dock Action Ring Buttons -->
       <nav class="concept-action-rings" id="main-nav-dock">
         <button class="ring-action-btn" data-panel="panel-vessel">
-          <div class="ring-circle-icon">⚡</div>
+          <div class="ring-circle-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></div>
           <span class="ring-label">СТЕЛС-ДРОН</span>
         </button>
         <button class="ring-action-btn" data-panel="panel-modules">
-          <div class="ring-circle-icon">⚙️</div>
+          <div class="ring-circle-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div>
           <span class="ring-label">МОДУЛИ</span>
         </button>
         <button class="ring-action-btn" data-panel="panel-weapons">
-          <div class="ring-circle-icon">🎯</div>
+          <div class="ring-circle-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></div>
           <span class="ring-label">ВООРУЖЕНИЕ</span>
         </button>
         <button class="ring-action-btn" data-panel="panel-contracts">
-          <div class="ring-circle-icon">📜</div>
+          <div class="ring-circle-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></div>
           <span class="ring-label">КОНТРАКТЫ</span>
         </button>
         <button class="ring-action-btn" id="btn-open-techtree">
-          <div class="ring-circle-icon">🔬</div>
+          <div class="ring-circle-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M10 2v7.31"/><path d="M14 9.3V1.99"/><path d="M8.5 2h7"/><path d="M14 9.3a6.5 6.5 0 1 1-4 0"/><line x1="5.52" y1="16" x2="18.48" y2="16"/></svg></div>
           <span class="ring-label">ДЕРЕВО ТЕХНОЛОГИЙ</span>
         </button>
       </nav>
@@ -231,7 +233,7 @@
 
       <div class="concept-slide-panel" id="panel-vessel">
         <div class="panel-header-title">
-          <span>⚡ СТЕЛС-ДРОН // ТЕЛЕМЕТРИЯ</span>
+          <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg> СТЕЛС-ДРОН // ТЕЛЕМЕТРИЯ</span>
           <button class="btn-buy-action btn-close-panel">✕</button>
         </div>
         <div class="upgrade-list-scroll">
@@ -268,7 +270,7 @@
 
       <div class="concept-slide-panel" id="panel-modules">
         <div class="panel-header-title">
-          <span>⚙️ МОДУЛИ ОБОРУДОВАНИЯ</span>
+          <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> МОДУЛИ ОБОРУДОВАНИЯ</span>
           <button class="btn-buy-action btn-close-panel">✕</button>
         </div>
         <div class="upgrade-list-scroll">
@@ -305,7 +307,7 @@
 
       <div class="concept-slide-panel" id="panel-weapons">
         <div class="panel-header-title">
-          <span>🎯 ВООРУЖЕНИЕ И КИБЕРСИСТЕМЫ</span>
+          <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg> ВООРУЖЕНИЕ И КИБЕРСИСТЕМЫ</span>
           <button class="btn-buy-action btn-close-panel">✕</button>
         </div>
         <div class="upgrade-list-scroll">
@@ -342,7 +344,7 @@
 
       <div class="concept-slide-panel" id="panel-contracts">
         <div class="panel-header-title">
-          <span>📜 КОНТРАКТЫ И СПЕЦОПЕРАЦИИ</span>
+          <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg> КОНТРАКТЫ И СПЕЦОПЕРАЦИИ</span>
           <button class="btn-buy-action btn-close-panel">✕</button>
         </div>
         <div class="upgrade-list-scroll">
@@ -427,7 +429,7 @@
       </div>
       <div class="mission-objectives-box">
         <div class="mission-obj-item" id="hud-obj-crates">📦 Контейнеры: <b id="hud-val-crates">0 / 3</b></div>
-        <div class="mission-obj-item" id="hud-obj-target">🎯 Дистанция: <b id="hud-val-target">140 м</b></div>
+        <div class="mission-obj-item" id="hud-obj-target"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg> Дистанция: <b id="hud-val-target">140 м</b></div>
       </div>
       <button class="btn-abort-mission" id="btn-abort-sortie" title="Экстренная эвакуация на базу">✕ ЭВАКУАЦИЯ</button>
     </header>
@@ -481,24 +483,24 @@
     <div class="mission-bottom-right">
       <div class="mission-tactical-toggles">
         <button class="btn-tactical-toggle active" id="btn-mission-vsa" title="Курсовая устойчивость VSA (ВКЛ / ВЫКЛ: Режим дрифта)">
-          <span class="btn-tt-icon">🛡️</span>
+          <span class="btn-tt-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span>
           <span class="btn-tt-text" id="hud-vsa-text">VSA: ВКЛ</span>
         </button>
         <button class="btn-tactical-toggle" id="btn-mission-dps" title="Система динамического позиционирования (Авто-удержание)">
-          <span class="btn-tt-icon">⚓</span>
+          <span class="btn-tt-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M12 22V8"/><path d="M5 12H2a10 10 0 0 0 20 0h-3"/><circle cx="12" cy="5" r="3"/></svg></span>
           <span class="btn-tt-text" id="hud-dps-text">DPS: ВЫКЛ</span>
         </button>
         <button class="btn-tactical-toggle" id="btn-mission-sonar" title="Гидроакустический сонар бокового обзора">
-          <span class="btn-tt-icon">📡</span>
+          <span class="btn-tt-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242M12 12v9"/></svg></span>
           <span class="btn-tt-text" id="hud-sonar-text">СОНАР</span>
         </button>
       </div>
       <button class="btn-mission-action btn-mission-boost" id="btn-mission-boost">
-        <span class="btn-ma-icon">⚡</span>
+        <span class="btn-ma-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></span>
         <span class="btn-ma-text">ФОРСАЖ</span>
       </button>
       <button class="btn-mission-action btn-mission-strike pulse-ready" id="btn-mission-strike">
-        <span class="btn-ma-icon">🚀</span>
+        <span class="btn-ma-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="M12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg></span>
         <span class="btn-ma-text">ПУСК FPV</span>
       </button>
     </div>
@@ -527,7 +529,7 @@
     <!-- Top FPV OSD Bar -->
     <header class="fpv-top-osd">
       <div class="fpv-osd-chip">VTX: 5.8GHz R-8</div>
-      <div class="fpv-osd-chip" id="fpv-osd-bat">🔋 25.2V (6S) 100%</div>
+      <div class="fpv-osd-chip" id="fpv-osd-bat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><rect x="1" y="6" width="18" height="12" rx="2" ry="2"/><line x1="23" y1="13" x2="23" y2="11"/></svg> 25.2V (6S) 100%</div>
       <div class="fpv-osd-chip" id="fpv-osd-rssi">📶 RSSI: -42dBm (98%)</div>
       <div class="fpv-osd-chip" id="fpv-osd-timer">⏱️ 00:00</div>
     </header>
@@ -551,7 +553,7 @@
       <!-- Lock-On Target Box (Tracks Subsystems) -->
       <div class="fpv-target-bracket" id="fpv-target-bracket">
         <div class="target-bracket-corners"></div>
-        <div class="target-bracket-tag" id="fpv-target-tag">🎯 [МОСТИК] 85м</div>
+        <div class="target-bracket-tag" id="fpv-target-tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg> [МОСТИК] 85м</div>
       </div>
 
       <!-- RECONNAISSANCE 3D WAYPOINT HUD (Follows targets in 3D screen space) -->
@@ -574,7 +576,7 @@
           <div class="wp-corner wp-tr"></div>
           <div class="wp-corner wp-bl"></div>
           <div class="wp-corner wp-br"></div>
-          <div class="wp-tag-pill" id="wp-target-tag">🎯 ЗРК "ТОР" // 65м</div>
+          <div class="wp-tag-pill" id="wp-target-tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg> ЗРК "ТОР" // 65м</div>
         </div>
         <button class="btn-recon-snap" id="btn-recon-snap">
           📸 ЗАФИКСИРОВАТЬ ЦЕЛЬ [ПРОБЕЛ / ТАП]
@@ -590,7 +592,7 @@
 
       <!-- CIWS Anti-Air Flak Alert Banner -->
       <div class="fpv-ciws-alert" id="fpv-ciws-alert">
-        ⚡ ВНИМАНИЕ: ЗЕНИТНЫЙ ОГОНЬ CIWS // МАНЕВРИРУЙТЕ!
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg> ВНИМАНИЕ: ЗЕНИТНЫЙ ОГОНЬ CIWS // МАНЕВРИРУЙТЕ!
       </div>
     </div>
 
@@ -628,7 +630,7 @@
         <span>📸 ФОТО</span>
       </button>
       <button class="btn-fpv-boost" id="btn-fpv-boost">
-        <span>⚡ ФОРСАЖ</span>
+        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg> ФОРСАЖ</span>
       </button>
       <button class="btn-fpv-detonate" id="btn-fpv-detonate">
         <span>💥 ДЕТОНАЦИЯ</span>
@@ -670,7 +672,7 @@
           <span class="btn-icon">🔄</span> ПОПРОБОВАТЬ СНОВА (RETRY)
         </button>
         <button class="btn-gameover-base" id="btn-gameover-base">
-          <span class="btn-icon">⚓</span> ЭВАКУАЦИЯ В ШТАБ
+          <span class="btn-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M12 22V8"/><path d="M5 12H2a10 10 0 0 0 20 0h-3"/><circle cx="12" cy="5" r="3"/></svg></span> ЭВАКУАЦИЯ В ШТАБ
         </button>
       </div>
     </div>
@@ -688,7 +690,7 @@
       </div>
 
       <div class="victory-hit-box" id="victory-hit-box">
-        <div class="hit-sub-label">🎯 ПОРАЖЁННЫЙ УЗЕЛ:</div>
+        <div class="hit-sub-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg> ПОРАЖЁННЫЙ УЗЕЛ:</div>
         <div class="hit-sub-title text-yellow" id="victory-hit-sub">ХОДОВОЙ МОСТИК (CRITICAL KILL x2.0)</div>
       </div>
 
@@ -703,7 +705,7 @@
           <span class="btn-icon">🔄</span> ПОВТОРИТЬ ВЫЛАЗКУ
         </button>
         <button class="btn-victory-claim" id="btn-victory-claim">
-          <span class="btn-icon">⚓</span> ЗАБРАТЬ КУШ И В ШТАБ
+          <span class="btn-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M12 22V8"/><path d="M5 12H2a10 10 0 0 0 20 0h-3"/><circle cx="12" cy="5" r="3"/></svg></span> ЗАБРАТЬ КУШ И В ШТАБ
         </button>
       </div>
     </div>
@@ -716,7 +718,7 @@
     <div class="mobile-drawer-container">
       <div class="mobile-drawer-header">
         <div class="drawer-title-box">
-          <span class="drawer-icon">☰</span>
+          <span class="drawer-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg></span>
           <h3>ТАКТИЧЕСКОЕ МЕНЮ</h3>
         </div>
         <button class="btn-close-modal" id="btn-close-mobile-drawer">✕</button>
@@ -724,7 +726,7 @@
 
       <div class="mobile-drawer-grid">
         <button class="drawer-action-btn" id="btn-drawer-tactical">
-          <span class="dab-icon">🛰️</span>
+          <span class="dab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M12 2v20M2 12h20M12 7a5 5 0 1 0 0 10 5 5 0 1 0 0-10zM12 12l5-5"/></svg></span>
           <div class="dab-meta">
             <span class="dab-title">ТАКТИКА v3.5</span>
             <span class="dab-sub">Сонар, ROV, VSA, Тесты</span>
@@ -732,7 +734,7 @@
         </button>
 
         <button class="drawer-action-btn" id="btn-drawer-map">
-          <span class="dab-icon">🗺️</span>
+          <span class="dab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg></span>
           <div class="dab-meta">
             <span class="dab-title">КАРТА СЕКТОРОВ</span>
             <span class="dab-sub" id="drawer-sector-name">О. Змеиный</span>
@@ -740,7 +742,7 @@
         </button>
 
         <button class="drawer-action-btn" id="btn-drawer-dossier">
-          <span class="dab-icon">📁</span>
+          <span class="dab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg></span>
           <div class="dab-meta">
             <span class="dab-title">СЕКРЕТНОЕ ДОСЬЕ</span>
             <span class="dab-sub">Документы и разведданные</span>
@@ -748,7 +750,7 @@
         </button>
 
         <button class="drawer-action-btn" id="btn-drawer-settings">
-          <span class="dab-icon">⚙️</span>
+          <span class="dab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>
           <div class="dab-meta">
             <span class="dab-title">НАСТРОЙКИ</span>
             <span class="dab-sub">Графика, звук, сброс</span>
@@ -756,7 +758,7 @@
         </button>
 
         <button class="drawer-action-btn" id="btn-drawer-help">
-          <span class="dab-icon">❓</span>
+          <span class="dab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span>
           <div class="dab-meta">
             <span class="dab-title">СПРАВКА И ПОМОЩЬ</span>
             <span class="dab-sub">Управление и механики</span>
@@ -778,7 +780,7 @@
   <div id="map-modal" class="tactical-modal-overlay">
     <div class="tactical-modal-card">
       <div class="modal-card-header">
-        <h2 class="modal-card-title">🗺️ ТЕАТР БОЕВЫХ ДЕЙСТВИЙ // ЧЁРНОЕ МОРЕ</h2>
+        <h2 class="modal-card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg> ТЕАТР БОЕВЫХ ДЕЙСТВИЙ // ЧЁРНОЕ МОРЕ</h2>
         <button class="btn-close-modal" id="btn-close-map">✕</button>
       </div>
       <p class="modal-card-desc">Выберите сектор развёртывания. Каждый район меняет погоду 3D-океана, вражеские корабли и множители наград.</p>
@@ -816,7 +818,7 @@
   <div id="cyber-modal" class="tactical-modal-overlay">
     <div class="tactical-modal-card cyber-card">
       <div class="modal-card-header">
-        <h2 class="modal-card-title">📡 РЭБ // ДЕШИФРОВКА РАДИОСПЕКТРА</h2>
+        <h2 class="modal-card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242M12 12v9"/></svg> РЭБ // ДЕШИФРОВКА РАДИОСПЕКТРА</h2>
         <button class="btn-close-modal" id="btn-close-cyber">✕</button>
       </div>
       <p class="modal-card-desc">Совместите частоту перехвата с несущей волной вражеского радара для извлечения разведданных. <strong>Время ограничено!</strong></p>
@@ -845,7 +847,7 @@
   <!-- FPV Assault Minigame Modal -->
   <div id="assault-modal" role="dialog" aria-modal="true" aria-label="FPV-Штурм">
     <div style="text-align: center;">
-      <h1 class="modal-main-title">🚀 FPV-ШТУРМ // ПРОРЫВ ПВО</h1>
+      <h1 class="modal-main-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="M12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg> FPV-ШТУРМ // ПРОРЫВ ПВО</h1>
       <p id="modal-timer" class="modal-sub-timer">ВРЕМЯ: 15.0с</p>
     </div>
     <canvas id="fpv-canvas" width="900" height="500"></canvas>
@@ -868,7 +870,7 @@
       </div>
       <div class="event-banner-right">
         <span class="event-banner-countdown" id="event-banner-timer">12с</span>
-        <button class="btn-event-action" id="event-banner-action" style="display:none;">🎯 ДЕЙСТВИЕ</button>
+        <button class="btn-event-action" id="event-banner-action" style="display:none;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg> ДЕЙСТВИЕ</button>
       </div>
     </div>
   </div>
@@ -890,7 +892,7 @@
       <div class="help-sections-grid">
         <!-- Section 1 -->
         <div class="help-card">
-          <div class="help-card-icon">📡</div>
+          <div class="help-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242M12 12v9"/></svg></div>
           <h3 class="help-card-title">1. РАДИОРАЗВЕДКА И ДОБЫЧА (SIGINT)</h3>
           <p class="help-card-text">
             Тапы по 3D-дрону перехватывают зашифрованную радио-телеметрию врага. Каждый клик генерирует <strong>МБ разведданных</strong> и <strong>$ финансовые кредиты</strong>, а также накапливает заряд боевой батареи FPV-штурма.
@@ -899,7 +901,7 @@
 
         <!-- Section 2 -->
         <div class="help-card">
-          <div class="help-card-icon">🚀</div>
+          <div class="help-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="M12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg></div>
           <h3 class="help-card-title">2. FPV-ШТУРМ И УДАР ПО КОРАБЛЯМ</h3>
           <p class="help-card-text">
             Корабли противника уничтожаются кинетическими ударами! По накоплению шкалы нажмите <strong>«FPV-ШТУРМ»</strong>: управляйте штурмовым дроном, обходите зоны ПВО и поражайте флагманы, зарабатывая редкие трофеи и чертежи престижа.
@@ -908,7 +910,7 @@
 
         <!-- Section 3 -->
         <div class="help-card">
-          <div class="help-card-icon">🗺️</div>
+          <div class="help-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg></div>
           <h3 class="help-card-title">3. СЮЖЕТНАЯ КАМПАНИЯ (4 АКТА)</h3>
           <p class="help-card-text">
             Проходите боевые операции: <em>«Тень над Змеиным»</em> $\rightarrow$ <em>«Прорыв Севастопольских бонов»</em> $\rightarrow$ <em>«Охота на Новороссийский терминал»</em> $\rightarrow$ <em>«Ликвидация супер-флагмана Левиафан»</em> с диалогами штаба и офицеров РЭБ.
@@ -944,7 +946,7 @@
       </div>
 
       <div class="help-footer-row">
-        <button class="btn-buy-action" id="btn-help-understood" style="max-width: 280px; margin: 0 auto;">ПРИНЯТО В РАБОТУ ⚓</button>
+        <button class="btn-buy-action" id="btn-help-understood" style="max-width: 280px; margin: 0 auto;">ПРИНЯТО В РАБОТУ <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M12 22V8"/><path d="M5 12H2a10 10 0 0 0 20 0h-3"/><circle cx="12" cy="5" r="3"/></svg></button>
       </div>
     </div>
   </div>
@@ -976,8 +978,8 @@
         <div class="tt-filter-tabs">
           <button class="tt-tab-btn active" data-filter="all">ВСЕ ВЕТВИ (13)</button>
           <button class="tt-tab-btn" data-filter="stealth">🕵️ СТЕЛС / РЭБ (4)</button>
-          <button class="tt-tab-btn" data-filter="firepower">🎯 ОГНЕВАЯ МОЩЬ (4)</button>
-          <button class="tt-tab-btn" data-filter="engineering">⚙️ ИНЖЕНЕРИЯ (5)</button>
+          <button class="tt-tab-btn" data-filter="firepower"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg> ОГНЕВАЯ МОЩЬ (4)</button>
+          <button class="tt-tab-btn" data-filter="engineering"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> ИНЖЕНЕРИЯ (5)</button>
         </div>
       </div>
 
@@ -997,7 +999,7 @@
 
           <div class="tt-node" data-tt="sniffer" data-tt-req="" data-tt-cost="500" data-tier="1">
             <div class="tt-node-tier">T-1</div>
-            <div class="tt-node-icon-wrap"><span class="tt-node-icon">📡</span></div>
+            <div class="tt-node-icon-wrap"><span class="tt-node-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242M12 12v9"/></svg></span></div>
             <div class="tt-node-body">
               <div class="tt-node-name">СНИФФЕР ПАКЕТОВ</div>
               <div class="tt-node-desc">+2.5 МБ/с пассивно</div>
@@ -1009,7 +1011,7 @@
 
           <div class="tt-node" data-tt="quantum" data-tt-req="sniffer" data-tt-cost="5000" data-tier="2">
             <div class="tt-node-tier">T-2</div>
-            <div class="tt-node-icon-wrap"><span class="tt-node-icon">🔮</span></div>
+            <div class="tt-node-icon-wrap"><span class="tt-node-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/></svg></span></div>
             <div class="tt-node-body">
               <div class="tt-node-name">КВАНТОВЫЙ ДЕШИФРАТОР</div>
               <div class="tt-node-desc">+12% шанс крита (x5)</div>
@@ -1033,7 +1035,7 @@
 
           <div class="tt-node" data-tt="ecm_suite" data-tt-req="ghost_protocol" data-tt-cost="250000" data-tier="4">
             <div class="tt-node-tier">T-4</div>
-            <div class="tt-node-icon-wrap"><span class="tt-node-icon">🛡️</span></div>
+            <div class="tt-node-icon-wrap"><span class="tt-node-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span></div>
             <div class="tt-node-body">
               <div class="tt-node-name">РЭБ КОМПЛЕКС</div>
               <div class="tt-node-desc">-50% кулдаун пуска FPV</div>
@@ -1045,7 +1047,7 @@
         <!-- Branch 2: ОГНЕВАЯ МОЩЬ -->
         <div class="tt-branch tt-branch-firepower" data-branch="firepower">
           <div class="tt-branch-header">
-            <div class="tt-branch-icon">🎯</div>
+            <div class="tt-branch-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></div>
             <div class="tt-branch-info">
               <div class="tt-branch-title">ОГНЕВАЯ МОЩЬ</div>
               <div class="tt-branch-sub">Ударные комплексы и дроны-камикадзе</div>
@@ -1067,7 +1069,7 @@
 
           <div class="tt-node" data-tt="missiles" data-tt-req="optics" data-tt-cost="8000" data-tier="2">
             <div class="tt-node-tier">T-2</div>
-            <div class="tt-node-icon-wrap"><span class="tt-node-icon">🚀</span></div>
+            <div class="tt-node-icon-wrap"><span class="tt-node-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="M12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg></span></div>
             <div class="tt-node-body">
               <div class="tt-node-name">СТАПЕЛИ FPV-ДРОНОВ</div>
               <div class="tt-node-desc">+50% сила удара дрона</div>
@@ -1103,7 +1105,7 @@
         <!-- Branch 3: ИНЖЕНЕРИЯ -->
         <div class="tt-branch tt-branch-engineering" data-branch="engineering">
           <div class="tt-branch-header">
-            <div class="tt-branch-icon">⚙️</div>
+            <div class="tt-branch-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div>
             <div class="tt-branch-info">
               <div class="tt-branch-title">ИНЖЕНЕРИЯ & БАЗА</div>
               <div class="tt-branch-sub">Энергетика, спутники и инфраструктура</div>
@@ -1113,7 +1115,7 @@
 
           <div class="tt-node" data-tt="satcom" data-tt-req="" data-tt-cost="300" data-tier="1">
             <div class="tt-node-tier">T-1</div>
-            <div class="tt-node-icon-wrap"><span class="tt-node-icon">📡</span></div>
+            <div class="tt-node-icon-wrap"><span class="tt-node-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242M12 12v9"/></svg></span></div>
             <div class="tt-node-body">
               <div class="tt-node-name">АНТЕННА SATCOM</div>
               <div class="tt-node-desc">+2.0 МБ/клик</div>
@@ -1125,7 +1127,7 @@
 
           <div class="tt-node" data-tt="armor" data-tt-req="satcom" data-tt-cost="3000" data-tier="2">
             <div class="tt-node-tier">T-2</div>
-            <div class="tt-node-icon-wrap"><span class="tt-node-icon">🛡️</span></div>
+            <div class="tt-node-icon-wrap"><span class="tt-node-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span></div>
             <div class="tt-node-body">
               <div class="tt-node-name">БРОНЕПЛИТЫ КОРПУСА</div>
               <div class="tt-node-desc">+1 жизнь в FPV, +1.5 МБ/с</div>
@@ -1149,7 +1151,7 @@
 
           <div class="tt-node" data-tt="autosiphon" data-tt-req="waterjets" data-tt-cost="75000" data-tier="4">
             <div class="tt-node-tier">T-4</div>
-            <div class="tt-node-icon-wrap"><span class="tt-node-icon">💰</span></div>
+            <div class="tt-node-icon-wrap"><span class="tt-node-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span></div>
             <div class="tt-node-body">
               <div class="tt-node-name">АВТО-СИФОН ДАННЫХ</div>
               <div class="tt-node-desc">+$75/с пассивных кредитов</div>
@@ -1176,7 +1178,7 @@
         <div class="tt-inspector-left">
           <div class="tt-inspector-blueprint">
             <div class="tt-blueprint-reticle"></div>
-            <div class="tt-blueprint-icon" id="tt-detail-icon">🔬</div>
+            <div class="tt-blueprint-icon" id="tt-detail-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M10 2v7.31"/><path d="M14 9.3V1.99"/><path d="M8.5 2h7"/><path d="M14 9.3a6.5 6.5 0 1 1-4 0"/><line x1="5.52" y1="16" x2="18.48" y2="16"/></svg></div>
             <div class="tt-blueprint-tier" id="tt-detail-tier">TIER 1</div>
           </div>
           <div class="tt-inspector-info">
@@ -1208,7 +1210,7 @@
   <div id="settings-modal" class="help-modal-overlay">
     <div class="help-modal-content" style="max-width: 480px;">
       <div class="help-modal-header">
-        <h2>⚙️ НАСТРОЙКИ СИСТЕМЫ</h2>
+        <h2><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> НАСТРОЙКИ СИСТЕМЫ</h2>
         <button class="btn-close-help" id="btn-close-settings">✕</button>
       </div>
       <div class="help-modal-body">
@@ -1239,7 +1241,7 @@
     </div>
     <div class="comms-main-content">
       <div class="comms-avatar-box" id="comms-avatar-icon">
-        📡
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242M12 12v9"/></svg>
         <span class="comms-avatar-badge" id="comms-speaker-role">HQ</span>
       </div>
       <div class="comms-text-pane">
@@ -1260,7 +1262,7 @@
       
       <div style="text-align:center; margin-bottom:16px;">
         <div style="font-family:'Rajdhani',monospace; font-size:11px; color:#00ff88; letter-spacing:2px;">OPERATIONAL COMMAND // DNIPRO RIVER THEATER</div>
-        <h2 style="font-family:'Rajdhani',sans-serif; font-size:24px; font-weight:800; color:#fff; margin:4px 0;">⚔️ БОЕВЫЕ ОПЕРАЦИИ «ХЕРСОНСКИЙ РУБЕЖ»</h2>
+        <h2 style="font-family:'Rajdhani',sans-serif; font-size:24px; font-weight:800; color:#fff; margin:4px 0;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M14.5 17.5L3 6V3h3l11.5 11.5"/><path d="M13 19l6-6"/><path d="M16 16l4 4"/><path d="M19 21l2-2"/><path d="M8.5 6.5L21 19v3h-3L6.5 10.5"/><path d="M5 11l6-6"/><path d="M8 8L4 4"/><path d="M3 5l2-2"/></svg> БОЕВЫЕ ОПЕРАЦИИ «ХЕРСОНСКИЙ РУБЕЖ»</h2>
         <p style="color:#8da4af; font-size:12px;">Тактические операции на Днепре: разведка, РЭБ-саботаж, FPV-удар и ликвидация объектов.</p>
       </div>
 
@@ -1276,7 +1278,7 @@
         </div>
         <div class="campaign-act-tab" data-act="3">
           <div class="campaign-act-tag">АКТ III</div>
-          <div class="campaign-act-title">⚓ ХЕРСОНСКИЙ РУБЕЖ</div>
+          <div class="campaign-act-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M12 22V8"/><path d="M5 12H2a10 10 0 0 0 20 0h-3"/><circle cx="12" cy="5" r="3"/></svg> ХЕРСОНСКИЙ РУБЕЖ</div>
         </div>
         <div class="campaign-act-tab" data-act="4">
           <div class="campaign-act-tag">АКТ IV // ФИНАЛ</div>
@@ -1299,7 +1301,7 @@
 
       <div style="text-align:center; margin-bottom:18px;">
         <div style="font-family:'Rajdhani',monospace; font-size:11px; color:#00f0ff; letter-spacing:2px;">NAVAL DRONE YARD // PROTOYPE HANGAR</div>
-        <h2 style="font-family:'Rajdhani',sans-serif; font-size:24px; font-weight:800; color:#fff; margin:4px 0;">⚓ АНГАР ПРОТОТИПОВ И ЦЕХ КРАФТА</h2>
+        <h2 style="font-family:'Rajdhani',sans-serif; font-size:24px; font-weight:800; color:#fff; margin:4px 0;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M12 22V8"/><path d="M5 12H2a10 10 0 0 0 20 0h-3"/><circle cx="12" cy="5" r="3"/></svg> АНГАР ПРОТОТИПОВ И ЦЕХ КРАФТА</h2>
         <p style="color:#8da4af; font-size:12px;">Выбирайте специализированные 3D-корпуса катеров и создавайте военные модули из трофейного лута.</p>
       </div>
 
@@ -1423,14 +1425,14 @@
             </div>
           </div>
           <div class="salvage-inv-pill">
-            <span class="salvage-inv-icon">🛡️</span>
+            <span class="salvage-inv-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span>
             <div>
               <div class="salvage-inv-label">ТИТАНОВЫЙ СПЛАВ:</div>
               <div class="salvage-inv-val" id="val-salvage-titanium">0 шт</div>
             </div>
           </div>
           <div class="salvage-inv-pill">
-            <span class="salvage-inv-icon">🔮</span>
+            <span class="salvage-inv-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/></svg></span>
             <div>
               <div class="salvage-inv-label">ИИ-ЯДРА «ЛЕВИАФАН»:</div>
               <div class="salvage-inv-val" id="val-salvage-aicore">0 шт</div>
@@ -1453,7 +1455,7 @@
     <div class="sonar-panel-inner">
       <div class="sonar-panel-header">
         <div class="sonar-header-title">
-          <span class="sonar-ping-icon">📡</span>
+          <span class="sonar-ping-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242M12 12v9"/></svg></span>
           <span>ГИДРОАКУСТИЧЕСКИЙ СОНАР БОКОВОГО ОБЗОРА (SSS-500)</span>
         </div>
         <div class="sonar-header-status">
@@ -1502,7 +1504,7 @@
         <div class="rov-crosshair-bracket"></div>
       </div>
       <div class="rov-siphon-prompt" id="rov-siphon-prompt">
-        <button class="btn-siphon-action" id="btn-trigger-siphon">🔮 ПОДКЛЮЧИТЬ СИФОН ДАННЫХ</button>
+        <button class="btn-siphon-action" id="btn-trigger-siphon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/></svg> ПОДКЛЮЧИТЬ СИФОН ДАННЫХ</button>
       </div>
     </div>
 
@@ -1522,7 +1524,7 @@
       <div class="tactical-hub-header">
         <div class="tactical-hub-title">
           <span class="th-badge">АРСЕНАЛ v3.5</span>
-          <h2>🛰️ ЦЕНТР ТАКТИЧЕСКИХ СИСТЕМ И ИСПЫТАНИЙ</h2>
+          <h2><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M12 2v20M2 12h20M12 7a5 5 0 1 0 0 10 5 5 0 1 0 0-10zM12 12l5-5"/></svg> ЦЕНТР ТАКТИЧЕСКИХ СИСТЕМ И ИСПЫТАНИЙ</h2>
         </div>
         <button class="btn-close-modal" id="btn-close-tactical-hub">✕</button>
       </div>
@@ -1532,7 +1534,7 @@
         <!-- 1. 3D Side-Scan Sonar -->
         <div class="th-card">
           <div class="th-card-header">
-            <span class="th-card-icon">📡</span>
+            <span class="th-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242M12 12v9"/></svg></span>
             <div>
               <div class="th-card-badge text-green">ГИДРОАКУСТИКА</div>
               <div class="th-card-title">3D-СОНАР БОКОВОГО ОБЗОРА</div>
@@ -1548,7 +1550,7 @@
         <!-- 2. Micro-ROV Submarine Drone -->
         <div class="th-card">
           <div class="th-card-header">
-            <span class="th-card-icon">🔮</span>
+            <span class="th-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/></svg></span>
             <div>
               <div class="th-card-badge text-cyan">ПОДВОДНЫЙ ДИВЕРСАНТ</div>
               <div class="th-card-title">ПРИВЯЗНОЙ МИКРО-ROV</div>
@@ -1564,7 +1566,7 @@
         <!-- 3. VSA Stability & Hydrodynamic Drift -->
         <div class="th-card">
           <div class="th-card-header">
-            <span class="th-card-icon">🚤</span>
+            <span class="th-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M2 12l2 6h16l2-6-4-4-6 2-6-2-4 4z"/></svg></span>
             <div>
               <div class="th-card-badge text-yellow">ГИДРОДИНАМИКА</div>
               <div class="th-card-title">КУРСОВАЯ УСТОЙЧИВОСТЬ VSA & ДРИФТ</div>
@@ -1580,7 +1582,7 @@
         <!-- 4. FPV Avionics & PID Tuning -->
         <div class="th-card">
           <div class="th-card-header">
-            <span class="th-card-icon">⚙️</span>
+            <span class="th-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>
             <div>
               <div class="th-card-badge" style="color:#d070ff;border-color:#d070ff;">АВИОНИКА FPV</div>
               <div class="th-card-title">PID-ТЮНИНГ & ИИ JETSON</div>
@@ -1613,8 +1615,8 @@
   </div>
 
   <!-- Audio, 3D Engine & Game Logic -->
-  <script src="audio.js?v=3.5.8"></script>
-  <script src="drone3d.js?v=3.5.8"></script>
-  <script type="module" src="./src/main.js"></script>
+  <script src="audio.js?v=4.0.0"></script>
+  <script src="drone3d.js?v=4.0.0"></script>
+  <script src="game.js?v=4.0.0"></script>
 </body>
 </html>
