@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700;800&family=Share+Tech+Mono&display=swap');
+﻿@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700;800&family=Share+Tech+Mono&display=swap');
 
 :root {
   /* Premium Sci-Fi Palette */
@@ -121,7 +121,7 @@ body {
 }
 
 /* =========================================================================
-   QUICK COMBAT ACTIONS BAR (FLIR, Р В Р В­Р вЂ, Р В Р С’Р С™Р вЂўР СћР С’)
+   QUICK COMBAT ACTIONS BAR (FLIR, Р В Р’В Р В Р’В­Р В РІР‚В, Р В Р’В Р В РЎвЂ™Р В РЎв„ўР В РІР‚СћР В РЎС›Р В РЎвЂ™)
    ========================================================================= */
 .quick-combat-actions-bar {
   position: relative;
@@ -154,12 +154,7 @@ body {
   color: var(--tactical-green);
 }
 
-.combat-quick-btn.flir-btn:hover {
-  background: var(--tactical-green);
-  color: #000;
-  box-shadow: 0 0 16px var(--tactical-green);
-  transform: scale(1.04);
-}
+@media (hover: hover) { .combat-quick-btn.flir-btn:hover { background: var(--tactical-green); color: #000; box-shadow: 0 0 16px var(--tactical-green); transform: scale(1.04); } }
 
 .combat-quick-btn.reb-btn {
   background: rgb(0 25 35 / 88%);
@@ -167,12 +162,7 @@ body {
   color: var(--credit-cyan);
 }
 
-.combat-quick-btn.reb-btn:hover {
-  background: var(--credit-cyan);
-  color: #000;
-  box-shadow: 0 0 16px var(--credit-cyan);
-  transform: scale(1.04);
-}
+@media (hover: hover) { .combat-quick-btn.reb-btn:hover { background: var(--credit-cyan); color: #000; box-shadow: 0 0 16px var(--credit-cyan); transform: scale(1.04); } }
 
 .combat-quick-btn.missile-btn {
   background: rgb(45 15 10 / 88%);
@@ -180,12 +170,7 @@ body {
   color: #fff;
 }
 
-.combat-quick-btn.missile-btn:hover {
-  background: var(--alarm-red);
-  color: #000;
-  box-shadow: 0 0 18px var(--alarm-red);
-  transform: scale(1.04);
-}
+@media (hover: hover) { .combat-quick-btn.missile-btn:hover { background: var(--alarm-red); color: #000; box-shadow: 0 0 18px var(--alarm-red); transform: scale(1.04); } }
 
 /* =========================================================================
    FLIR THERMAL SCOPE OVERLAY
@@ -623,13 +608,7 @@ body {
   transition: all 0.2s ease;
 }
 
-.ring-action-btn:hover .ring-circle-icon,
-.ring-action-btn.active .ring-circle-icon {
-  background: var(--tactical-green);
-  color: #000;
-  box-shadow: 0 0 20px var(--tactical-green);
-  transform: scale(1.08);
-}
+@media (hover: hover) { .ring-action-btn:hover .ring-circle-icon, .ring-action-btn.active .ring-circle-icon { background: var(--tactical-green); color: #000; box-shadow: 0 0 20px var(--tactical-green); transform: scale(1.08); } }
 .ring-label { font-size: 9px; font-weight: 700; letter-spacing: 0.8px; color: #a0d8b4; text-shadow: var(--text-outline); }
 
 /* =========================================================================
@@ -1502,7 +1481,7 @@ body {
 }
 
 .help-tips li::before {
-  content: 'РІвЂ“С‘';
+  content: 'Р Р†РІР‚вЂњРЎвЂ';
   position: absolute;
   left: 0;
   color: var(--tactical-green);
@@ -1884,7 +1863,7 @@ body {
 }
 
 /* =========================================================================
-   TECH TREE РІР‚вЂќ TACTICAL R&D MATRIX (CYBERPUNK / MILITARY HUD)
+   TECH TREE Р Р†Р вЂљРІР‚Сњ TACTICAL R&D MATRIX (CYBERPUNK / MILITARY HUD)
    ========================================================================= */
 
 .tt-modal-container {
@@ -2303,7 +2282,7 @@ body {
 }
 
 .tt-node.tt-unlocked .tt-node-cost-badge::after {
-  content: ' РІСљвЂњ';
+  content: ' Р Р†РЎС™РІР‚Сљ';
   font-weight: 900;
 }
 
@@ -4313,7 +4292,7 @@ body {
 }
 
 /* =========================================================================
-   COMPREHENSIVE MOBILE LAYOUT РІР‚вЂќ MODALS, HUD, OVERLAYS (РІвЂ°В¤768px)
+   COMPREHENSIVE MOBILE LAYOUT Р Р†Р вЂљРІР‚Сњ MODALS, HUD, OVERLAYS (Р Р†РІР‚В°Р’В¤768px)
    All rules below only apply to mobile/tablet. Desktop is untouched.
    ========================================================================= */
 
@@ -5021,7 +5000,7 @@ body {
 }
 
 /* =========================================================================
-   ULTRA-SMALL PHONES (РІвЂ°В¤ 400px width)
+   ULTRA-SMALL PHONES (Р Р†РІР‚В°Р’В¤ 400px width)
    ========================================================================= */
 @media (width <= 400px) {
   .campaign-acts-nav {
@@ -6065,7 +6044,7 @@ body {
 }
 
 /* =========================================================================
-   MOBILE-FIRST SCREEN SPACE OPTIMIZATIONS (РІвЂ°В¤ 768px)
+   MOBILE-FIRST SCREEN SPACE OPTIMIZATIONS (Р Р†РІР‚В°Р’В¤ 768px)
    ========================================================================== */
 @media (width <= 768px) {
   /* Hide desktop-only buttons in top row */
@@ -6644,6 +6623,7 @@ body::after {
 #assault-modal, #cyber-modal, #victory-modal, #game-over-modal, .help-modal-overlay {
   z-index: 9999 !important;
 }
+
 
 
 
