@@ -6497,3 +6497,101 @@ body::after {
 #main-hud-layer {
   transition: opacity 0.3s ease;
 }
+/* ==========================================================================
+   v5.1 MOBILE UI LAYOUT OVERHAUL (BOTTOM DOCK & COMPACT TOP)
+   ========================================================================== */
+
+#main-hud-layer {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  pointer-events: none;
+}
+.top-hud-bar, .quick-combat-actions-bar, .concept-action-rings, .concept-bottom-hud, .concept-dossier-card, .concept-slide-panel {
+  pointer-events: auto !important;
+}
+
+/* FPV TARGET PANEL: Anchor to Bottom */
+.concept-bottom-hud {
+  position: absolute !important;
+  bottom: 12px !important;
+  left: 12px !important;
+  right: 12px !important;
+  z-index: 100;
+  background: rgba(0, 15, 10, 0.75) !important;
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(0, 255, 200, 0.4) !important;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+  border-radius: 12px;
+  padding: 12px !important;
+  margin: 0 !important;
+}
+
+#btn-assault {
+  padding: 10px 16px !important;
+  font-size: 15px !important;
+  border-radius: 8px;
+  letter-spacing: 1px;
+}
+
+/* ACTION RINGS (Menu buttons): Bottom dock */
+.concept-action-rings {
+  position: absolute !important;
+  bottom: 150px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  width: max-content !important;
+  display: flex !important;
+  flex-direction: row !important;
+  gap: 12px !important;
+  padding: 8px 20px !important;
+  background: rgba(0, 20, 15, 0.8) !important;
+  backdrop-filter: blur(12px) !important;
+  border: 1px solid rgba(0, 255, 200, 0.3) !important;
+  border-radius: 40px !important;
+  z-index: 90;
+}
+
+.ring-action-btn {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.ring-circle-icon {
+  width: 40px !important;
+  height: 40px !important;
+  background: rgba(0, 255, 200, 0.1) !important;
+  border: 1px solid rgba(0, 255, 200, 0.5) !important;
+}
+
+.ring-label {
+  display: none !important;
+}
+
+/* QUICK COMBAT ACTIONS: Scrollable horizontal bar */
+.quick-combat-actions-bar {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  overflow-x: auto !important;
+  padding: 6px 12px !important;
+  gap: 10px !important;
+  margin-top: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.quick-combat-actions-bar::-webkit-scrollbar {
+  display: none;
+}
+.combat-quick-btn {
+  flex: 0 0 auto !important;
+  width: 85px !important;
+  height: 34px !important;
+  border-radius: 8px !important;
+}
+
+/* TOP HUD TWEAKS */
+.top-hud-bar {
+  padding: 6px 12px !important;
+}
