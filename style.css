@@ -6080,3 +6080,39 @@ body::after {
   mix-blend-mode: overlay;
 }
 
+
+@keyframes glitch-anim {
+  0% { transform: translate(0); }
+  20% { transform: translate(-5px, 5px); }
+  40% { transform: translate(-5px, -5px); }
+  60% { transform: translate(5px, 5px); }
+  80% { transform: translate(5px, -5px); }
+  100% { transform: translate(0); }
+}
+.glitch-effect {
+  animation: glitch-anim 0.15s cubic-bezier(.25, .46, .45, .94) both;
+  filter: hue-rotate(90deg) contrast(150%);
+}
+.flir-lock-point.locking {
+  background: rgba(255, 0, 0, 0.3) !important;
+  border-color: #ff0000 !important;
+  color: #fff !important;
+  box-shadow: 0 0 15px rgba(255, 0, 0, 0.6) !important;
+  transition: all 1.5s linear !important;
+}
+
+
+.flir-lock-point {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+@media (max-width: 768px) {
+  .btn-recon-snap {
+    bottom: 110px !important;
+    padding: 14px 28px !important;
+    font-size: 16px !important;
+    z-index: 10000 !important;
+  }
+}
+

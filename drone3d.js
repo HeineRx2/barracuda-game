@@ -219,10 +219,11 @@ class Barracuda3DEngine {
     this.createEnemyWarship();
     this.createLightningSystem();
     this.createRainSystem();
+    this.createPlanktonSystem();
     this.createParticlePools();
 
-    // Custom Thermal Shader for FLIR mode
     this.thermalMaterial = new THREE.ShaderMaterial({
+      uniforms: { uTime: { value: 0.0 } },
       vertexShader: `
         varying vec3 vNormal;
         void main() {
@@ -231,10 +232,18 @@ class Barracuda3DEngine {
         }
       `,
       fragmentShader: `
+        uniform float uTime;
         varying vec3 vNormal;
+        float hash(float n) { return fract(sin(n) * 43758.5453123); }
         void main() {
           float intensity = pow(1.0 - max(dot(vNormal, vec3(0.0, 0.0, 1.0)), 0.0), 3.0);
-          gl_FragColor = vec4(0.0, 1.0, 0.4, 1.0) * intensity + vec4(0.0, 0.15, 0.05, 1.0);
+          float noise = hash(gl_FragCoord.x * 12.9898 + gl_FragCoord.y * 78.233 + uTime) * 0.12;
+          float scanline = sin(gl_FragCoord.y * 1.5 + uTime * 8.0) * 0.05;
+          
+          vec3 color = vec3(0.0, 1.0, 0.4) * intensity + vec3(0.0, 0.15, 0.05);
+          color += vec3(noise + scanline);
+          
+          gl_FragColor = vec4(color, 1.0);
         }
       `,
       wireframe: false
@@ -406,15 +415,72 @@ class Barracuda3DEngine {
 
       // Add slight wind effect
       positions[i * 3] += (this.weatherType === 'storm' ? 2.0 : 0.5) * dt;
+      positions[i * 3 + 2] -= (velocities[i] * 0.2) * dt;
 
-      if (positions[i * 3 + 1] < 0) {
-        positions[i * 3 + 1] = 35 + Math.random() * 5;
-        positions[i * 3] = (Math.random() - 0.5) * 80;
+      if (positions[i * 3 + 1] < -10) {
+        positions[i * 3 + 1] = 40;
         positions[i * 3 + 2] = (Math.random() - 0.5) * 80;
       }
     }
 
     this.rainParticles.geometry.attributes.position.needsUpdate = true;
+  }
+
+  createPlanktonSystem() {
+    const pCount = 1500;
+    const pGeo = new THREE.BufferGeometry();
+    const positions = new Float32Array(pCount * 3);
+    const velocities = new Float32Array(pCount * 3);
+
+    for (let i = 0; i < pCount; i++) {
+      positions[i * 3] = (Math.random() - 0.5) * 30;
+      positions[i * 3 + 1] = (Math.random() - 0.5) * 30 - 5; // Underwater
+      positions[i * 3 + 2] = (Math.random() - 0.5) * 30;
+      velocities[i * 3] = (Math.random() - 0.5) * 0.5;
+      velocities[i * 3 + 1] = (Math.random() - 0.5) * 0.2;
+      velocities[i * 3 + 2] = (Math.random() - 0.5) * 0.5;
+    }
+
+    pGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    pGeo.userData = { velocities: velocities };
+
+    const pMat = new THREE.PointsMaterial({
+      color: 0x88ccff,
+      size: 0.05,
+      transparent: true,
+      opacity: 0.6,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending
+    });
+
+    this.planktonSystem = new THREE.Points(pGeo, pMat);
+    this.planktonSystem.visible = false;
+    this.scene.add(this.planktonSystem);
+  }
+
+  updatePlankton(dt) {
+    if (!this.planktonSystem || !this.planktonSystem.visible) return;
+    
+    // Move plankton around the camera to give infinite illusion
+    this.planktonSystem.position.copy(this.camera.position);
+
+    const positions = this.planktonSystem.geometry.attributes.position.array;
+    const velocities = this.planktonSystem.geometry.userData.velocities;
+    
+    for (let i = 0; i < positions.length / 3; i++) {
+      positions[i * 3] += velocities[i * 3] * dt;
+      positions[i * 3 + 1] += velocities[i * 3 + 1] * dt;
+      positions[i * 3 + 2] += velocities[i * 3 + 2] * dt;
+      
+      // Wrap around within a 30m cube centered on camera
+      if (positions[i * 3] > 15) positions[i * 3] -= 30;
+      if (positions[i * 3] < -15) positions[i * 3] += 30;
+      if (positions[i * 3 + 1] > 15) positions[i * 3 + 1] -= 30;
+      if (positions[i * 3 + 1] < -15) positions[i * 3 + 1] += 30;
+      if (positions[i * 3 + 2] > 15) positions[i * 3 + 2] -= 30;
+      if (positions[i * 3 + 2] < -15) positions[i * 3 + 2] += 30;
+    }
+    this.planktonSystem.geometry.attributes.position.needsUpdate = true;
   }
 
   // =========================================================================
@@ -483,10 +549,20 @@ class Barracuda3DEngine {
         this.originalFog = this.scene.fog;
         this.scene.fog = new THREE.FogExp2(0x001105, 0.015);
       }
+      if (this.planktonSystem) this.planktonSystem.visible = false;
+    } else if (mode === 'rov') {
+      this.scene.overrideMaterial = null;
+      this.scene.background = new THREE.Color(0x001a22); // Deep dark water
+      if (this.scene.fog) {
+        this.originalFog = this.scene.fog;
+        this.scene.fog = new THREE.FogExp2(0x001a22, 0.08); // Dense underwater fog
+      }
+      if (this.planktonSystem) this.planktonSystem.visible = true;
     } else {
       this.scene.overrideMaterial = null;
       if (this.skyColor) this.scene.background = this.skyColor;
       if (this.originalFog) this.scene.fog = this.originalFog;
+      if (this.planktonSystem) this.planktonSystem.visible = false;
     }
   }
 
@@ -1375,6 +1451,8 @@ class Barracuda3DEngine {
     if (!this.fpvFlightActive || !this.fpvDroneMesh) return;
 
     this.fpvFlightTime += dt;
+    this.fpvGlitchAmount = Math.max(0, this.fpvGlitchAmount - 1.5 * dt); // Decay glitch
+    
     // Battery discharge
     this.fpvBattery = Math.max(19.0, this.fpvBattery - (this.fpvBoost ? 0.22 : 0.08) * dt);
 
@@ -1434,6 +1512,19 @@ class Barracuda3DEngine {
       }
     } else {
       // ---- MANUAL MODE: Player-controlled FPV flight (missions only) ----
+
+      // Final approach static / signal loss calculation
+      if (this.enemyShip) {
+        const toTargetX = this.enemyShip.position.x - this.fpvPos.x;
+        const toTargetZ = this.enemyShip.position.z - this.fpvPos.z;
+        const horizDist = Math.sqrt(toTargetX * toTargetX + toTargetZ * toTargetZ);
+        
+        if (horizDist < 45.0) {
+          // Static increases as we get closer (starts at 45m, peaks at 0m)
+          const staticFactor = Math.max(0, 1.0 - (horizDist / 45.0));
+          this.fpvGlitchAmount = Math.max(this.fpvGlitchAmount, staticFactor);
+        }
+      }
 
       // HOVER MODE: stabilize position, dampen velocity, hold altitude
       if (this.fpvHover) {
@@ -2410,6 +2501,10 @@ class Barracuda3DEngine {
     try {
     const t = this.clock.getElapsedTime();
     const dt = 0.016;
+    
+    if (this.thermalMaterial && this.thermalMaterial.uniforms) {
+      this.thermalMaterial.uniforms.uTime.value = t;
+    }
 
     // Camera Mode Switching: Cinematic Orbit, FPV 1st-person, Boat Chase, FLIR, or Base Orbit
     if (this._cameraMode === 'cinematic_orbit') {
@@ -2483,6 +2578,9 @@ class Barracuda3DEngine {
 
     // Rain
     this.updateRain(dt);
+    
+    // Underwater Plankton
+    this.updatePlankton(dt);
 
     // Clouds
     if (this.cloudsGroup) {
@@ -3654,7 +3752,8 @@ class Barracuda3DEngine {
       magnetometerNt: this.magnetometerVal,
       siphonProgress: Math.round(this.siphonProgress),
       siphonLocked: this.siphonLocked,
-      rovActive: this.rovActive
+      rovActive: this.rovActive,
+      rovDepth: this.rovActive ? Math.abs(this.rovPos.y).toFixed(1) : 0
     };
   }
 }

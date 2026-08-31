@@ -3279,8 +3279,17 @@ class BarracudaGame {
     this._updateRewDots();
 
     // Button handlers
-    document.getElementById('rew-hack-btn').addEventListener('click', () => this._rewAttemptCapture());
-    document.getElementById('rew-abort-btn').addEventListener('click', () => this._finishRewMission(false));
+    document.getElementById('rew-hack-btn').addEventListener('click', (e) => { e.stopPropagation(); this._rewAttemptCapture(); });
+    document.getElementById('rew-abort-btn').addEventListener('click', (e) => { e.stopPropagation(); this._finishRewMission(false); });
+
+    // Tap-zone for mobile
+    const tapHandler = (e) => {
+      if (e.target.closest('#rew-abort-btn') || e.target.closest('#rew-hack-btn')) return;
+      e.preventDefault();
+      this._rewAttemptCapture();
+    };
+    overlay.addEventListener('mousedown', tapHandler);
+    overlay.addEventListener('touchstart', tapHandler, { passive: false });
 
     // Keyboard handler
     this._rewKeyHandler = (e) => {
@@ -3968,10 +3977,9 @@ class BarracudaGame {
         reticleEl.style.top = `50%`;
       }
 
-      tagEl.textContent = `🎯 ${nearest.name} [${nearest.dist}м]`;
-
       // Lock-On State (< 45m)
       if (nearest.dist <= 45) {
+        tagEl.innerHTML = `<span style="color:#fff;background:#00ff88;padding:0 4px;border-radius:2px;color:#000;">TARGET DETECTED</span> ${nearest.name} [${nearest.dist}м]`;
         reticleEl.classList.add('locked');
         if (snapBtn) snapBtn.style.display = 'block';
         if (mainCrosshair) mainCrosshair.style.borderColor = '#00ff88';
@@ -3981,6 +3989,7 @@ class BarracudaGame {
           this.reconState.lockedAudioPlayed = true;
         }
       } else {
+        tagEl.textContent = `🎯 ${nearest.name} [${nearest.dist}м]`;
         reticleEl.classList.remove('locked');
         if (snapBtn) snapBtn.style.display = 'none';
         if (mainCrosshair) mainCrosshair.style.borderColor = '';
@@ -4075,6 +4084,18 @@ class BarracudaGame {
       const pitchLadder = document.getElementById('fpv-pitch-ladder');
       if (pitchLadder) {
         pitchLadder.style.transform = `translateY(${telem.pitchDeg * 2.5}px) rotate(${telem.rollDeg}deg)`;
+      }
+
+      // Dynamic Glitch / Static Effect
+      const glitchLayer = document.getElementById('fpv-glitch-layer');
+      if (glitchLayer) {
+        if (telem.glitchAmount > 0) {
+          glitchLayer.style.opacity = telem.glitchAmount.toString();
+          glitchLayer.classList.add('fpv-glitched');
+        } else {
+          glitchLayer.style.opacity = '0';
+          glitchLayer.classList.remove('fpv-glitched');
+        }
       }
 
       // Lock on bracket
@@ -4172,7 +4193,10 @@ class BarracudaGame {
         const magFill = document.getElementById('rov-fill-mag');
         const siphonPct = document.getElementById('rov-siphon-pct');
         const siphonFill = document.getElementById('rov-siphon-fill');
+        const depthEl = document.getElementById('rov-hud-depth');
+        
         if (magVal) magVal.textContent = `${telem.magnetometerNt.toLocaleString()} nT`;
+        if (depthEl) depthEl.textContent = `ГЛУБИНА: ${telem.rovDepth} м`;
         if (magFill) {
           const norm = Math.min(100, Math.max(0, (telem.magnetometerNt - 48000) / 40));
           magFill.style.width = `${norm}%`;
@@ -4709,17 +4733,52 @@ class BarracudaGame {
     }
 
     document.querySelectorAll('.flir-lock-point').forEach(btn => {
-      btn.addEventListener('click', (e) => {
+      let holdTimer = null;
+      let progressInterval = null;
+      const targetType = btn.getAttribute('data-target');
+      
+      const startLock = (e) => {
+        e.preventDefault();
         e.stopPropagation();
-        const targetType = btn.getAttribute('data-target');
-        let multiplier = 4;
-        if (targetType === 'ammo') multiplier = 8;
-        if (targetType === 'bridge') multiplier = 5;
+        if (window.tacticalAudio) window.tacticalAudio.playSonarPing();
+        
+        btn.classList.add('locking');
+        let progress = 0;
+        
+        progressInterval = setInterval(() => {
+          progress += 10;
+        }, 150);
 
-        this.fireMissileSalvo(multiplier);
-        this.flirOverlay.classList.remove('active');
-        if (this.engine3D) this.engine3D.cameraMode = 'orbit';
-      });
+        holdTimer = setTimeout(() => {
+          clearInterval(progressInterval);
+          btn.classList.remove('locking');
+          
+          if (window.tacticalAudio) window.tacticalAudio.playAlert();
+          
+          let multiplier = 4;
+          if (targetType === 'ammo') multiplier = 8;
+          if (targetType === 'bridge') multiplier = 5;
+
+          this.fireMissileSalvo(multiplier);
+          this.flirOverlay.classList.remove('active');
+          if (this.engine3D) this.engine3D.cameraMode = 'orbit';
+        }, 1500);
+      };
+
+      const cancelLock = (e) => {
+        e.preventDefault();
+        if (holdTimer) clearTimeout(holdTimer);
+        if (progressInterval) clearInterval(progressInterval);
+        btn.classList.remove('locking');
+      };
+
+      btn.addEventListener('mousedown', startLock);
+      btn.addEventListener('touchstart', startLock, { passive: false });
+      
+      btn.addEventListener('mouseup', cancelLock);
+      btn.addEventListener('mouseleave', cancelLock);
+      btn.addEventListener('touchend', cancelLock);
+      btn.addEventListener('touchcancel', cancelLock);
     });
 
     // Direct 3D Missile Fire
