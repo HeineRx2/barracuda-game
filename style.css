@@ -1,4 +1,4 @@
-﻿@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700;800&family=Share+Tech+Mono&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700;800&family=Share+Tech+Mono&display=swap');
 
 :root {
   /* Premium Sci-Fi Palette */
@@ -6610,4 +6610,46 @@ body::after {
   padding: 6px 12px !important;
   flex: 0 0 auto !important;
 }
+
+/* FIX 5.1.2: Centering bottom panel */
+.concept-bottom-hud {
+  align-self: center !important;
+  width: calc(100% - 24px) !important;
+  max-width: 500px !important;
+  margin: 0 auto 12px auto !important; /* Adding bottom margin for breathing room */
+}
+
+/* FIX 5.1.2: Top Stats Row Alignment & Booster Fix */
+.top-stats-row {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 6px !important;
+  width: 100% !important;
+}
+.booster-floating-widget {
+  position: static !important;
+  top: auto !important; right: auto !important;
+  flex: 1 1 auto !important;
+  min-width: 0;
+}
+.booster-inner-btn {
+  width: 100% !important;
+  justify-content: center !important;
+}
+
+/* FIX 5.1.2: Make quick combat actions smaller and centered */
+.quick-combat-actions-bar {
+  justify-content: center !important;
+  padding: 4px 6px !important;
+  gap: 6px !important;
+}
+.combat-quick-btn {
+  width: auto !important;
+  min-width: 70px !important;
+  height: 28px !important;
+  font-size: 9px !important;
+  padding: 2px 6px !important;
+}
+
 
