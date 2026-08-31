@@ -5829,7 +5829,7 @@ body {
 
   /* Clean mobile layout with fully clickable controls */
   .middle-arena {
-    pointer-events: auto !important;
+    pointer-events: none !important;
   }
   .concept-action-rings {
     gap: 6px !important;
