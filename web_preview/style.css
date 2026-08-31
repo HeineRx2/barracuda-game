@@ -5806,19 +5806,21 @@ body {
     font-size: 11px !important;
   }
   
-  /* Quick Combat Bar: sleek scrollable / compact */
+  /* Quick Combat Bar: Grid layout for mobile */
   .quick-combat-actions-bar {
-    display: flex !important;
-    flex-wrap: nowrap !important;
-    overflow-x: auto !important;
-    gap: 4px !important;
-    padding: 2px 4px !important;
-    -webkit-overflow-scrolling: touch;
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 8px !important;
+    height: auto !important;
+    padding: 4px !important;
+    overflow: visible !important;
   }
   .combat-quick-btn {
-    flex: 0 0 auto !important;
-    padding: 4px 8px !important;
+    width: 100% !important;
+    height: 36px !important;
+    padding: 4px !important;
     font-size: 10px !important;
+    justify-content: center !important;
   }
 
   /* Clean mobile layout with fully clickable controls */
