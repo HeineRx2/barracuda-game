@@ -6229,6 +6229,9 @@ class BarracudaGame {
       this.saveGame();
     };
 
+    if (!this.pidSettings) {
+      this.pidSettings = { pGain: 1.0, dGain: 1.0, expo: 1.0 };
+    }
     if (sliderP) { sliderP.value = this.pidSettings.pGain || 1.0; sliderP.addEventListener('input', updatePid); }
     if (sliderD) { sliderD.value = this.pidSettings.dGain || 1.0; sliderD.addEventListener('input', updatePid); }
     if (sliderExpo) { sliderExpo.value = this.pidSettings.expo || 1.0; sliderExpo.addEventListener('input', updatePid); }
