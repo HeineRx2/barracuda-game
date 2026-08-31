@@ -193,13 +193,17 @@ body {
 .flir-thermal-view {
   position: absolute;
   top: 0; left: 0;
+  width: 100%; height: 100%;
   z-index: 9999;
-  display: flex;
+  display: none;
   flex-direction: column;
   justify-content: space-between;
   align-items: center;
   padding: 24px;
-  background: radial-gradient(circle at center, rgba(0, 255, 102, 0.06) 0%, rgba(0, 16, 8, 0.65) 100%);
+  background: transparent;
+  pointer-events: none;
+}
+#btn-exit-flir, .flir-lock-point {
   pointer-events: auto;
 }
 
@@ -608,7 +612,7 @@ body {
   box-shadow: 0 0 20px var(--tactical-green);
   transform: scale(1.08);
 }
-.ring-label { font-size: 9px; font-weight: 700; letter-spacing: 0.8px; color: #a0d8b4; text-shadow: var(--text-outline); }
+.ring-label { font-size: 9px; font-weight: 700; letter-spacing: 0.8px; color: #a0d8b4; }
 
 /* =========================================================================
    SLIDE-OUT PANELS (DRAWER MODALS)
@@ -797,7 +801,6 @@ body {
   font-size: 24px;
   font-weight: 800;
   color: var(--tactical-green);
-  text-shadow: var(--text-outline), 0 0 12px var(--tactical-green);
   pointer-events: none;
   animation: floatDrift 0.85s cubic-bezier(0.1,0.8,0.3,1) forwards;
   z-index: 40;
@@ -805,7 +808,6 @@ body {
 .floating-gain.crit {
   font-size: 32px;
   color: var(--hazard-yellow);
-  text-shadow: var(--text-outline), 0 0 18px var(--hazard-yellow);
 }
 @keyframes floatDrift {
   0% { opacity: 1; transform: translate(-50%, 0) scale(0.85); }
@@ -1179,7 +1181,6 @@ body {
   font-size: 22px;
   font-weight: 800;
   color: var(--alarm-red);
-  text-shadow: 0 0 10px rgba(255, 42, 42, 0.5);
 }
 
 .btn-event-action {
@@ -1231,7 +1232,6 @@ body {
   color: var(--hazard-yellow);
   letter-spacing: 2px;
   margin: 8px 0;
-  text-shadow: 0 0 12px rgba(255, 204, 0, 0.4);
 }
 
 /* =========================================================================
@@ -1684,7 +1684,6 @@ body {
     border-radius: 50%;
     background: rgba(10, 25, 32, 0.85);
     border: 1px solid rgba(0, 240, 255, 0.4);
-    box-shadow: 0 0 10px rgba(0, 240, 255, 0.15);
   }
 
   .ring-label {
@@ -1712,7 +1711,6 @@ body {
     border-bottom: none !important;
     padding: 12px 14px !important;
     z-index: 200 !important;
-    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.9) !important;
     pointer-events: auto;
   }
 
@@ -1728,7 +1726,6 @@ body {
     border: 1px solid rgba(0, 240, 255, 0.35);
     border-radius: 10px;
     backdrop-filter: blur(14px);
-    box-shadow: 0 4px 25px rgba(0,0,0,0.7);
     pointer-events: auto;
     z-index: 25;
   }
@@ -1784,7 +1781,6 @@ body {
     background: linear-gradient(135deg, rgba(0, 240, 255, 0.25), rgba(0, 255, 136, 0.25));
     border: 1px solid #00f0ff;
     color: #00f0ff;
-    box-shadow: 0 0 15px rgba(0, 240, 255, 0.2);
   }
 }
 
@@ -1840,7 +1836,6 @@ body {
   padding: 24px 28px !important;
   background: radial-gradient(circle at 50% 0%, rgba(0, 35, 45, 0.96) 0%, rgba(3, 10, 16, 0.98) 75%), #030a10 !important;
   border: 1px solid rgba(0, 240, 255, 0.25) !important;
-  box-shadow: 0 0 50px rgba(0, 240, 255, 0.12), inset 0 0 40px rgba(0, 255, 136, 0.04) !important;
   border-radius: 16px !important;
   overflow-y: auto !important;
   scrollbar-width: thin;
@@ -1876,7 +1871,6 @@ body {
   height: 6px;
   border-radius: 50%;
   background: #00ff88;
-  box-shadow: 0 0 8px #00ff88;
   animation: tt-radar-blip 1.5s infinite;
 }
 
@@ -1891,7 +1885,6 @@ body {
   font-weight: 800;
   color: #ffffff;
   letter-spacing: 1.5px;
-  text-shadow: 0 0 20px rgba(0, 255, 136, 0.5);
   margin: 0 0 12px 0;
   text-transform: uppercase;
 }
@@ -1914,7 +1907,6 @@ body {
   gap: 8px;
   font-family: 'Rajdhani', monospace;
   font-size: 12px;
-  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5);
 }
 
 .tt-telemetry-label {
@@ -1963,7 +1955,6 @@ body {
   background: rgba(0, 240, 255, 0.15);
   border-color: #00f0ff;
   color: #00f0ff;
-  box-shadow: 0 0 14px rgba(0, 240, 255, 0.25);
 }
 
 /* Branches Grid */
@@ -1989,17 +1980,14 @@ body {
 
 .tt-branch-stealth {
   border-top: 2px solid #00f0ff;
-  background: linear-gradient(180deg, rgba(0, 240, 255, 0.06) 0%, rgba(4, 15, 24, 0.8) 100%);
 }
 
 .tt-branch-firepower {
   border-top: 2px solid #ff2255;
-  background: linear-gradient(180deg, rgba(255, 34, 85, 0.06) 0%, rgba(4, 15, 24, 0.8) 100%);
 }
 
 .tt-branch-engineering {
   border-top: 2px solid #ffaa00;
-  background: linear-gradient(180deg, rgba(255, 170, 0, 0.06) 0%, rgba(4, 15, 24, 0.8) 100%);
 }
 
 .tt-branch-header {
@@ -2077,9 +2065,9 @@ body {
   animation: tt-pulse-travel 1.8s infinite linear;
 }
 
-.tt-branch-stealth .tt-conduit-pulse { background: #00f0ff; box-shadow: 0 0 8px #00f0ff; }
-.tt-branch-firepower .tt-conduit-pulse { background: #ff2255; box-shadow: 0 0 8px #ff2255; }
-.tt-branch-engineering .tt-conduit-pulse { background: #ffaa00; box-shadow: 0 0 8px #ffaa00; }
+.tt-branch-stealth .tt-conduit-pulse { background: #00f0ff; }
+.tt-branch-firepower .tt-conduit-pulse { background: #ff2255; }
+.tt-branch-engineering .tt-conduit-pulse { background: #ffaa00; }
 
 @keyframes tt-pulse-travel {
   0% { top: -10px; opacity: 0; }
@@ -2103,7 +2091,6 @@ body {
   align-items: center;
   text-align: center;
   user-select: none;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
 
 .tt-node-tier {
@@ -2175,7 +2162,6 @@ body {
 .tt-node:hover {
   transform: translateY(-2px) scale(1.02);
   border-color: rgba(0, 240, 255, 0.4);
-  box-shadow: 0 6px 20px rgba(0, 240, 255, 0.15);
 }
 
 .tt-node:hover .tt-node-icon-wrap {
@@ -2193,7 +2179,6 @@ body {
 
 .tt-node.tt-locked:hover {
   transform: none;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
   border-color: rgba(255, 255, 255, 0.05);
 }
 
@@ -2207,18 +2192,16 @@ body {
 .tt-node.tt-available {
   border-color: rgba(0, 255, 136, 0.6);
   background: linear-gradient(135deg, rgba(0, 35, 25, 0.95) 0%, rgba(3, 16, 12, 0.98) 100%);
-  box-shadow: 0 0 16px rgba(0, 255, 136, 0.2);
   animation: tt-available-glow 2s infinite ease-in-out;
 }
 
 @keyframes tt-available-glow {
-  0%, 100% { border-color: rgba(0, 255, 136, 0.4); box-shadow: 0 0 12px rgba(0, 255, 136, 0.15); }
-  50% { border-color: rgba(0, 255, 136, 0.9); box-shadow: 0 0 24px rgba(0, 255, 136, 0.35); }
+  0%, 100% { border-color: rgba(0, 255, 136, 0.4); }
+  50% { border-color: rgba(0, 255, 136, 0.9); }
 }
 
 .tt-node.tt-available .tt-node-icon-wrap {
   border-color: #00ff88;
-  box-shadow: 0 0 12px rgba(0, 255, 136, 0.3);
 }
 
 .tt-node.tt-available .tt-node-cost-badge {
@@ -2231,7 +2214,6 @@ body {
 .tt-node.tt-unlocked {
   border-color: rgba(0, 240, 255, 0.6);
   background: linear-gradient(135deg, rgba(0, 30, 45, 0.9) 0%, rgba(2, 14, 22, 0.95) 100%);
-  box-shadow: 0 0 14px rgba(0, 240, 255, 0.15);
 }
 
 .tt-node.tt-unlocked .tt-node-icon-wrap {
@@ -2258,7 +2240,6 @@ body {
 .tt-node.tt-selected {
   outline: 2px solid #00f0ff !important;
   outline-offset: 3px !important;
-  box-shadow: 0 0 25px rgba(0, 240, 255, 0.45) !important;
 }
 
 /* =========================================================================
@@ -2272,7 +2253,6 @@ body {
   padding: 18px 22px;
   display: flex;
   gap: 24px;
-  box-shadow: 0 6px 30px rgba(0, 0, 0, 0.6), inset 0 0 20px rgba(0, 240, 255, 0.03);
   position: relative;
   overflow: hidden;
 }
@@ -2304,7 +2284,6 @@ body {
   justify-content: center;
   position: relative;
   flex-shrink: 0;
-  box-shadow: inset 0 0 15px rgba(0, 240, 255, 0.1);
 }
 
 .tt-blueprint-icon {
@@ -2428,13 +2407,11 @@ body {
   letter-spacing: 1px;
   cursor: pointer;
   transition: all 0.25s ease;
-  box-shadow: 0 4px 16px rgba(0, 255, 136, 0.3);
   text-transform: uppercase;
 }
 
 .tt-btn-action-research:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 24px rgba(0, 255, 136, 0.5);
   filter: brightness(1.1);
 }
 
@@ -2446,7 +2423,6 @@ body {
   opacity: 0.4;
   cursor: not-allowed;
   transform: none !important;
-  box-shadow: none !important;
   background: rgba(255, 255, 255, 0.1) !important;
   color: #7a9aa8 !important;
 }
@@ -2503,7 +2479,6 @@ body {
   border: 1px solid rgba(0, 255, 136, 0.4);
   border-left: 4px solid #00ff88;
   border-radius: 10px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8), 0 0 25px rgba(0, 255, 136, 0.2);
   z-index: 1050;
   display: none;
   flex-direction: column;
@@ -2542,7 +2517,6 @@ body {
   height: 8px;
   background: #ff2244;
   border-radius: 50%;
-  box-shadow: 0 0 8px #ff2244;
   animation: commsPulse 1s infinite alternate;
 }
 
@@ -2581,7 +2555,6 @@ body {
   font-size: 28px;
   position: relative;
   flex-shrink: 0;
-  box-shadow: inset 0 0 12px rgba(0, 255, 136, 0.15);
 }
 
 .comms-avatar-badge {
@@ -2656,7 +2629,6 @@ body {
   border-color: #00ff88;
   color: #00ff88;
   transform: translateX(4px);
-  box-shadow: 0 0 12px rgba(0, 255, 136, 0.25);
 }
 
 .comms-choice-tag {
@@ -2676,7 +2648,6 @@ body {
   width: 94vw;
   background: rgba(2, 10, 18, 0.95);
   border: 1px solid rgba(0, 240, 255, 0.3);
-  box-shadow: 0 16px 60px rgba(0, 0, 0, 0.85), 0 0 35px rgba(0, 240, 255, 0.15);
 }
 
 .campaign-acts-nav {
@@ -2707,7 +2678,6 @@ body {
 .campaign-act-tab.active {
   border-color: #00f0ff;
   background: rgba(0, 240, 255, 0.15);
-  box-shadow: 0 0 16px rgba(0, 240, 255, 0.2);
 }
 
 .campaign-act-tag {
@@ -2751,7 +2721,6 @@ body {
 
 .campaign-mission-card.active {
   border-color: rgba(0, 255, 136, 0.5);
-  box-shadow: 0 0 18px rgba(0, 255, 136, 0.15);
 }
 
 .campaign-mission-card.completed {
@@ -2831,7 +2800,6 @@ body {
   border-color: #00ff88;
   color: #00ff88;
   background: rgba(0, 255, 136, 0.15);
-  box-shadow: 0 0 8px rgba(0, 255, 136, 0.2);
 }
 
 .mission-phase-step.done {
@@ -2864,13 +2832,11 @@ body {
   letter-spacing: 1px;
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: 0 4px 14px rgba(0, 255, 136, 0.3);
 }
 
 .btn-launch-mission:hover {
   transform: translateY(-2px);
   filter: brightness(1.1);
-  box-shadow: 0 6px 20px rgba(0, 255, 136, 0.5);
 }
 
 .btn-launch-mission:disabled {
@@ -2878,10 +2844,9 @@ body {
   color: #6a8c98;
   cursor: not-allowed;
   transform: none;
-  box-shadow: none;
 }
 
-/* ==========================================================================
+/* =========================================================================
    DRONE HANGAR & SALVAGE/CRAFTING MODAL
    ========================================================================== */
 .hangar-modal-container {
@@ -2889,7 +2854,6 @@ body {
   width: 94vw;
   background: rgba(2, 12, 20, 0.96);
   border: 1px solid rgba(0, 255, 136, 0.3);
-  box-shadow: 0 16px 60px rgba(0, 0, 0, 0.85), 0 0 35px rgba(0, 255, 136, 0.15);
 }
 
 .hangar-prototype-grid {
@@ -2925,7 +2889,6 @@ body {
 .proto-card.selected {
   border-color: #00ff88;
   background: linear-gradient(180deg, rgba(0, 255, 136, 0.12) 0%, rgba(4, 18, 30, 0.9) 100%);
-  box-shadow: 0 0 20px rgba(0, 255, 136, 0.25);
 }
 
 .proto-badge {
@@ -3081,7 +3044,6 @@ body {
 .btn-craft-action:hover {
   background: #ffcc00;
   color: #000;
-  box-shadow: 0 0 12px rgba(255, 204, 0, 0.4);
 }
 
 .btn-craft-action:disabled {
@@ -3120,7 +3082,6 @@ body {
   color: #fff;
   letter-spacing: 1px;
   margin: 4px 0;
-  text-shadow: 0 0 15px rgba(0, 240, 255, 0.4);
 }
 
 .help-subtitle {
@@ -3151,7 +3112,6 @@ body {
 .help-card:hover {
   border-color: #00f0ff;
   background: rgba(12, 28, 36, 0.85);
-  box-shadow: 0 0 15px rgba(0, 240, 255, 0.15);
 }
 
 .help-card-icon {
@@ -3219,8 +3179,6 @@ body {
   border: 1px solid rgba(0, 255, 136, 0.4);
   border-radius: 8px;
   padding: 8px 16px;
-  backdrop-filter: blur(12px);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.8), 0 0 15px rgba(0, 255, 136, 0.15);
   pointer-events: auto;
 }
 
@@ -3236,7 +3194,6 @@ body {
   font-weight: 800;
   color: #00ff88;
   letter-spacing: 1px;
-  text-shadow: 0 0 8px rgba(0, 255, 136, 0.4);
 }
 
 .mission-timer {
@@ -3281,7 +3238,6 @@ body {
 .btn-abort-mission:hover {
   background: #ff4444;
   color: #000;
-  box-shadow: 0 0 15px rgba(255, 68, 68, 0.6);
 }
 
 /* ------------------- CENTER HUD & COMPASS ------------------- */
@@ -3300,7 +3256,6 @@ body {
   background: rgba(4, 14, 20, 0.7);
   border: 1px solid rgba(0, 240, 255, 0.3);
   border-radius: 20px;
-  backdrop-filter: blur(8px);
 }
 
 .compass-marker {
@@ -3348,11 +3303,6 @@ body {
   padding: 4px 12px;
   border-radius: 4px;
   border: 1px solid rgba(255, 204, 0, 0.4);
-  animation: warningPulse 1s infinite alternate;
-}
-@keyframes warningPulse {
-  from { opacity: 0.6; }
-  to { opacity: 1; transform: scale(1.02); }
 }
 
 /* ------------------- BOTTOM LEFT: SPEED & HULL ------------------- */
@@ -3369,8 +3319,6 @@ body {
   border-radius: 8px;
   padding: 8px 14px;
   text-align: center;
-  backdrop-filter: blur(10px);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.7);
 }
 
 .speed-number {
@@ -3396,7 +3344,6 @@ body {
   border-radius: 8px;
   padding: 8px 14px;
   min-width: 170px;
-  backdrop-filter: blur(10px);
 }
 
 .hull-label {
@@ -3420,7 +3367,6 @@ body {
 .hull-bar-fill {
   height: 100%;
   background: linear-gradient(90deg, #00ff88, #00f0ff);
-  box-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
   transition: width 0.15s ease-out;
 }
 
@@ -3443,7 +3389,6 @@ body {
   border-radius: 50%;
   background: radial-gradient(circle, rgba(0, 240, 255, 0.12) 0%, rgba(4, 16, 22, 0.6) 100%);
   border: 2px solid rgba(0, 240, 255, 0.4);
-  box-shadow: 0 0 20px rgba(0, 240, 255, 0.2), inset 0 0 15px rgba(0, 240, 255, 0.1);
   position: relative;
   display: flex;
   align-items: center;
@@ -3456,7 +3401,6 @@ body {
   border-radius: 50%;
   background: linear-gradient(135deg, rgba(0, 240, 255, 0.8), rgba(0, 255, 136, 0.8));
   border: 2px solid #fff;
-  box-shadow: 0 0 15px #00f0ff;
   position: absolute;
   transform: translate(0px, 0px);
   pointer-events: none;
@@ -3492,7 +3436,6 @@ body {
   border-radius: 8px;
   font-family: 'Rajdhani', sans-serif;
   cursor: pointer;
-  backdrop-filter: blur(10px);
   transition: all 0.15s ease;
 }
 
@@ -3500,12 +3443,10 @@ body {
   background: rgba(255, 204, 0, 0.15);
   border: 1.5px solid #ffcc00;
   color: #ffcc00;
-  box-shadow: 0 0 14px rgba(255, 204, 0, 0.2);
 }
 .btn-mission-boost:hover, .btn-mission-boost.active {
   background: #ffcc00;
   color: #000;
-  box-shadow: 0 0 22px rgba(255, 204, 0, 0.8);
   transform: scale(1.05);
 }
 
@@ -3513,12 +3454,10 @@ body {
   background: rgba(255, 68, 68, 0.2);
   border: 1.5px solid #ff4444;
   color: #ff5555;
-  box-shadow: 0 0 14px rgba(255, 68, 68, 0.25);
 }
 .btn-mission-strike:hover {
   background: #ff4444;
   color: #fff;
-  box-shadow: 0 0 25px rgba(255, 68, 68, 0.8);
   transform: scale(1.05);
 }
 
@@ -3545,7 +3484,6 @@ body {
 .debrief-card {
   max-width: 520px !important;
   border-color: rgba(0, 255, 136, 0.5) !important;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.9), 0 0 30px rgba(0, 255, 136, 0.25) !important;
 }
 
 .debrief-stats-grid {
@@ -3593,12 +3531,10 @@ body {
   border: none;
   color: #000;
   cursor: pointer;
-  box-shadow: 0 0 25px rgba(0, 255, 136, 0.5);
   transition: all 0.2s ease;
 }
 .btn-claim-mission-reward:hover {
   transform: scale(1.02);
-  box-shadow: 0 0 35px rgba(0, 255, 136, 0.8);
 }
 
 /* =========================================================================
@@ -3629,31 +3565,6 @@ body {
   display: none !important;
 }
 
-/* CRT Scanlines & Analog Noise */
-.fpv-scanlines {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.35) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
-  background-size: 100% 3px, 6px 100%;
-  pointer-events: none;
-  z-index: 1;
-  opacity: 0.85;
-}
-
-.fpv-vignette {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  box-shadow: inset 0 0 120px rgba(0, 0, 0, 0.85);
-  pointer-events: none;
-  z-index: 2;
-}
-
 .fpv-glitch-layer {
   position: absolute;
   top: 0;
@@ -3669,13 +3580,6 @@ body {
 }
 .fpv-glitched {
   opacity: 1 !important;
-  animation: fpvGlitchNoise 0.15s infinite;
-}
-
-@keyframes fpvGlitchNoise {
-  0% { transform: translate(2px, -1px); filter: contrast(200%); }
-  50% { transform: translate(-3px, 2px); filter: invert(30%); }
-  100% { transform: translate(1px, 1px); filter: contrast(150%); }
 }
 
 /* Top OSD Bar */
@@ -3690,8 +3594,6 @@ body {
   border: 1px solid rgba(0, 255, 136, 0.4);
   border-radius: 6px;
   padding: 6px 14px;
-  backdrop-filter: blur(8px);
-  text-shadow: 0 0 5px #00ff88;
 }
 
 .fpv-osd-chip {
@@ -3725,7 +3627,6 @@ body {
   gap: 18px;
   color: rgba(0, 255, 136, 0.7);
   font-size: 11px;
-  transition: transform 0.05s linear;
 }
 
 .pitch-horizon {
@@ -3749,7 +3650,6 @@ body {
   height: 24px;
   border: 1.5px solid rgba(0, 255, 136, 0.9);
   border-radius: 3px;
-  box-shadow: 0 0 10px rgba(0, 255, 136, 0.6);
 }
 
 .fpv-reticle-dot {
@@ -3758,7 +3658,6 @@ body {
   height: 4px;
   background: #ff3300;
   border-radius: 50%;
-  box-shadow: 0 0 6px #ff3300;
 }
 
 /* Target Lock Bracket */
@@ -3773,13 +3672,6 @@ body {
   border-radius: 4px;
   padding: 4px 8px;
   background: rgba(0, 240, 255, 0.12);
-  box-shadow: 0 0 15px rgba(0, 240, 255, 0.4);
-  animation: fpvLockPulse 1.2s infinite alternate;
-}
-
-@keyframes fpvLockPulse {
-  0% { transform: scale(0.96); border-color: #00f0ff; }
-  100% { transform: scale(1.04); border-color: #ffcc00; }
 }
 
 .target-bracket-tag {
@@ -3802,13 +3694,7 @@ body {
   padding: 4px 12px;
   border-radius: 4px;
   letter-spacing: 1px;
-  animation: fpvAlertBlink 0.6s infinite alternate;
   display: none;
-}
-
-@keyframes fpvAlertBlink {
-  0% { opacity: 0.4; }
-  100% { opacity: 1.0; }
 }
 
 /* Left & Right Telemetry Panels */
@@ -3847,7 +3733,6 @@ body {
   font-size: 20px;
   font-weight: 900;
   line-height: 1.1;
-  text-shadow: 0 0 8px currentColor;
 }
 
 .fpv-telem-unit {
@@ -3890,7 +3775,6 @@ body {
   font-size: 11px;
   font-weight: 800;
   cursor: pointer;
-  box-shadow: 0 0 20px rgba(0, 255, 204, 0.3);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -3902,14 +3786,12 @@ body {
   background: #00ffcc;
   color: #000;
   transform: scale(0.95);
-  box-shadow: 0 0 30px rgba(0, 255, 204, 0.8);
 }
 
 .btn-fpv-detonate {
   border-color: #ff4400;
   color: #ff4400;
   background: rgba(255, 68, 0, 0.18);
-  box-shadow: 0 0 20px rgba(255, 68, 0, 0.4);
 }
 .btn-fpv-detonate:active {
   background: #ff4400;
@@ -3942,17 +3824,7 @@ body {
 .gameover-card {
   max-width: 500px !important;
   border: 1.5px solid rgba(255, 50, 50, 0.6) !important;
-  box-shadow: 0 10px 50px rgba(0, 0, 0, 0.95), 0 0 40px rgba(255, 50, 50, 0.3) !important;
   background: linear-gradient(180deg, #18080a 0%, #0c0406 100%) !important;
-  animation: gameoverShake 0.4s ease;
-}
-
-@keyframes gameoverShake {
-  0% { transform: translate(0, 0); }
-  20% { transform: translate(-6px, 4px); }
-  40% { transform: translate(6px, -4px); }
-  60% { transform: translate(-3px, 2px); }
-  100% { transform: translate(0, 0); }
 }
 
 .gameover-header {
@@ -3963,12 +3835,6 @@ body {
 .gameover-skull-icon {
   font-size: 40px;
   margin-bottom: 4px;
-  animation: pulseSkull 1.5s infinite alternate;
-}
-
-@keyframes pulseSkull {
-  0% { transform: scale(0.95); opacity: 0.8; }
-  100% { transform: scale(1.1); opacity: 1.0; text-shadow: 0 0 20px #ff0000; }
 }
 
 .gameover-subtitle {
@@ -4020,7 +3886,6 @@ body {
   border: none;
   color: #fff;
   cursor: pointer;
-  box-shadow: 0 0 25px rgba(255, 68, 0, 0.5);
   transition: all 0.2s ease;
   display: flex;
   align-items: center;
@@ -4029,7 +3894,6 @@ body {
 }
 .btn-gameover-retry:hover {
   transform: scale(1.03);
-  box-shadow: 0 0 35px rgba(255, 68, 0, 0.8);
 }
 
 .btn-gameover-base {
@@ -4061,7 +3925,6 @@ body {
 .victory-card {
   max-width: 520px !important;
   border: 1.5px solid rgba(0, 255, 136, 0.6) !important;
-  box-shadow: 0 10px 50px rgba(0, 0, 0, 0.95), 0 0 40px rgba(0, 255, 136, 0.35) !important;
   background: linear-gradient(180deg, #051a14 0%, #030d0a 100%) !important;
 }
 
@@ -4073,12 +3936,6 @@ body {
 .victory-medal-icon {
   font-size: 42px;
   margin-bottom: 4px;
-  animation: pulseMedal 1.8s infinite alternate;
-}
-
-@keyframes pulseMedal {
-  0% { transform: scale(0.95); }
-  100% { transform: scale(1.12); text-shadow: 0 0 25px #00ff88; }
 }
 
 .victory-rank-badge {
@@ -4092,7 +3949,6 @@ body {
   border-radius: 12px;
   letter-spacing: 1.5px;
   margin-top: 6px;
-  box-shadow: 0 0 15px rgba(0, 255, 136, 0.6);
 }
 
 .victory-hit-box {
@@ -4142,7 +3998,6 @@ body {
 }
 .btn-victory-retry:hover {
   background: rgba(0, 240, 255, 0.25);
-  box-shadow: 0 0 20px rgba(0, 240, 255, 0.4);
 }
 
 .btn-victory-claim {
@@ -4156,7 +4011,6 @@ body {
   border: none;
   color: #000;
   cursor: pointer;
-  box-shadow: 0 0 25px rgba(0, 255, 136, 0.5);
   transition: all 0.2s ease;
   display: flex;
   align-items: center;
@@ -4165,1777 +4019,39 @@ body {
 }
 .btn-victory-claim:hover {
   transform: scale(1.02);
-  box-shadow: 0 0 35px rgba(0, 255, 136, 0.8);
 }
-
-/* =========================================================================
-   MOBILE TOUCH DEVICE OPTIMIZATIONS
-   ========================================================================= */
-@media (pointer: coarse), (hover: none), (max-width: 768px) {
-  /* Show virtual joysticks on touch devices */
-  .virtual-joystick-container {
-    display: block !important;
-  }
-
-  /* Bigger touch targets for buttons */
-  .combat-quick-btn {
-    min-width: 52px;
-    min-height: 44px;
-    padding: 8px 10px;
-    font-size: 10px;
-  }
-
-  .combat-quick-btn .cq-icon { font-size: 18px; }
-  .combat-quick-btn .cq-text { font-size: 8px; }
-
-  /* Larger joystick for easier control */
-  .virtual-joystick-container {
-    width: 130px;
-    height: 130px;
-    bottom: 16px;
-    left: 16px;
-  }
-  .virtual-joystick-container.fpv-joy {
-    right: 16px;
-    left: auto;
-  }
-  .joystick-thumb {
-    width: 50px;
-    height: 50px;
-  }
-
-  /* Mission cockpit HUD responsive */
-  .mission-cockpit-overlay {
-    font-size: 11px;
-  }
-
-  /* FPV OSD bigger text for mobile */
-  .fpv-osd-panel {
-    font-size: 12px;
-    padding: 6px 10px;
-  }
-
-  /* FLIR touch targets bigger */
-  .flir-lock-point {
-    padding: 14px 18px;
-    font-size: 13px;
-    min-height: 48px;
-  }
-
-  .btn-flir-exit {
-    padding: 14px 24px;
-    font-size: 14px;
-    min-height: 48px;
-  }
-
-  /* Bigger click area for main taps */
-  .center-interact-zone {
-    min-height: 200px;
-  }
-
-  /* Bottom panel scroll fix */
-  .bottom-panel {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-}
-
-/* =========================================================================
-   COMPREHENSIVE MOBILE LAYOUT — MODALS, HUD, OVERLAYS (≤768px)
-   All rules below only apply to mobile/tablet. Desktop is untouched.
-   ========================================================================= */
-
-@media (max-width: 768px) {
-
-  /* ---- HELP MODAL ---- */
-  .help-modal-overlay {
-    padding: 0 !important;
-    align-items: flex-end !important;
-  }
-  .help-modal-content {
-    max-width: 100vw !important;
-    width: 100vw !important;
-    max-height: 85vh !important;
-    border-radius: 16px 16px 0 0 !important;
-    border-bottom: none !important;
-  }
-  .help-modal-header {
-    padding: 12px 16px;
-  }
-  .help-modal-header h2 {
-    font-size: 15px;
-  }
-  .help-modal-body {
-    padding: 12px 14px;
-  }
-  .help-section h3 {
-    font-size: 13px;
-  }
-  .help-section p {
-    font-size: 11px;
-  }
-  .help-item {
-    padding: 6px 10px;
-    gap: 8px;
-  }
-  .help-icon {
-    font-size: 15px;
-    min-width: 20px;
-  }
-  .help-item div {
-    font-size: 10px;
-  }
-  .help-close-btn,
-  .btn-close-help {
-    width: 36px;
-    height: 36px;
-    font-size: 16px;
-  }
-
-  /* ---- CAMPAIGN OPERATIONS MODAL ---- */
-  .campaign-modal-container {
-    max-width: 100vw !important;
-    width: 100vw !important;
-    max-height: 90vh !important;
-    border-radius: 16px 16px 0 0 !important;
-    border-bottom: none !important;
-    padding: 14px !important;
-    overflow-y: auto !important;
-    -webkit-overflow-scrolling: touch;
-  }
-  .campaign-acts-nav {
-    display: grid !important;
-    grid-template-columns: 1fr 1fr;
-    gap: 6px;
-    margin-bottom: 12px;
-    overflow-x: visible;
-  }
-  .campaign-act-tab {
-    min-width: 0;
-    padding: 8px 10px;
-  }
-  .campaign-act-tag {
-    font-size: 8px;
-  }
-  .campaign-act-title {
-    font-size: 11px;
-  }
-  .campaign-mission-grid {
-    grid-template-columns: 1fr !important;
-    gap: 10px;
-  }
-  .campaign-mission-card {
-    padding: 12px;
-  }
-  .mission-header-row {
-    flex-wrap: wrap;
-    gap: 4px;
-    margin-bottom: 6px;
-  }
-  .mission-code-badge {
-    font-size: 9px;
-    padding: 1px 5px;
-  }
-  .mission-status-pill {
-    font-size: 8px;
-    padding: 1px 6px;
-  }
-  .mission-type-badge {
-    font-size: 8px !important;
-    padding: 1px 6px !important;
-  }
-  .mission-title-text {
-    font-size: 14px;
-  }
-  .mission-desc-text {
-    font-size: 11px;
-    margin-bottom: 8px;
-  }
-  .mission-phases-track {
-    gap: 3px;
-    margin-bottom: 10px;
-  }
-  .mission-phase-step {
-    padding: 4px 2px;
-    font-size: 8px;
-  }
-  .mission-rewards-row {
-    font-size: 10px;
-    gap: 6px;
-    margin-bottom: 8px;
-  }
-  .btn-launch-mission {
-    padding: 10px;
-    font-size: 12px;
-    min-height: 44px;
-  }
-
-  /* ---- DRONE HANGAR & SALVAGE MODAL ---- */
-  .hangar-modal-container {
-    max-width: 100vw !important;
-    width: 100vw !important;
-    max-height: 90vh !important;
-    border-radius: 16px 16px 0 0 !important;
-    border-bottom: none !important;
-    padding: 14px !important;
-    overflow-y: auto !important;
-    -webkit-overflow-scrolling: touch;
-  }
-  .hangar-prototype-grid {
-    grid-template-columns: 1fr !important;
-    gap: 10px;
-  }
-  .proto-card {
-    padding: 12px;
-  }
-  .proto-title {
-    font-size: 15px;
-  }
-  .proto-role {
-    font-size: 10px;
-    margin-bottom: 8px;
-  }
-  .proto-stat-item {
-    font-size: 10px;
-  }
-  .salvage-inventory-bar {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 6px;
-  }
-  .salvage-inv-pill {
-    min-width: 0;
-    padding: 6px 8px;
-    gap: 6px;
-  }
-  .salvage-inv-icon {
-    font-size: 16px;
-  }
-  .salvage-inv-label {
-    font-size: 9px;
-  }
-  .salvage-inv-val {
-    font-size: 12px;
-  }
-  .crafting-grid {
-    grid-template-columns: 1fr !important;
-    gap: 8px;
-  }
-  .craft-card {
-    padding: 10px;
-  }
-  .craft-card-title {
-    font-size: 12px;
-  }
-  .craft-card-cost {
-    font-size: 10px;
-  }
-  .craft-card-effect {
-    font-size: 10px;
-  }
-  .btn-craft-action {
-    padding: 8px 12px;
-    font-size: 11px;
-    min-height: 40px;
-  }
-
-  /* ---- TACTICAL MODAL (SECTOR MAP & SIGINT) ---- */
-  .tactical-modal-overlay {
-    padding: 0 !important;
-    align-items: flex-end !important;
-  }
-  .tactical-modal-content {
-    max-width: 100vw !important;
-    width: 100vw !important;
-    max-height: 85vh !important;
-    border-radius: 16px 16px 0 0 !important;
-    border-bottom: none !important;
-  }
-
-  /* ---- TECH TREE ---- */
-  .tech-tree-container,
-  .tech-tree-modal-container {
-    max-width: 100vw !important;
-    width: 100vw !important;
-    max-height: 90vh !important;
-    border-radius: 16px 16px 0 0 !important;
-    border-bottom: none !important;
-    padding: 12px !important;
-    overflow-y: auto !important;
-    -webkit-overflow-scrolling: touch;
-  }
-  .tech-tree-grid,
-  .tech-branch-grid {
-    grid-template-columns: 1fr !important;
-    gap: 8px !important;
-  }
-  .tech-node-card {
-    padding: 10px;
-  }
-
-  /* ---- COMMS TERMINAL ---- */
-  .comms-overlay,
-  .comms-terminal-overlay {
-    padding: 10px !important;
-    align-items: flex-end !important;
-  }
-  .comms-terminal-card,
-  .comms-card {
-    max-width: 100vw !important;
-    width: calc(100vw - 20px) !important;
-    border-radius: 12px !important;
-    padding: 14px !important;
-    max-height: 70vh !important;
-    overflow-y: auto !important;
-  }
-  .comms-choices,
-  .comms-actions {
-    flex-direction: column !important;
-    gap: 6px !important;
-  }
-  .comms-choice-btn,
-  .btn-comms-choice {
-    width: 100% !important;
-    min-height: 44px;
-    font-size: 12px !important;
-    padding: 10px !important;
-  }
-
-  /* ---- 3D MISSION COCKPIT HUD ---- */
-  #mission-cockpit-overlay {
-    padding: max(8px, env(safe-area-inset-top)) 10px max(10px, env(safe-area-inset-bottom)) 10px !important;
-  }
-  .mission-top-header {
-    flex-direction: column;
-    gap: 6px;
-    padding: 6px 10px;
-    border-radius: 6px;
-  }
-  .mission-header-left {
-    width: 100%;
-    justify-content: space-between;
-    gap: 6px;
-  }
-  .mission-badge {
-    font-size: 11px;
-  }
-  .mission-timer {
-    font-size: 12px;
-    padding: 2px 6px;
-  }
-  .mission-objectives-box {
-    width: 100%;
-    justify-content: center;
-    gap: 8px;
-    flex-wrap: wrap;
-  }
-  .mission-obj-item {
-    font-size: 11px;
-  }
-  .btn-abort-mission {
-    font-size: 10px;
-    padding: 4px 10px;
-    min-height: 32px;
-  }
-  .mission-compass-tape {
-    gap: 8px;
-    padding: 3px 10px;
-    font-size: 10px;
-  }
-  .compass-marker {
-    font-size: 9px;
-  }
-  .mission-crosshair {
-    width: 32px;
-    height: 32px;
-  }
-  .mission-warning-banner {
-    font-size: 10px;
-    padding: 3px 10px;
-  }
-  .mission-bottom-left {
-    gap: 8px;
-  }
-  .mission-speed-dial {
-    padding: 6px 10px;
-  }
-  .speed-number {
-    font-size: 20px;
-  }
-  .speed-unit {
-    font-size: 8px;
-  }
-  .mission-hull-widget {
-    min-width: 120px;
-    padding: 6px 10px;
-  }
-  .hull-label {
-    font-size: 10px;
-  }
-  .hull-bar-track {
-    height: 6px;
-  }
-  .mission-bottom-right {
-    gap: 6px;
-  }
-  .btn-mission-action {
-    padding: 6px 10px;
-    min-width: 60px;
-    height: 44px;
-    border-radius: 6px;
-  }
-  .btn-ma-icon {
-    font-size: 15px;
-  }
-  .btn-ma-text {
-    font-size: 8px;
-  }
-  .mission-pc-hints {
-    display: none !important; /* Hide keyboard hints on mobile */
-  }
-  .debrief-card {
-    max-width: calc(100vw - 20px) !important;
-    width: calc(100vw - 20px) !important;
-    border-radius: 12px !important;
-  }
-  .debrief-stats-grid {
-    grid-template-columns: 1fr 1fr;
-    gap: 6px;
-  }
-  .debrief-stat-box {
-    padding: 8px 10px;
-  }
-  .debrief-stat-label {
-    font-size: 9px;
-  }
-  .debrief-stat-val {
-    font-size: 14px;
-  }
-
-  /* ---- FPV DRONE OVERLAY ---- */
-  #fpv-flight-overlay {
-    padding: max(8px, env(safe-area-inset-top)) 10px max(10px, env(safe-area-inset-bottom)) 10px !important;
-  }
-  .fpv-top-osd {
-    padding: 4px 10px;
-    gap: 6px;
-    border-radius: 4px;
-  }
-  .fpv-osd-chip {
-    font-size: 10px;
-    letter-spacing: 0.5px;
-  }
-  .fpv-center-osd {
-    width: 220px;
-    height: 170px;
-  }
-  .fpv-pitch-ladder {
-    gap: 12px;
-    font-size: 9px;
-  }
-  .pitch-horizon {
-    font-size: 11px;
-    letter-spacing: 2px;
-  }
-  .fpv-crosshair {
-    width: 28px;
-    height: 28px;
-  }
-  .fpv-reticle-box {
-    width: 18px;
-    height: 18px;
-  }
-  .fpv-left-telemetry {
-    left: 8px;
-    padding: 6px 8px;
-  }
-  .fpv-right-telemetry {
-    right: 8px;
-    padding: 6px 8px;
-  }
-  .fpv-telem-label {
-    font-size: 7px;
-  }
-  .fpv-telem-value {
-    font-size: 16px;
-  }
-  .fpv-telem-unit {
-    font-size: 7px;
-    margin-bottom: 4px;
-  }
-  .fpv-target-bracket {
-    right: -30px;
-    top: 22px;
-    padding: 3px 6px;
-  }
-  .target-bracket-tag {
-    font-size: 9px;
-  }
-  .fpv-ciws-alert {
-    font-size: 10px;
-    padding: 3px 8px;
-    bottom: -35px;
-  }
-  .fpv-bottom-actions {
-    bottom: 16px;
-    right: 16px;
-    gap: 8px;
-  }
-  .btn-fpv-boost, .btn-fpv-detonate {
-    width: 60px;
-    height: 60px;
-    font-size: 10px;
-  }
-  .fpv-pc-hints {
-    display: none !important; /* Hide keyboard hints on mobile */
-  }
-
-  /* ---- GAME OVER MODAL ---- */
-  .gameover-card {
-    max-width: calc(100vw - 24px) !important;
-    width: calc(100vw - 24px) !important;
-    border-radius: 12px !important;
-  }
-  .gameover-skull-icon {
-    font-size: 32px;
-  }
-  .gameover-subtitle {
-    font-size: 10px;
-  }
-  .gameover-reason-box {
-    padding: 8px 10px;
-    margin: 8px 0;
-  }
-  .reason-text {
-    font-size: 12px;
-  }
-  .gameover-actions {
-    flex-direction: column;
-    gap: 8px;
-    margin-top: 12px;
-  }
-  .btn-gameover-retry,
-  .btn-gameover-base {
-    flex: none;
-    width: 100%;
-    height: 44px;
-    font-size: 12px;
-  }
-
-  /* ---- VICTORY MODAL ---- */
-  .victory-card {
-    max-width: calc(100vw - 24px) !important;
-    width: calc(100vw - 24px) !important;
-    border-radius: 12px !important;
-  }
-  .victory-medal-icon {
-    font-size: 34px;
-  }
-  .victory-rank-badge {
-    font-size: 11px;
-    padding: 2px 10px;
-  }
-  .victory-hit-box {
-    padding: 6px 10px;
-  }
-  .hit-sub-title {
-    font-size: 13px;
-  }
-  .victory-actions {
-    flex-direction: column;
-    gap: 8px;
-    margin-top: 12px;
-  }
-  .btn-victory-retry,
-  .btn-victory-claim {
-    flex: none;
-    width: 100%;
-    height: 44px;
-    font-size: 12px;
-  }
-
-  /* ---- FLIR THERMAL VIEW ---- */
-  .flir-thermal-view {
-    padding: 14px;
-  }
-  .flir-circle {
-    width: 100px;
-    height: 100px;
-  }
-  .flir-telemetry-hud {
-    font-size: 9px;
-  }
-
-  /* ---- NOTIFICATION SYSTEM ---- */
-  .notification-stack,
-  .notification-container {
-    left: 8px !important;
-    right: 8px !important;
-    top: auto !important;
-    bottom: 80px !important;
-    max-width: none !important;
-    width: auto !important;
-  }
-  .notification-item,
-  .notification-card {
-    width: 100% !important;
-    max-width: none !important;
-    font-size: 11px;
-    padding: 8px 12px;
-  }
-
-  /* ---- RANDOM EVENT BANNER ---- */
-  .event-banner {
-    left: 8px !important;
-    right: 8px !important;
-    width: auto !important;
-    max-width: none !important;
-    font-size: 11px;
-  }
-
-  /* ---- GENERAL MODAL CLOSE BUTTONS ---- */
-  .help-close-btn {
-    width: 36px;
-    height: 36px;
-    font-size: 18px;
-    min-width: 36px;
-    min-height: 36px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 100;
-  }
-
-  /* ---- REW HACK OVERLAY (injected via JS, style overrides) ---- */
-  #rew-hack-overlay {
-    padding: 16px !important;
-  }
-  #rew-bar-container {
-    width: 90% !important;
-    max-width: 90vw !important;
-    height: 44px !important;
-  }
-  #rew-hack-btn {
-    padding: 12px 20px !important;
-    font-size: 14px !important;
-    min-height: 48px !important;
-    width: 100% !important;
-  }
-  #rew-abort-btn {
-    padding: 12px 16px !important;
-    font-size: 12px !important;
-    min-height: 44px !important;
-  }
-
-  /* ---- INSPECTOR TERMINAL ---- */
-  .inspector-terminal,
-  .tactical-inspector {
-    max-height: 50vh !important;
-    border-radius: 12px 12px 0 0 !important;
-  }
-
-  /* ---- PREVENT OVERFLOW ON ALL MODALS ---- */
-  .help-modal-overlay.active {
-    overflow: hidden;
-  }
-}
-
-/* =========================================================================
-   ULTRA-SMALL PHONES (≤ 400px width)
-   ========================================================================= */
-@media (max-width: 400px) {
-  .campaign-acts-nav {
-    grid-template-columns: 1fr !important;
-    gap: 4px !important;
-  }
-  .campaign-act-tab {
-    padding: 6px 8px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-  .campaign-act-tag {
-    font-size: 7px;
-    white-space: nowrap;
-  }
-  .campaign-act-title {
-    font-size: 10px;
-  }
-  .mission-title-text {
-    font-size: 13px;
-  }
-  .mission-desc-text {
-    font-size: 10px;
-  }
-  .btn-launch-mission {
-    font-size: 11px;
-    padding: 8px;
-  }
-  .salvage-inventory-bar {
-    grid-template-columns: 1fr !important;
-  }
-  .fpv-left-telemetry,
-  .fpv-right-telemetry {
-    display: none !important; /* Hide side panels on tiny screens */
-  }
-  .fpv-center-osd {
-    width: 180px;
-    height: 140px;
-  }
-  .mission-hull-widget {
-    min-width: 100px;
-  }
-  .speed-number {
-    font-size: 16px;
-  }
-  .btn-fpv-boost, .btn-fpv-detonate {
-    width: 52px;
-    height: 52px;
-    font-size: 9px;
-  }
-  .virtual-joystick-container {
-    width: 110px !important;
-    height: 110px !important;
-  }
-  .joystick-thumb {
-    width: 42px !important;
-    height: 42px !important;
-  }
-}
-
-/* =========================================================================
-   LANDSCAPE MOBILE (short height, wide screen)
-   ========================================================================= */
-@media (max-height: 500px) and (max-width: 920px) {
-  #game-frame {
-    padding: 4px 8px !important;
-  }
-  .top-hud-bar {
-    gap: 2px !important;
-  }
-  .top-nav-row {
-    height: 26px !important;
-  }
-  .top-stats-row {
-    height: 24px !important;
-  }
-  .btn-tactical-pause,
-  .btn-dossier-pill,
-  .btn-sector-pill,
-  .btn-help-pill {
-    height: 24px !important;
-  }
-  .pill-label { font-size: 5px !important; }
-  .pill-value { font-size: 8px !important; }
-  .quick-combat-actions-bar {
-    height: 22px !important;
-    margin-top: 2px !important;
-  }
-  .combat-quick-btn {
-    min-height: 22px !important;
-    height: 22px !important;
-    font-size: 8px !important;
-  }
-  .bottom-concept-bar {
-    padding: 4px 8px !important;
-    gap: 2px !important;
-  }
-  .concept-bar-track {
-    height: 4px !important;
-  }
-  .btn-concept-strike {
-    height: 28px !important;
-    font-size: 10px !important;
-  }
-  .concept-action-rings {
-    padding: 0 !important;
-  }
-  .ring-circle-icon {
-    width: 28px !important;
-    height: 28px !important;
-    font-size: 12px !important;
-  }
-  .ring-label {
-    font-size: 6px !important;
-  }
-
-  /* Modals in landscape */
-  .help-modal-content,
-  .campaign-modal-container,
-  .hangar-modal-container {
-    max-height: 95vh !important;
-  }
-
-  /* Cockpit HUD compact in landscape */
-  .mission-top-header {
-    padding: 4px 8px !important;
-  }
-  .mission-badge {
-    font-size: 10px !important;
-  }
-  .fpv-top-osd {
-    padding: 3px 8px !important;
-  }
-  .fpv-osd-chip {
-    font-size: 9px !important;
-  }
-}
-
-/* ==========================================================================
-   ADVANCED TACTICAL SYSTEMS (VSA, DPS, SONAR, DEPTH SOUNDER, ROV, PID)
-   ========================================================================== */
-
-/* Depth Sounder & Shallow Alert */
-.mission-depth-sounder {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  background: rgba(4, 18, 28, 0.85);
-  border: 1px solid rgba(0, 240, 255, 0.35);
-  padding: 4px 10px;
-  border-radius: 6px;
-  font-family: 'Rajdhani', sans-serif;
-  font-size: 13px;
-  font-weight: 700;
-  margin-top: 6px;
-  backdrop-filter: blur(8px);
-}
-.depth-icon {
-  font-size: 14px;
-}
-.depth-label {
-  color: #7a9aa8;
-  font-size: 11px;
-}
-.depth-val {
-  font-family: 'Share Tech Mono', monospace;
-  font-size: 14px;
-}
-.shallow-badge {
-  background: rgba(255, 30, 30, 0.85);
-  color: #fff;
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-size: 10px;
-  font-weight: 900;
-  animation: shallowPulse 0.6s infinite alternate;
-  border: 1px solid #ffcc00;
-}
-@keyframes shallowPulse {
-  from { transform: scale(0.95); opacity: 0.8; }
-  to { transform: scale(1.05); opacity: 1; filter: drop-shadow(0 0 8px #ff0033); }
-}
-
-/* Mission Tactical Toggles (VSA, DPS, Sonar) */
-.mission-tactical-toggles {
-  display: flex;
-  gap: 6px;
-  margin-bottom: 6px;
-}
-.btn-tactical-toggle {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  padding: 6px 10px;
-  border-radius: 6px;
-  background: rgba(4, 18, 28, 0.85);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  color: #7a9aa8;
-  font-family: 'Rajdhani', sans-serif;
-  font-size: 12px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  backdrop-filter: blur(6px);
-}
-.btn-tactical-toggle:hover {
-  border-color: rgba(0, 240, 255, 0.5);
-  color: #00f0ff;
-  transform: translateY(-1px);
-}
-.btn-tactical-toggle.active {
-  background: rgba(0, 255, 136, 0.18);
-  border-color: #00ff88;
-  color: #00ff88;
-  box-shadow: 0 0 12px rgba(0, 255, 136, 0.3);
-}
-.btn-tt-icon {
-  font-size: 13px;
-}
-
-/* PID Avionics Tuning in Hangar */
-.avionics-pid-section {
-  background: rgba(3, 14, 22, 0.7);
-  border: 1px solid rgba(0, 240, 255, 0.3);
-  border-radius: 10px;
-  padding: 14px;
-  margin-bottom: 16px;
-}
-.pid-controls-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 12px;
-}
-.pid-card {
-  background: rgba(6, 24, 38, 0.8);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 8px;
-  padding: 10px;
-}
-.pid-header {
-  display: flex;
-  justify-content: space-between;
-  font-family: 'Rajdhani', sans-serif;
-  font-size: 12px;
-  font-weight: 700;
-  margin-bottom: 6px;
-  color: #8da4af;
-}
-.pid-slider {
-  width: 100%;
-  height: 6px;
-  background: rgba(0, 40, 60, 0.8);
-  border-radius: 3px;
-  outline: none;
-  cursor: pointer;
-  accent-color: #00f0ff;
-}
-.pid-hint {
-  font-size: 10px;
-  color: #617b88;
-  margin-top: 4px;
-  line-height: 1.3;
-}
-
-/* Sonar Waterfall Display Modal */
-.sonar-panel-modal {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: min(660px, 92vw);
-  background: rgba(2, 10, 16, 0.95);
-  border: 1px solid rgba(0, 255, 136, 0.5);
-  border-radius: 12px;
-  box-shadow: 0 10px 50px rgba(0, 0, 0, 0.9), 0 0 30px rgba(0, 255, 136, 0.25);
-  z-index: 1200;
-  backdrop-filter: blur(14px);
-  overflow: hidden;
-}
-.sonar-panel-inner {
-  padding: 14px;
-}
-.sonar-panel-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding-bottom: 8px;
-  border-bottom: 1px solid rgba(0, 255, 136, 0.25);
-  font-family: 'Rajdhani', sans-serif;
-}
-.sonar-header-title {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: #00ff88;
-  font-weight: 700;
-  font-size: 14px;
-}
-.sonar-header-status {
-  font-size: 11px;
-  color: #7a9aa8;
-}
-.btn-close-sonar {
-  background: rgba(255, 50, 50, 0.15);
-  border: 1px solid rgba(255, 50, 50, 0.4);
-  color: #ff5555;
-  border-radius: 6px;
-  padding: 4px 10px;
-  font-family: 'Rajdhani', sans-serif;
-  font-size: 11px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-.btn-close-sonar:hover {
-  background: rgba(255, 50, 50, 0.4);
-  color: #fff;
-}
-.sonar-waterfall-viewport {
-  position: relative;
-  width: 100%;
-  height: 240px;
-  background: #02080d;
-  margin: 10px 0;
-  border: 1px solid rgba(0, 255, 136, 0.3);
-  border-radius: 8px;
-  overflow: hidden;
-}
-#sonar-waterfall-canvas {
-  width: 100%;
-  height: 100%;
-  display: block;
-}
-.sonar-center-track {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 50%;
-  width: 2px;
-  background: rgba(0, 255, 136, 0.4);
-  transform: translateX(-50%);
-  pointer-events: none;
-}
-.sonar-grid-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: repeating-linear-gradient(0deg, transparent, transparent 19px, rgba(0, 255, 136, 0.08) 20px),
-              repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(0, 255, 136, 0.08) 40px);
-  pointer-events: none;
-}
-.sonar-panel-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-family: 'Rajdhani', sans-serif;
-  font-size: 11px;
-  color: #8da4af;
-}
-.sonar-legend {
-  display: flex;
-  gap: 12px;
-}
-.sonar-speed-alert {
-  color: #00ff88;
-  font-weight: 600;
-}
-
-/* Underwater Micro-ROV Overlay */
-.rov-overlay-container {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: radial-gradient(circle at center, rgba(0, 35, 45, 0.4) 0%, rgba(1, 10, 15, 0.95) 100%);
-  z-index: 1000;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  padding: 16px;
-  backdrop-filter: blur(2px);
-  pointer-events: auto;
-}
-.rov-water-vignette {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  box-shadow: inset 0 0 100px rgba(0, 20, 30, 0.9);
-  pointer-events: none;
-}
-.rov-scan-lines {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0, 240, 255, 0.03) 3px);
-  pointer-events: none;
-}
-.rov-top-hud {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  z-index: 10;
-}
-.rov-hud-chip {
-  background: rgba(3, 18, 28, 0.85);
-  border: 1px solid rgba(0, 240, 255, 0.4);
-  padding: 6px 12px;
-  border-radius: 6px;
-  font-family: 'Rajdhani', sans-serif;
-  font-weight: 700;
-  font-size: 13px;
-  color: #00f0ff;
-}
-.rov-center-hud {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  z-index: 10;
-  gap: 20px;
-}
-.rov-magnetometer-readout {
-  background: rgba(2, 12, 20, 0.9);
-  border: 1px solid rgba(255, 204, 0, 0.5);
-  padding: 10px 16px;
-  border-radius: 8px;
-  text-align: center;
-  font-family: 'Rajdhani', sans-serif;
-  box-shadow: 0 0 20px rgba(255, 204, 0, 0.2);
-}
-.mag-label {
-  font-size: 11px;
-  color: #ffcc00;
-  font-weight: 700;
-  letter-spacing: 1px;
-}
-.mag-val {
-  font-family: 'Share Tech Mono', monospace;
-  font-size: 24px;
-  font-weight: 700;
-  margin: 4px 0;
-}
-.mag-bar-track {
-  width: 140px;
-  height: 6px;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 3px;
-  overflow: hidden;
-  margin: 0 auto;
-}
-.mag-bar-fill {
-  height: 100%;
-  background: linear-gradient(90deg, #00ff88, #ffcc00, #ff0033);
-  transition: width 0.15s ease;
-}
-.rov-crosshair-bracket {
-  width: 80px;
-  height: 80px;
-  border: 2px dashed rgba(0, 240, 255, 0.6);
-  border-radius: 50%;
-  animation: rovSpin 8s linear infinite;
-}
-@keyframes rovSpin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-.btn-siphon-action {
-  background: linear-gradient(135deg, #00ff88, #00bb66);
-  color: #021810;
-  border: none;
-  padding: 12px 24px;
-  border-radius: 8px;
-  font-family: 'Rajdhani', sans-serif;
-  font-size: 15px;
-  font-weight: 900;
-  letter-spacing: 1px;
-  cursor: pointer;
-  box-shadow: 0 0 25px rgba(0, 255, 136, 0.6);
-  transition: all 0.2s ease;
-}
-.btn-siphon-action:hover {
-  transform: scale(1.05);
-  filter: brightness(1.15);
-}
-.rov-bottom-hud {
-  display: flex;
-  justify-content: center;
-  z-index: 10;
-}
-.rov-siphon-progress-box {
-  background: rgba(3, 18, 28, 0.85);
-  border: 1px solid rgba(0, 255, 136, 0.4);
-  padding: 10px 20px;
-  border-radius: 8px;
-  width: min(340px, 90vw);
-  text-align: center;
-  font-family: 'Rajdhani', sans-serif;
-}
-.siphon-label {
-  font-size: 13px;
-  color: #00ff88;
-  margin-bottom: 6px;
-}
-.siphon-bar-track {
-  height: 8px;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 4px;
-  overflow: hidden;
-}
-/* ==========================================================================
-   TACTICAL SYSTEMS CENTER (MODAL & CARDS v3.5.0)
-   ========================================================================== */
-.tactical-hub-container {
-  width: min(880px, 94vw);
-  max-height: 90vh;
-  background: rgba(3, 14, 22, 0.95);
-  border: 1px solid rgba(0, 255, 200, 0.5);
-  border-radius: 14px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.95), 0 0 35px rgba(0, 255, 200, 0.25);
-  padding: 20px;
-  backdrop-filter: blur(16px);
-  overflow-y: auto;
-  font-family: 'Rajdhani', sans-serif;
-  color: #e0e8ec;
-}
-.tactical-hub-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-bottom: 1px solid rgba(0, 255, 200, 0.3);
-  padding-bottom: 12px;
-  margin-bottom: 12px;
-}
-.tactical-hub-title {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.tactical-hub-title h2 {
-  font-size: 18px;
-  margin: 0;
-  color: #00ffcc;
-  font-weight: 700;
-  letter-spacing: 1px;
-}
-.th-badge {
-  background: rgba(0, 255, 200, 0.2);
-  border: 1px solid #00ffcc;
-  color: #00ffcc;
-  font-size: 10px;
-  padding: 2px 8px;
-  border-radius: 4px;
-  font-weight: 800;
-}
-.tactical-hub-sub {
-  font-size: 13px;
-  color: #8da4af;
-  margin-bottom: 16px;
-  line-height: 1.4;
-}
-.tactical-cards-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 14px;
-}
-.th-card {
-  background: rgba(6, 24, 38, 0.85);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 10px;
-  padding: 14px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  transition: all 0.25s ease;
-}
-.th-card:hover {
-  border-color: rgba(0, 255, 200, 0.6);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6), 0 0 15px rgba(0, 255, 200, 0.2);
-}
-.th-card-header {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 8px;
-}
-.th-card-icon {
-  font-size: 22px;
-}
-.th-card-badge {
-  font-size: 9px;
-  font-weight: 800;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-}
-.th-card-title {
-  font-size: 14px;
-  font-weight: 700;
-  color: #fff;
-}
-.th-card-desc {
-  font-size: 11px;
-  color: #9cb1bc;
-  line-height: 1.4;
-  margin: 8px 0 14px;
-}
-.th-card-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  padding-top: 10px;
-}
-.th-hotkey {
-  font-size: 10px;
-  color: #6a8290;
-  font-family: 'Share Tech Mono', monospace;
-}
-.btn-th-action {
-  background: linear-gradient(135deg, #00bb66, #00ff88);
-  border: none;
-  color: #021a10;
-  font-family: 'Rajdhani', sans-serif;
-  font-size: 12px;
-  font-weight: 800;
-  padding: 6px 14px;
-  border-radius: 6px;
-  cursor: pointer;
-  letter-spacing: 0.5px;
-  transition: all 0.2s ease;
-}
-.btn-th-action:hover {
-  transform: scale(1.05);
-  box-shadow: 0 0 16px rgba(0, 255, 136, 0.5);
-}
-
-/* Quick Combat Buttons Extra Styles */
-.sonar-btn {
-  border-color: rgba(0, 255, 136, 0.4) !important;
-  color: #00ff88 !important;
-}
-.rov-btn {
-  border-color: rgba(0, 240, 255, 0.4) !important;
-  color: #00f0ff !important;
-}
-.boat-btn {
-  border-color: rgba(255, 200, 0, 0.4) !important;
-  color: #ffcc00 !important;
-}
-
-/* ==========================================================================
-   RECONNAISSANCE HUD & WAYPOINT OVERLAY
-   ========================================================================== */
-.recon-hud-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  pointer-events: none;
-  z-index: 150;
-}
-.recon-objective-banner {
-  position: absolute;
-  top: 16px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(3, 16, 26, 0.88);
-  border: 1px solid #00ffcc;
-  padding: 4px 12px;
-  border-radius: 8px;
-  font-family: 'Rajdhani', sans-serif;
-  font-size: 11px;
-  font-weight: 700;
-  color: #00ffcc;
-  box-shadow: 0 0 20px rgba(0, 255, 200, 0.3);
-  text-align: center;
-  backdrop-filter: blur(8px);
-  letter-spacing: 0.5px;
-  pointer-events: auto;
-  animation: bannerGlow 1.5s infinite alternate;
-}
-@keyframes bannerGlow {
-  from { border-color: rgba(0, 255, 200, 0.4); box-shadow: 0 0 10px rgba(0, 255, 200, 0.2); }
-  to { border-color: rgba(0, 255, 200, 1.0); box-shadow: 0 0 25px rgba(0, 255, 200, 0.5); }
-}
-.recon-waypoint-reticle {
-  position: absolute;
-  width: 50px;
-  height: 50px;
-  transform: translate(-50%, -50%);
-  pointer-events: none;
-  transition: all 0.05s linear;
-}
-.wp-corner {
-  position: absolute;
-  width: 10px;
-  height: 10px;
-  border-color: #00f0ff;
-  border-style: solid;
-}
-.wp-tl { top: 0; left: 0; border-width: 2px 0 0 2px; }
-.wp-tr { top: 0; right: 0; border-width: 2px 2px 0 0; }
-.wp-bl { bottom: 0; left: 0; border-width: 0 0 2px 2px; }
-.wp-br { bottom: 0; right: 0; border-width: 0 2px 2px 0; }
-
-.recon-waypoint-reticle.locked .wp-corner {
-  border-color: #00ff88;
-  animation: lockPulse 0.4s infinite alternate;
-}
-@keyframes lockPulse {
-  from { transform: scale(0.9); }
-  to { transform: scale(1.1); }
-}
-.wp-tag-pill {
-  position: absolute;
-  bottom: -22px;
-  left: 50%;
-  transform: translateX(-50%);
-  white-space: nowrap;
-  background: rgba(2, 10, 16, 0.85);
-  border: 1px solid #00f0ff;
-  padding: 2px 8px;
-  border-radius: 4px;
-  font-family: 'Share Tech Mono', monospace;
-  font-size: 11px;
-  font-weight: 700;
-  color: #00f0ff;
-  box-shadow: 0 0 10px rgba(0, 240, 255, 0.4);
-}
-.recon-waypoint-reticle.locked .wp-tag-pill {
-  border-color: #00ff88;
-  color: #00ff88;
-  box-shadow: 0 0 15px rgba(0, 255, 136, 0.6);
-}
-.btn-recon-snap {
-  position: absolute;
-  bottom: 85px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: linear-gradient(135deg, #00ff88, #00cc66);
-  border: 2px solid #ffffff;
-  color: #011810;
-  font-family: 'Rajdhani', sans-serif;
-  font-size: 16px;
-  font-weight: 900;
-  padding: 10px 24px;
-  border-radius: 10px;
-  cursor: pointer;
-  box-shadow: 0 0 30px rgba(0, 255, 136, 0.8), 0 4px 15px rgba(0, 0, 0, 0.7);
-  letter-spacing: 1px;
-  pointer-events: auto;
-  display: none;
-  animation: snapPulse 0.6s infinite alternate;
-}
-@keyframes snapPulse {
-  from { transform: translateX(-50%) scale(0.96); }
-  to { transform: translateX(-50%) scale(1.06); filter: brightness(1.2); }
-}
-.recon-photo-card {
-  position: absolute;
-  right: 20px;
-  bottom: 80px;
-  background: rgba(4, 20, 30, 0.92);
-  border: 1px solid #00ff88;
-  border-radius: 8px;
-  padding: 8px 12px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  box-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
-  font-family: 'Rajdhani', sans-serif;
-  opacity: 0;
-  transform: translateX(40px);
-  transition: all 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  pointer-events: none;
-}
-.recon-photo-card.show {
-  opacity: 1;
-  transform: translateX(0);
-}
-.photo-thumb {
-  font-size: 24px;
-}
-.photo-title {
-  font-size: 12px;
-  font-weight: 700;
-  color: #fff;
-}
-/* ==========================================================================
-   MOBILE COMMAND DRAWER & NAVIGATION COMPASS (v3.6)
-   ========================================================================== */
-.mobile-drawer-container {
-  width: min(440px, 92vw);
-  background: rgba(3, 14, 22, 0.96);
-  border: 1px solid rgba(0, 240, 255, 0.4);
-  border-radius: 14px;
-  box-shadow: 0 15px 50px rgba(0, 0, 0, 0.9), 0 0 30px rgba(0, 240, 255, 0.2);
-  padding: 16px;
-  backdrop-filter: blur(16px);
-  font-family: 'Rajdhani', sans-serif;
-  color: #e0e8ec;
-}
-.mobile-drawer-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-bottom: 1px solid rgba(0, 240, 255, 0.25);
-  padding-bottom: 10px;
-  margin-bottom: 12px;
-}
-.drawer-title-box {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.drawer-title-box h3 {
-  margin: 0;
-  font-size: 16px;
-  color: #00f0ff;
-  font-weight: 700;
-  letter-spacing: 1px;
-}
-.drawer-icon {
-  font-size: 18px;
-  color: #00f0ff;
-}
-.mobile-drawer-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
-.drawer-action-btn {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background: rgba(6, 24, 38, 0.9);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 8px;
-  padding: 10px 12px;
-  cursor: pointer;
-  color: #e0e8ec;
-  font-family: 'Rajdhani', sans-serif;
-  text-align: left;
-  transition: all 0.2s ease;
-  touch-action: manipulation;
-  -webkit-tap-highlight-color: transparent;
-}
-.drawer-action-btn:hover,
-.drawer-action-btn:active {
-  background: rgba(0, 240, 255, 0.15);
-  border-color: #00f0ff;
-  transform: translateY(-1px);
-}
-.dab-icon {
-  font-size: 20px;
-}
-.dab-meta {
-  display: flex;
-  flex-direction: column;
-}
-.dab-title {
-  font-size: 13px;
-  font-weight: 700;
-  color: #fff;
-}
-.dab-sub {
-  font-size: 9px;
-  color: #8da4af;
-  margin-top: 2px;
-}
-
-/* 3D Navigation Compass Arrow */
-.recon-compass-arrow {
-  position: absolute;
-  top: 90px;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  pointer-events: none;
-  z-index: 160;
-  transition: transform 0.1s ease-out;
-}
-.compass-pointer-icon {
-  width: 32px;
-  height: 32px;
-  background: rgba(2, 12, 20, 0.85);
-  border: 1.5px solid #00f0ff;
-  border-radius: 50%;
-  color: #00f0ff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 14px;
-  font-weight: 900;
-  box-shadow: 0 0 15px rgba(0, 240, 255, 0.5);
-  transition: transform 0.1s linear, color 0.2s ease, border-color 0.2s ease;
-}
-.compass-pointer-icon.locked {
-  border-color: #00ff88;
-  color: #00ff88;
-  box-shadow: 0 0 20px rgba(0, 255, 136, 0.8);
-}
-.compass-label-text {
-  background: rgba(3, 14, 22, 0.85);
-  border: 1px solid rgba(0, 240, 255, 0.4);
-  border-radius: 4px;
-  padding: 2px 8px;
-  font-family: 'Share Tech Mono', monospace;
-  font-size: 10px;
-  color: #00f0ff;
-  white-space: nowrap;
-}
-
-/* Recon Full-Screen Tap Zone */
-.recon-screen-tap-zone {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  pointer-events: auto;
-  z-index: 100;
-  touch-action: manipulation;
-  -webkit-tap-highlight-color: transparent;
-}
-
-/* ==========================================================================
-   MOBILE-FIRST SCREEN SPACE OPTIMIZATIONS (≤ 768px)
-   ========================================================================== */
-@media (max-width: 768px) {
-  /* Hide desktop-only buttons in top row */
-  .btn-desktop-only {
-    display: none !important;
-  }
-  .btn-nav-drawer-toggle {
-    display: flex !important;
-  }
-  
-  /* Top Nav Row Compact Layout */
-  .top-nav-row {
-    display: flex !important;
-    justify-content: space-between !important;
-    gap: 4px !important;
-    width: 100% !important;
-  }
-  .top-nav-row button {
-    flex: 1 1 auto !important;
-    min-width: 0 !important;
-    padding: 4px 6px !important;
-    font-size: 11px !important;
-  }
-  
-  /* Quick Combat Bar: Grid layout for mobile */
-  .quick-combat-actions-bar {
-    display: grid !important;
-    grid-template-columns: repeat(3, 1fr) !important;
-    gap: 8px !important;
-    height: auto !important;
-    padding: 4px !important;
-    overflow: visible !important;
-  }
-  .combat-quick-btn {
-    width: 100% !important;
-    height: 36px !important;
-    padding: 4px !important;
-    font-size: 10px !important;
-    justify-content: center !important;
-  }
-
-  /* Clean mobile layout with fully clickable controls */
-  .middle-arena {
-    pointer-events: auto !important;
-  }
-  .concept-action-rings {
-    gap: 6px !important;
-    pointer-events: auto !important;
-  }
-  .concept-dossier-card,
-  .concept-slide-panel {
-    pointer-events: auto !important;
-  }
-
-  /* During Gameplay / Sorties: Notification ticker at the very top */
-  #notification-container {
-    top: 6px !important;
-    left: 8px !important;
-    right: 8px !important;
-    bottom: auto !important;
-    max-width: none !important;
-    pointer-events: none !important;
-  }
-  .tactical-notification {
-    padding: 6px 10px !important;
-    font-size: 11px !important;
-    pointer-events: none !important;
-    background: rgba(2, 14, 22, 0.92) !important;
-    border-left-width: 3px !important;
-  }
-  .notif-title {
-    font-size: 11px !important;
-    margin-bottom: 1px !important;
-  }
-  .notif-text {
-    font-size: 10px !important;
-  }
-
-  /* Ensure all interactive buttons respond immediately to touch */
-  button,
-  .ring-action-btn,
-  .btn-buy-action,
-  .btn-recon-snap,
-  .btn-fpv-boost,
-  .combat-quick-btn,
-  .drawer-action-btn {
-    touch-action: manipulation !important;
-    -webkit-tap-highlight-color: transparent !important;
-    cursor: pointer !important;
-    pointer-events: auto !important;
-  }
-
-  /* FPV & Recon touch buttons on mobile */
-  .btn-recon-snap {
-    bottom: 60px !important;
-    padding: 12px 28px !important;
-    font-size: 15px !important;
-    z-index: 200 !important;
-  }
-}
-
-
-
-
-#game-frame {
-  height: 100vh;
-  height: 100dvh;
-  z-index: 1000 !important;
-}
-
-.svg-icon { width: 1.2em; height: 1.2em; vertical-align: text-bottom; fill: none; stroke-linecap: round; stroke-linejoin: round; }
-
 
 /* ================== PREMIUM HUD OVERHAUL ================== */
 .top-hud-bar {
-  background: var(--hud-bg-glass);
-  border-bottom: 1px solid var(--hud-border-cyan);
+  background: rgba(4, 12, 20, 0.4) !important;
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   padding: 6px 10px;
-  -webkit-clip-path: var(--cut-corner-bottom);
-  clip-path: var(--cut-corner-bottom);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  border-radius: 0 0 16px 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
   margin-bottom: 4px;
 }
 
 .top-nav-row button, .btn-dossier-pill, .btn-sector-pill, .btn-help-pill, .balance-pill, .combat-quick-btn {
-  background: var(--hud-bg-elevated) !important;
-  border: 1px solid var(--hud-border) !important;
-  color: var(--tactical-green) !important;
-  border-radius: 0 !important;
-  -webkit-clip-path: var(--cut-corner);
-  clip-path: var(--cut-corner);
+  background: rgba(20, 30, 40, 0.6) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  color: #fff !important;
+  border-radius: 12px !important;
   transition: all 0.2s ease-out;
-  text-shadow: 0 0 5px var(--tactical-green);
-  box-shadow: 0 0 10px rgba(0, 255, 136, 0.2);
 }
 
 .top-nav-row button:hover, .combat-quick-btn:hover {
   background: var(--tactical-green-glow) !important;
   color: #fff !important;
-  box-shadow: 0 0 15px var(--tactical-green);
   cursor: crosshair;
 }
 
 .balance-pill {
   border-color: var(--hud-border-cyan) !important;
   color: var(--credit-cyan) !important;
-  text-shadow: var(--text-glow-cyan);
-  box-shadow: var(--box-glow-cyan);
 }
 .pill-value {
   color: #fff !important;
-  text-shadow: 0 0 5px #fff, 0 0 10px var(--credit-cyan);
 }
 
 /* Hover Glitch Effect */
@@ -5951,18 +4067,16 @@ body {
   animation: glitch-skew 0.3s linear;
 }
 
-/* Redesign Bottom HUD Bar */
+/* Clean up bottom concept bar */
 .bottom-concept-bar {
-  background: var(--hud-bg-glass) !important;
-  border: 1px solid var(--hud-border-cyan) !important;
+  background: rgba(4, 12, 20, 0.4) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
   border-bottom: none !important;
-  border-radius: 0 !important;
+  border-radius: 16px 16px 0 0 !important;
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  -webkit-clip-path: polygon(12px 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 0 100%, 0 12px);
-  clip-path: polygon(12px 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 0 100%, 0 12px);
   padding: 10px 15px !important;
-  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3);
 }
 
 /* Ring Actions Dock */
@@ -5983,42 +4097,20 @@ body {
   border-color: var(--tactical-green) !important;
 }
 
-/* Scanning Line Overlay (Micro-Animation) */
-body::after {
-  content: "";
-  position: absolute;
-  top: 0; left: 0; width: 100%; height: 100%;
-  background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0) 50%, rgba(0,255,136,0.05) 50%, rgba(0,255,136,0.05));
-  background-size: 100% 4px;
-  z-index: 9999;
-  pointer-events: none;
-  opacity: 0.4;
-}
+/* Scanning Line Overlay - REMOVED FOR PERFORMANCE */
 
 
 /* ================== MODAL & PANEL OVERHAUL ================== */
 .concept-slide-panel, .concept-dossier-card, .concept-techtree-modal {
-  background: var(--hud-bg-elevated) !important;
-  border: 1px solid var(--hud-border-cyan) !important;
+  background: rgba(10, 15, 25, 0.85) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 16px !important;
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  clip-path: var(--cut-corner);
-  box-shadow: 0 0 30px rgba(0, 240, 255, 0.15), inset 0 0 20px rgba(0, 240, 255, 0.05);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
 }
 
-/* Holographic Grid Background */
-.concept-slide-panel::before, .concept-dossier-card::before, .concept-techtree-modal::before {
-  content: "";
-  position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background-image: 
-    linear-gradient(rgba(0, 240, 255, 0.1) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 240, 255, 0.1) 1px, transparent 1px);
-  background-size: 20px 20px;
-  pointer-events: none;
-  z-index: -1;
-  opacity: 0.5;
-}
+/* Holographic Grid Background - REMOVED FOR CLEAN DESIGN */
 
 /* Modal Headers */
 .panel-header-title, .concept-dossier-header, .techtree-header {
@@ -6064,15 +4156,5 @@ body::after {
   clip-path: var(--cut-corner);
 }
 
-/* Add a digital noise overlay specifically for FPV */
-#fpv-flight-overlay::after {
-  content: "";
-  position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: url('data:image/svg+xml;utf8,<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><filter id="noiseFilter"><feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" stitchTiles="stitch"/></filter><rect width="100%" height="100%" filter="url(%23noiseFilter)"/></svg>');
-  opacity: 0.15;
-  pointer-events: none;
-  z-index: -1;
-  mix-blend-mode: overlay;
-}
+/* Digital noise overlay - REMOVED */
 
