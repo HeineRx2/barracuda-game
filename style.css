@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700;800&family=Share+Tech+Mono&display=swap');
+﻿@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700;800&family=Share+Tech+Mono&display=swap');
 
 :root {
   /* Premium Sci-Fi Palette */
@@ -121,7 +121,7 @@ body {
 }
 
 /* =========================================================================
-   QUICK COMBAT ACTIONS BAR (FLIR, РЭБ, РАКЕТА)
+   QUICK COMBAT ACTIONS BAR (FLIR, Р Р­Р‘, Р РђРљР•РўРђ)
    ========================================================================= */
 .quick-combat-actions-bar {
   position: relative;
@@ -1502,7 +1502,7 @@ body {
 }
 
 .help-tips li::before {
-  content: '▸';
+  content: 'в–ё';
   position: absolute;
   left: 0;
   color: var(--tactical-green);
@@ -1883,7 +1883,7 @@ body {
 }
 
 /* =========================================================================
-   TECH TREE — TACTICAL R&D MATRIX (CYBERPUNK / MILITARY HUD)
+   TECH TREE вЂ” TACTICAL R&D MATRIX (CYBERPUNK / MILITARY HUD)
    ========================================================================= */
 
 .tt-modal-container {
@@ -2302,7 +2302,7 @@ body {
 }
 
 .tt-node.tt-unlocked .tt-node-cost-badge::after {
-  content: ' ✓';
+  content: ' вњ“';
   font-weight: 900;
 }
 
@@ -4312,7 +4312,7 @@ body {
 }
 
 /* =========================================================================
-   COMPREHENSIVE MOBILE LAYOUT — MODALS, HUD, OVERLAYS (≤768px)
+   COMPREHENSIVE MOBILE LAYOUT вЂ” MODALS, HUD, OVERLAYS (в‰¤768px)
    All rules below only apply to mobile/tablet. Desktop is untouched.
    ========================================================================= */
 
@@ -5020,7 +5020,7 @@ body {
 }
 
 /* =========================================================================
-   ULTRA-SMALL PHONES (≤ 400px width)
+   ULTRA-SMALL PHONES (в‰¤ 400px width)
    ========================================================================= */
 @media (width <= 400px) {
   .campaign-acts-nav {
@@ -6064,7 +6064,7 @@ body {
 }
 
 /* ==========================================================================
-   MOBILE-FIRST SCREEN SPACE OPTIMIZATIONS (≤ 768px)
+   MOBILE-FIRST SCREEN SPACE OPTIMIZATIONS (в‰¤ 768px)
    ========================================================================== */
 @media (width <= 768px) {
   /* Hide desktop-only buttons in top row */
@@ -6498,32 +6498,41 @@ body::after {
   transition: opacity 0.3s ease;
 }
 /* ==========================================================================
-   v5.1 MOBILE UI LAYOUT OVERHAUL (BOTTOM DOCK & COMPACT TOP)
+   v5.1 MOBILE UI LAYOUT OVERHAUL (FLEXBOX BOTTOM DOCK & COMPACT TOP)
    ========================================================================== */
 
 #main-hud-layer {
   position: absolute;
   top: 0; left: 0; right: 0; bottom: 0;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
   pointer-events: none;
 }
 .top-hud-bar, .quick-combat-actions-bar, .concept-action-rings, .concept-bottom-hud, .concept-dossier-card, .concept-slide-panel {
   pointer-events: auto !important;
 }
 
-/* FPV TARGET PANEL: Anchor to Bottom */
+/* Make sure middle arena flexes to push bottom hud down */
+.middle-arena {
+  flex: 1 1 auto;
+}
+
+/* FPV TARGET PANEL: Natural flex layout at bottom */
 .concept-bottom-hud {
-  position: absolute !important;
-  bottom: 12px !important;
-  left: 12px !important;
-  right: 12px !important;
+  position: relative !important;
+  bottom: auto !important;
+  left: auto !important;
+  right: auto !important;
   z-index: 100;
-  background: rgba(0, 15, 10, 0.75) !important;
+  background: rgba(0, 15, 10, 0.8) !important;
   backdrop-filter: blur(16px);
   border: 1px solid rgba(0, 255, 200, 0.4) !important;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.8);
-  border-radius: 12px;
+  box-shadow: 0 -5px 20px rgba(0,0,0,0.8);
+  border-radius: 12px 12px 0 0 !important;
   padding: 12px !important;
   margin: 0 !important;
+  flex: 0 0 auto !important;
 }
 
 #btn-assault {
@@ -6533,22 +6542,25 @@ body::after {
   letter-spacing: 1px;
 }
 
-/* ACTION RINGS (Menu buttons): Bottom dock */
+/* ACTION RINGS (Menu buttons): Natural flex right above FPV panel */
 .concept-action-rings {
-  position: absolute !important;
-  bottom: 150px !important;
-  left: 50% !important;
-  transform: translateX(-50%) !important;
-  width: max-content !important;
+  position: relative !important;
+  bottom: auto !important;
+  left: auto !important;
+  transform: none !important;
+  width: 100% !important;
   display: flex !important;
   flex-direction: row !important;
+  justify-content: center !important;
   gap: 12px !important;
-  padding: 8px 20px !important;
-  background: rgba(0, 20, 15, 0.8) !important;
-  backdrop-filter: blur(12px) !important;
-  border: 1px solid rgba(0, 255, 200, 0.3) !important;
-  border-radius: 40px !important;
+  padding: 8px 0px !important;
+  background: rgba(0, 20, 15, 0.4) !important;
+  backdrop-filter: blur(10px) !important;
+  border-top: 1px solid rgba(0, 255, 200, 0.2) !important;
+  border-bottom: none !important;
+  border-radius: 20px 20px 0 0 !important;
   z-index: 90;
+  flex: 0 0 auto !important;
 }
 
 .ring-action-btn {
@@ -6568,8 +6580,9 @@ body::after {
   display: none !important;
 }
 
-/* QUICK COMBAT ACTIONS: Scrollable horizontal bar */
+/* QUICK COMBAT ACTIONS: Scrollable horizontal bar at top */
 .quick-combat-actions-bar {
+  position: relative !important;
   display: flex !important;
   flex-wrap: nowrap !important;
   overflow-x: auto !important;
@@ -6580,6 +6593,7 @@ body::after {
   border: none !important;
   -ms-overflow-style: none;
   scrollbar-width: none;
+  flex: 0 0 auto !important;
 }
 .quick-combat-actions-bar::-webkit-scrollbar {
   display: none;
@@ -6594,4 +6608,6 @@ body::after {
 /* TOP HUD TWEAKS */
 .top-hud-bar {
   padding: 6px 12px !important;
+  flex: 0 0 auto !important;
 }
+
