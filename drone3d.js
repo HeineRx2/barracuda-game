@@ -2418,7 +2418,7 @@ class Barracuda3DEngine {
       this.currentRotation.x += (this.targetRotation.x - this.currentRotation.x) * 0.08;
       this.currentRotation.y += (this.targetRotation.y - this.currentRotation.y) * 0.08;
 
-      const trackCenter = new THREE.Vector3(0, 0, 0);
+      const trackCenter = this.boatModel ? this.boatModel.position.clone() : new THREE.Vector3(0, 0, 0);
       const isPortrait = window.innerWidth < window.innerHeight;
       const R = isPortrait ? 9.2 : 11.2;
       const camX = trackCenter.x + R * Math.sin(this.currentRotation.y) * Math.cos(this.currentRotation.x);
@@ -2729,21 +2729,30 @@ class Barracuda3DEngine {
       this.updateMissionWorld(dt, t);
     } else if (this.boatModel) {
       // =========================================================================
-      // AUTONOMOUS LIVING LOBBY (ДРОН ЦЕНТРИРОВАН И ПЛАВАЕТ НА ВОЛНАХ В ЛОББИ)
+      // AUTONOMOUS LIVING LOBBY (ДРОН ПЛАВАЕТ В ЛОББИ)
       // =========================================================================
-      const lobbyHeading = Math.sin(t * 0.4) * 0.35;
+      let lobbyX = 0, lobbyZ = 0, lobbyHeading = 0;
+      const cruiseR = this.isMobile ? 7.0 : 14.0;
+      const cruiseSpeed = this.isMobile ? 0.35 : 0.28;
+      const cruiseAngle = t * cruiseSpeed;
+      lobbyX = Math.sin(cruiseAngle) * cruiseR;
+      lobbyZ = Math.cos(cruiseAngle * 0.8) * (cruiseR * 0.85);
+      const nextX = Math.sin(cruiseAngle + 0.04) * cruiseR;
+      const nextZ = Math.cos((cruiseAngle + 0.04) * 0.8) * (cruiseR * 0.85);
+      lobbyHeading = Math.atan2(nextX - lobbyX, nextZ - lobbyZ);
+
       const lobbyHeave = Math.sin(t * 2.2) * 0.08 + Math.cos(t * 1.4) * 0.03;
       const lobbyPitch = 0.03 + Math.sin(t * 1.8) * 0.025;
       const lobbyRoll = Math.sin(t * 0.8) * 0.05;
 
-      this.boatModel.position.set(0, this.boatBaseY + lobbyHeave - (this.bounceImpulse * 0.05), 0);
+      this.boatModel.position.set(lobbyX, this.boatBaseY + lobbyHeave - (this.bounceImpulse * 0.05), lobbyZ);
       this.boatModel.rotation.set(lobbyPitch + (this.bounceImpulse * 0.012), lobbyHeading, lobbyRoll);
 
       // Waterjet spray in lobby
       if (Math.random() > 0.4) {
         const sternDist = 2.2;
-        const wakeX = -Math.sin(lobbyHeading) * sternDist;
-        const wakeZ = -Math.cos(lobbyHeading) * sternDist;
+        const wakeX = lobbyX - Math.sin(lobbyHeading) * sternDist;
+        const wakeZ = lobbyZ - Math.cos(lobbyHeading) * sternDist;
         this.emitWakeParticle(wakeX - Math.cos(lobbyHeading) * 0.35, wakeZ + Math.sin(lobbyHeading) * 0.35, 1.2);
         this.emitWakeParticle(wakeX + Math.cos(lobbyHeading) * 0.35, wakeZ - Math.sin(lobbyHeading) * 0.35, 1.2);
       }
@@ -2867,6 +2876,8 @@ class Barracuda3DEngine {
     this.boatModel.traverse((child) => {
       if (child.isMesh && child.material && child.material.color) {
         child.material.color.setHex(hullColor);
+        child.material.emissive.setHex(hullColor);
+        child.material.emissiveIntensity = 0.15;
         child.material.roughness = roughness;
         child.material.metalness = metalness;
         child.material.needsUpdate = true;

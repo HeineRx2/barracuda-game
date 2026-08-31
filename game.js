@@ -3527,19 +3527,22 @@ class BarracudaGame {
     if (event === 'mine_hit') {
       if (window.tacticalAudio) window.tacticalAudio.playHeavyExplosion();
       this.showMissionWarning('💥 ПОДРЫВ НА МИНЕ! -35 HP КОРПУСА');
+      if (!this.sortieStats) this.sortieStats = { hitMines: 0 };
       this.sortieStats.hitMines++;
       if (data.hp <= 0) {
         this.finishSortie(false, 'Корпус катера уничтожен серией взрывов морских мин');
       }
     } else if (event === 'crate_collected') {
       if (window.tacticalAudio) window.tacticalAudio.playSalvagePickup();
+      if (!this.sortieStats) this.sortieStats = { crates: 0, totalCrates: 3 };
       this.sortieStats.crates = data.collected;
       this.sortieStats.totalCrates = data.total;
-      this.showMissionWarning(`📦 ПОДОБРАН ГРУЗ: ${data.loot} (${data.collected}/${data.total})`);
+      this.showMissionWarning(`📦 ГРУЗ СОБРАН: ${data.loot} (${data.collected}/${data.total})`);
       const cratesEl = document.getElementById('hud-val-crates');
       if (cratesEl) cratesEl.textContent = `${data.collected} / ${data.total}`;
     } else if (event === 'searchlight_detected') {
       this.showMissionWarning('⚠️ ВНИМАНИЕ: ВАС ЗАСЕКЛИ! ОГОНЬ БЕРЕГОВОЙ БАТАРЕИ!');
+      if (!this.sortieStats) this.sortieStats = { detected: 0 };
       this.sortieStats.detected++;
     } else if (event === 'tracer_hit') {
       if (window.tacticalAudio) window.tacticalAudio.playEnemyShoot();
@@ -3551,6 +3554,7 @@ class BarracudaGame {
       if (window.tacticalAudio) window.tacticalAudio.playTargetLock();
       this.showMissionWarning('🎯 ЗОНА ЦЕЛИ ДОСТИГНУТА! НАЖМИТЕ [ПУСК FPV] ДЛЯ УДАРА!');
     } else if (event === 'fpv_damaged') {
+      if (!this.sortieStats) this.sortieStats = { flakHitsTaken: 0 };
       this.sortieStats.flakHitsTaken++;
       const glitchLayer = document.getElementById('fpv-glitch-layer');
       if (glitchLayer) {
@@ -3560,6 +3564,7 @@ class BarracudaGame {
     } else if (event === 'fpv_crashed') {
       this.finishSortie(false, data.reason || 'FPV-дрон потерпел крушение');
     } else if (event === 'fpv_target_hit') {
+      if (!this.sortieStats) this.sortieStats = {};
       this.sortieStats.targetSubsystem = data.subsystem || 'Ходовой мостик';
       this.sortieStats.damageBonus = data.damageBonus;
       this.sortieStats.scoreMult = data.scoreMult || 1.5;
@@ -4278,7 +4283,9 @@ class BarracudaGame {
       if (reasonEl) reasonEl.textContent = reason || 'Катер потерпел крушение // Связь с экипажем потеряна';
 
       // Partial salvage preserved
-      const salvagedCredits = Math.floor(m.reward.usd * 0.25 * (this.sortieStats.crates / Math.max(1, this.sortieStats.totalCrates)));
+      const crates = this.sortieStats ? (this.sortieStats.crates || 0) : 0;
+      const totalCrates = this.sortieStats ? (this.sortieStats.totalCrates || 3) : 3;
+      const salvagedCredits = Math.floor(m.reward.usd * 0.25 * (crates / Math.max(1, totalCrates)));
       if (salvagedCredits > 0) this.creditsUSD += salvagedCredits;
 
       if (statsEl) {

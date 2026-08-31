@@ -43,7 +43,7 @@ body {
   width: 100%; height: 100%;
   z-index: 1;
   cursor: grab;
-  touch-action: none;
+  touch-action: manipulation;
 }
 #drone-3d-viewport:active { cursor: grabbing; }
 
@@ -1061,16 +1061,16 @@ body {
    ========================================================================= */
 .event-banner-overlay {
   position: fixed;
-  top: 55px;
-  left: 50%;
-  transform: translateX(-50%) translateY(-200%);
+  top: 80px;
+  right: 24px;
+  transform: translateX(120%);
   z-index: 800;
   transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
   pointer-events: none;
 }
 
 .event-banner-overlay.show {
-  transform: translateX(-50%) translateY(0);
+  transform: translateX(0);
   pointer-events: auto;
 }
 
@@ -5482,15 +5482,15 @@ body {
 }
 .recon-objective-banner {
   position: absolute;
-  top: 48px;
+  top: 16px;
   left: 50%;
   transform: translateX(-50%);
   background: rgba(3, 16, 26, 0.88);
   border: 1px solid #00ffcc;
-  padding: 6px 16px;
+  padding: 4px 12px;
   border-radius: 8px;
   font-family: 'Rajdhani', sans-serif;
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 700;
   color: #00ffcc;
   box-shadow: 0 0 20px rgba(0, 255, 200, 0.3);

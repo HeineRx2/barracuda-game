@@ -1654,9 +1654,10 @@ class BarracudaGame {
       }
     } else if (event === 'crate_collected') {
       if (window.tacticalAudio) window.tacticalAudio.playSalvagePickup();
+      if (!this.sortieStats) this.sortieStats = { crates: 0, totalCrates: 3 };
       this.sortieStats.crates = data.collected;
       this.sortieStats.totalCrates = data.total;
-      this.showMissionWarning(`📦 ПОДОБРАН ГРУЗ: ${data.loot} (${data.collected}/${data.total})`);
+      this.showMissionWarning(`📦 ГРУЗ СОБРАН: ${data.loot} (${data.collected}/${data.total})`);
       const cratesEl = document.getElementById('hud-val-crates');
       if (cratesEl) cratesEl.textContent = `${data.collected} / ${data.total}`;
     } else if (event === 'searchlight_detected') {
@@ -2396,7 +2397,9 @@ class BarracudaGame {
       if (reasonEl) reasonEl.textContent = reason || 'Катер потерпел крушение // Связь с экипажем потеряна';
 
       // Partial salvage preserved
-      const salvagedCredits = Math.floor(m.reward.usd * 0.25 * (this.sortieStats.crates / Math.max(1, this.sortieStats.totalCrates)));
+      const crates = this.sortieStats ? (this.sortieStats.crates || 0) : 0;
+      const totalCrates = this.sortieStats ? (this.sortieStats.totalCrates || 3) : 3;
+      const salvagedCredits = Math.floor(m.reward.usd * 0.25 * (crates / Math.max(1, totalCrates)));
       if (salvagedCredits > 0) store.state.creditsUSD += salvagedCredits;
 
       if (statsEl) {

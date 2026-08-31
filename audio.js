@@ -36,7 +36,7 @@ class TacticalAudioEngine {
       this.compressor.connect(this.ctx.destination);
 
       this.masterGain = this.ctx.createGain();
-      this.masterGain.gain.value = 0.8;
+      this.masterGain.gain.value = 0.35;
       this.masterGain.connect(this.compressor);
 
       // Pre-build impulse response for reverb
