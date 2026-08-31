@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700;800&family=Share+Tech+Mono&display=swap');
+﻿@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700;800&family=Share+Tech+Mono&display=swap');
 
 :root {
   /* Premium Sci-Fi Palette */
@@ -121,7 +121,7 @@ body {
 }
 
 /* =========================================================================
-   QUICK COMBAT ACTIONS BAR (FLIR, Р Р­Р‘, Р РђРљР•РўРђ)
+   QUICK COMBAT ACTIONS BAR (FLIR, Р В Р В­Р вЂ, Р В Р С’Р С™Р вЂўР СћР С’)
    ========================================================================= */
 .quick-combat-actions-bar {
   position: relative;
@@ -1502,7 +1502,7 @@ body {
 }
 
 .help-tips li::before {
-  content: 'в–ё';
+  content: 'РІвЂ“С‘';
   position: absolute;
   left: 0;
   color: var(--tactical-green);
@@ -1883,7 +1883,7 @@ body {
 }
 
 /* =========================================================================
-   TECH TREE вЂ” TACTICAL R&D MATRIX (CYBERPUNK / MILITARY HUD)
+   TECH TREE РІР‚вЂќ TACTICAL R&D MATRIX (CYBERPUNK / MILITARY HUD)
    ========================================================================= */
 
 .tt-modal-container {
@@ -2302,7 +2302,7 @@ body {
 }
 
 .tt-node.tt-unlocked .tt-node-cost-badge::after {
-  content: ' вњ“';
+  content: ' РІСљвЂњ';
   font-weight: 900;
 }
 
@@ -4312,7 +4312,7 @@ body {
 }
 
 /* =========================================================================
-   COMPREHENSIVE MOBILE LAYOUT вЂ” MODALS, HUD, OVERLAYS (в‰¤768px)
+   COMPREHENSIVE MOBILE LAYOUT РІР‚вЂќ MODALS, HUD, OVERLAYS (РІвЂ°В¤768px)
    All rules below only apply to mobile/tablet. Desktop is untouched.
    ========================================================================= */
 
@@ -5020,7 +5020,7 @@ body {
 }
 
 /* =========================================================================
-   ULTRA-SMALL PHONES (в‰¤ 400px width)
+   ULTRA-SMALL PHONES (РІвЂ°В¤ 400px width)
    ========================================================================= */
 @media (width <= 400px) {
   .campaign-acts-nav {
@@ -6064,7 +6064,7 @@ body {
 }
 
 /* ==========================================================================
-   MOBILE-FIRST SCREEN SPACE OPTIMIZATIONS (в‰¤ 768px)
+   MOBILE-FIRST SCREEN SPACE OPTIMIZATIONS (РІвЂ°В¤ 768px)
    ========================================================================== */
 @media (width <= 768px) {
   /* Hide desktop-only buttons in top row */
@@ -6580,29 +6580,35 @@ body::after {
   display: none !important;
 }
 
-/* QUICK COMBAT ACTIONS: Scrollable horizontal bar at top */
+/* ==========================================================================
+   FIX 5.1.6: CLEAN UNIFIED COMBAT BAR (TWO FLOORS)
+   ========================================================================== */
 .quick-combat-actions-bar {
   position: relative !important;
   display: flex !important;
-  flex-wrap: nowrap !important;
-  overflow-x: auto !important;
-  padding: 6px 12px !important;
-  gap: 10px !important;
-  margin-top: 0 !important;
+  flex-wrap: wrap !important;
+  justify-content: center !important;
+  align-items: center !important;
+  padding: 4px 2px !important;
+  gap: 6px !important;
+  margin-top: -8px !important;
   background: transparent !important;
   border: none !important;
-  -ms-overflow-style: none;
-  scrollbar-width: none;
+  overflow: hidden !important;
+  width: 100% !important;
   flex: 0 0 auto !important;
-}
-.quick-combat-actions-bar::-webkit-scrollbar {
-  display: none;
 }
 .combat-quick-btn {
-  flex: 0 0 auto !important;
-  width: 85px !important;
-  height: 34px !important;
-  border-radius: 8px !important;
+  display: flex !important;
+  flex: 1 1 calc(33.333% - 8px) !important;
+  max-width: calc(33.333% - 8px) !important;
+  min-width: 65px !important;
+  height: 30px !important;
+  font-size: 8.5px !important;
+  padding: 2px !important;
+  justify-content: center !important;
+  align-items: center !important;
+  border-radius: 6px !important;
 }
 
 /* TOP HUD TWEAKS */
@@ -6616,7 +6622,7 @@ body::after {
   align-self: center !important;
   width: calc(100% - 24px) !important;
   max-width: 500px !important;
-  margin: 0 auto 12px auto !important; /* Adding bottom margin for breathing room */
+  margin: 0 auto 12px auto !important; 
 }
 
 /* FIX 5.1.2: Top Stats Row Alignment & Booster Fix */
@@ -6638,30 +6644,11 @@ body::after {
   justify-content: center !important;
 }
 
-/* FIX 5.1.3: Make quick combat actions wrap to two floors */
-.quick-combat-actions-bar {
-  display: flex !important;
-  flex-wrap: wrap !important;
-  justify-content: center !important;
-  padding: 2px 4px !important;
-  gap: 4px !important;
-  overflow: visible !important;
-  margin-top: -6px !important; /* Pull up closer to the top bar */
-}
-.combat-quick-btn {
-  width: auto !important;
-  flex: 1 1 calc(33.333% - 8px) !important;
-  min-width: 70px !important;
-  height: 24px !important;
-  font-size: 8px !important;
-  padding: 2px 4px !important;
-  border-radius: 4px !important;
-}
-
 /* FIX 5.1.4: Guarantee all modals and overlays stay above the HUD */
 #assault-modal, #cyber-modal, #victory-modal, #game-over-modal, .help-modal-overlay {
   z-index: 9999 !important;
 }
+
 
 
 
