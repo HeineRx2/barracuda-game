@@ -1,4 +1,4 @@
-﻿@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700;800&family=Share+Tech+Mono&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700;800&family=Share+Tech+Mono&display=swap');
 
 :root {
   /* Premium Sci-Fi Palette */
@@ -121,7 +121,7 @@ body {
 }
 
 /* =========================================================================
-   QUICK COMBAT ACTIONS BAR (FLIR, Р В Р’В Р В Р’В­Р В РІР‚В, Р В Р’В Р В РЎвЂ™Р В РЎв„ўР В РІР‚СћР В РЎС›Р В РЎвЂ™)
+   QUICK COMBAT ACTIONS BAR (FLIR, Р Р­Р‘, Р РђРљР•РўРђ)
    ========================================================================= */
 .quick-combat-actions-bar {
   position: relative;
@@ -154,23 +154,28 @@ body {
   color: var(--tactical-green);
 }
 
-@media (hover: hover) { .combat-quick-btn.flir-btn:hover { background: var(--tactical-green); color: #000; box-shadow: 0 0 16px var(--tactical-green); transform: scale(1.04); } }
+@media (hover: hover) {
+  .combat-quick-btn.flir-btn:hover {
+    background: var(--tactical-green);
+    color: #000;
+    box-shadow: 0 0 16px var(--tactical-green);
+    transform: scale(1.04);
+  }
 
-.combat-quick-btn.reb-btn {
-  background: rgb(0 25 35 / 88%);
-  border: 1.5px solid var(--credit-cyan);
-  color: var(--credit-cyan);
+  .combat-quick-btn.reb-btn:hover {
+    background: var(--credit-cyan);
+    color: #000;
+    box-shadow: 0 0 16px var(--credit-cyan);
+    transform: scale(1.04);
+  }
+
+  .combat-quick-btn.missile-btn:hover {
+    background: var(--alarm-red);
+    color: #000;
+    box-shadow: 0 0 18px var(--alarm-red);
+    transform: scale(1.04);
+  }
 }
-
-@media (hover: hover) { .combat-quick-btn.reb-btn:hover { background: var(--credit-cyan); color: #000; box-shadow: 0 0 16px var(--credit-cyan); transform: scale(1.04); } }
-
-.combat-quick-btn.missile-btn {
-  background: rgb(45 15 10 / 88%);
-  border: 1.5px solid var(--alarm-red);
-  color: #fff;
-}
-
-@media (hover: hover) { .combat-quick-btn.missile-btn:hover { background: var(--alarm-red); color: #000; box-shadow: 0 0 18px var(--alarm-red); transform: scale(1.04); } }
 
 /* =========================================================================
    FLIR THERMAL SCOPE OVERLAY
@@ -608,7 +613,15 @@ body {
   transition: all 0.2s ease;
 }
 
-@media (hover: hover) { .ring-action-btn:hover .ring-circle-icon, .ring-action-btn.active .ring-circle-icon { background: var(--tactical-green); color: #000; box-shadow: 0 0 20px var(--tactical-green); transform: scale(1.08); } }
+@media (hover: hover) {
+  .ring-action-btn:hover .ring-circle-icon,
+  .ring-action-btn.active .ring-circle-icon {
+    background: var(--tactical-green);
+    color: #000;
+    box-shadow: 0 0 20px var(--tactical-green);
+    transform: scale(1.08);
+  }
+}
 .ring-label { font-size: 9px; font-weight: 700; letter-spacing: 0.8px; color: #a0d8b4; text-shadow: var(--text-outline); }
 
 /* =========================================================================
@@ -1481,7 +1494,7 @@ body {
 }
 
 .help-tips li::before {
-  content: 'Р Р†РІР‚вЂњРЎвЂ';
+  content: 'в–ё';
   position: absolute;
   left: 0;
   color: var(--tactical-green);
@@ -1637,7 +1650,7 @@ body {
     justify-content: center;
     gap: 4px;
     width: 100%;
-    height: 28px;
+    height: auto;
     margin: 4px 0 0;
     align-self: stretch;
     pointer-events: auto;
@@ -1863,7 +1876,7 @@ body {
 }
 
 /* =========================================================================
-   TECH TREE Р Р†Р вЂљРІР‚Сњ TACTICAL R&D MATRIX (CYBERPUNK / MILITARY HUD)
+   TECH TREE вЂ” TACTICAL R&D MATRIX (CYBERPUNK / MILITARY HUD)
    ========================================================================= */
 
 .tt-modal-container {
@@ -2282,7 +2295,7 @@ body {
 }
 
 .tt-node.tt-unlocked .tt-node-cost-badge::after {
-  content: ' Р Р†РЎС™РІР‚Сљ';
+  content: ' вњ“';
   font-weight: 900;
 }
 
@@ -2915,7 +2928,7 @@ body {
   box-shadow: none;
 }
 
-/* =========================================================================
+/* ==========================================================================
    DRONE HANGAR & SALVAGE/CRAFTING MODAL
    ========================================================================== */
 .hangar-modal-container {
@@ -4292,7 +4305,7 @@ body {
 }
 
 /* =========================================================================
-   COMPREHENSIVE MOBILE LAYOUT Р Р†Р вЂљРІР‚Сњ MODALS, HUD, OVERLAYS (Р Р†РІР‚В°Р’В¤768px)
+   COMPREHENSIVE MOBILE LAYOUT вЂ” MODALS, HUD, OVERLAYS (в‰¤768px)
    All rules below only apply to mobile/tablet. Desktop is untouched.
    ========================================================================= */
 
@@ -5000,7 +5013,7 @@ body {
 }
 
 /* =========================================================================
-   ULTRA-SMALL PHONES (Р Р†РІР‚В°Р’В¤ 400px width)
+   ULTRA-SMALL PHONES (в‰¤ 400px width)
    ========================================================================= */
 @media (width <= 400px) {
   .campaign-acts-nav {
@@ -6043,8 +6056,8 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
-/* =========================================================================
-   MOBILE-FIRST SCREEN SPACE OPTIMIZATIONS (Р Р†РІР‚В°Р’В¤ 768px)
+/* ==========================================================================
+   MOBILE-FIRST SCREEN SPACE OPTIMIZATIONS (в‰¤ 768px)
    ========================================================================== */
 @media (width <= 768px) {
   /* Hide desktop-only buttons in top row */
@@ -6071,15 +6084,27 @@ body {
     font-size: 11px !important;
   }
   
-  /* Quick Combat Bar: Grid layout for mobile */
-  
+  /* Quick Combat Bar: Flex layout for mobile */
+  .quick-combat-actions-bar {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    height: auto !important;
+    padding: 4px !important;
+    overflow: visible !important;
+  }
 
   .combat-quick-btn {
-    width: 100% !important;
-    height: 36px !important;
-    padding: 4px !important;
+    width: auto !important;
+    flex: 1 1 calc(33.333% - 8px) !important;
+    min-width: 85px !important;
+    height: auto !important;
+    min-height: 36px !important;
+    padding: 4px 8px !important;
     font-size: 10px !important;
     justify-content: center !important;
+    align-items: center !important;
   }
 
   /* Clean mobile layout with fully clickable controls */
@@ -6181,13 +6206,11 @@ body {
   box-shadow: 0 0 10px rgb(0 255 136 / 20%);
 }
 
-@media (hover: hover) {
-  .top-nav-row button:hover, .combat-quick-btn:hover {
-    background: var(--tactical-green-glow) !important;
-    color: #fff !important;
-    box-shadow: 0 0 15px var(--tactical-green);
-    cursor: crosshair;
-  }
+.top-nav-row button:hover, .combat-quick-btn:hover {
+  background: var(--tactical-green-glow) !important;
+  color: #fff !important;
+  box-shadow: 0 0 15px var(--tactical-green);
+  cursor: crosshair;
 }
 
 .balance-pill {
@@ -6244,10 +6267,12 @@ body {
   transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
-.ring-action-btn:hover {
-  transform: scale(1.15);
-  background: var(--tactical-green-glow) !important;
-  border-color: var(--tactical-green) !important;
+@media (hover: hover) {
+  .ring-action-btn:hover {
+    transform: scale(1.15);
+    background: var(--tactical-green-glow) !important;
+    border-color: var(--tactical-green) !important;
+  }
 }
 
 /* Scanning Line Overlay (Micro-Animation) */
@@ -6536,7 +6561,7 @@ body::after {
   border-radius: 20px 20px 0 0 !important;
   z-index: 90;
   flex: 0 0 auto !important;
-  margin: 0 auto !important; /* Force center, override margin-left: auto */
+  margin: 0 auto !important;
 }
 
 .ring-action-btn {
@@ -6556,9 +6581,7 @@ body::after {
   display: none !important;
 }
 
-/* ==========================================================================
-   FIX 5.1.6: CLEAN UNIFIED COMBAT BAR (TWO FLOORS)
-   ========================================================================== */
+/* QUICK COMBAT ACTIONS: Unified combat bar */
 .quick-combat-actions-bar {
   position: relative !important;
   display: flex !important;
@@ -6570,7 +6593,7 @@ body::after {
   margin-top: -8px !important;
   background: transparent !important;
   border: none !important;
-  overflow: hidden !important;
+  overflow: visible !important;
   width: 100% !important;
   flex: 0 0 auto !important;
 }
@@ -6578,7 +6601,8 @@ body::after {
   display: flex !important;
   flex: 1 1 calc(33.333% - 8px) !important;
   min-width: 85px !important;
-  height: 36px !important;
+  height: auto !important;
+  min-height: 36px !important;
   font-size: 10px !important;
   padding: 4px 8px !important;
   justify-content: center !important;
@@ -6597,7 +6621,7 @@ body::after {
   align-self: center !important;
   width: calc(100% - 24px) !important;
   max-width: 500px !important;
-  margin: 0 auto 12px auto !important; 
+  margin: 0 auto 12px auto !important; /* Adding bottom margin for breathing room */
 }
 
 /* FIX 5.1.2: Top Stats Row Alignment & Booster Fix */
@@ -6619,13 +6643,12 @@ body::after {
   justify-content: center !important;
 }
 
+/* END OF FILE */
+
 /* FIX 5.1.4: Guarantee all modals and overlays stay above the HUD */
 #assault-modal, #cyber-modal, #victory-modal, #game-over-modal, .help-modal-overlay {
   z-index: 9999 !important;
 }
-
-
-
 
 
 

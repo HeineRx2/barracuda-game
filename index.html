@@ -1,11 +1,11 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>BARRACUDA // РђРІС‚РѕРЅРѕРјРЅС‹Р№ РЈРґР°СЂРЅС‹Р№ Р”СЂРѕРЅ</title>
-  <meta name="description" content="РўР°РєС‚РёС‡РµСЃРєРёР№ СЃРёРјСѓР»СЏС‚РѕСЂ Р±РѕРµРІРѕРіРѕ РЅР°РґРІРѕРґРЅРѕРіРѕ РґСЂРѕРЅР° Р‘Р°СЂСЂР°РєСѓРґР° СЃ СЂРµР°Р»РёСЃС‚РёС‡РЅРѕР№ 3D-РјРѕРґРµР»СЊСЋ.">
-  <link rel="stylesheet" href="style.css?v=5.1.9">
+  <title>BARRACUDA // Автономный Ударный Дрон</title>
+  <meta name="description" content="Тактический симулятор боевого надводного дрона Барракуда с реалистичной 3D-моделью.">
+  <link rel="stylesheet" href="style.css?v=5.2.0">
 
   <!-- Global Error Handler Overlay -->
   <script>
@@ -16,11 +16,11 @@
         b = document.createElement('div');
         b.id = 'debug-error-banner';
         b.style.cssText = 'position:fixed; bottom:80px; left:20px; right:20px; z-index:999999; background:rgba(180,10,10,0.97); color:#fff; font-family:monospace; padding:12px; font-size:11px; border:2px solid #ffcc00; border-radius:6px; box-shadow:0 0 20px rgba(0,0,0,0.8); max-height:40vh; overflow:auto; cursor:pointer;';
-        b.title = 'РќР°Р¶РјРё С‡С‚РѕР±С‹ Р·Р°РєСЂС‹С‚СЊ';
+        b.title = 'Нажми чтобы закрыть';
         b.onclick = function() { b.remove(); };
         document.body ? document.body.appendChild(b) : document.addEventListener('DOMContentLoaded', function() { document.body.appendChild(b); });
       }
-      b.innerHTML += '<div style="margin-bottom:4px; border-bottom:1px solid rgba(255,255,255,0.2); padding-bottom:4px;">вљ пёЏ <b>' + msg + '</b>' + (file ? '<br><small style="color:#ffcccc">' + file + (line ? ':' + line : '') + '</small>' : '') + '</div>';
+      b.innerHTML += '<div style="margin-bottom:4px; border-bottom:1px solid rgba(255,255,255,0.2); padding-bottom:4px;">⚠️ <b>' + msg + '</b>' + (file ? '<br><small style="color:#ffcccc">' + file + (line ? ':' + line : '') + '</small>' : '') + '</div>';
     }
     window.addEventListener('error', function(e) {
       _showErrorBanner((e.message || e), e.filename ? e.filename.split('/').pop() : '', e.lineno);
@@ -63,23 +63,23 @@
     <div class="flir-crosshair"></div>
     <div class="flir-scan-line"></div>
     <div class="flir-telemetry-box">
-      <div>Р Р•Р–РРњ: РўР•РџР›РћР’РР—РћР  FLIR (LWIR)</div>
-      <div>РЎР•РќРЎРћР : РљР РРћ-РњРђРўР РР¦Рђ 640x512</div>
-      <div>РЎРџР•РљРўР : 8-14 РјРєРј // РЈРЎРР›Р•РќРР• x4</div>
-      <div id="flir-target-status" style="color:#ffcc00; margin-top:4px;">Р¦Р•Р›Р¬: Р’Р РђР–Р•РЎРљРР™ РљРћР РђР‘Р›Р¬ [Р—РђРҐР’РђРў]</div>
+      <div>РЕЖИМ: ТЕПЛОВИЗОР FLIR (LWIR)</div>
+      <div>СЕНСОР: КРИО-МАТРИЦА 640x512</div>
+      <div>СПЕКТР: 8-14 мкм // УСИЛЕНИЕ x4</div>
+      <div id="flir-target-status" style="color:#ffcc00; margin-top:4px;">ЦЕЛЬ: ВРАЖЕСКИЙ КОРАБЛЬ [ЗАХВАТ]</div>
     </div>
     <div class="flir-weakspots-container" style="margin-top: auto;">
-      <button class="flir-lock-point" data-target="radar" title="Р Р°РґР°СЂРЅС‹Р№ РєРѕРјРїР»РµРєСЃ (РљСЂРёС‚ x4)">
-        <span class="lock-bracket"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg> Р РђР”РђР РќР«Р™ РџРћРЎРў [x4 РљР РРў]</span>
+      <button class="flir-lock-point" data-target="radar" title="Радарный комплекс (Крит x4)">
+        <span class="lock-bracket"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg> РАДАРНЫЙ ПОСТ [x4 КРИТ]</span>
       </button>
-      <button class="flir-lock-point" data-target="missile" title="Р Р°РєРµС‚РЅС‹Рµ С€Р°С…С‚С‹ (РљСЂРёС‚ x4)">
-        <span class="lock-bracket"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg> РџРЈРЎРљРћР’Р«Р• РЁРђРҐРўР« [x4 РљР РРў]</span>
+      <button class="flir-lock-point" data-target="missile" title="Ракетные шахты (Крит x4)">
+        <span class="lock-bracket"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg> ПУСКОВЫЕ ШАХТЫ [x4 КРИТ]</span>
       </button>
-      <button class="flir-lock-point" data-target="engine" title="РњР°С€РёРЅРЅРѕРµ РѕС‚РґРµР»РµРЅРёРµ (РљСЂРёС‚ x4)">
-        <span class="lock-bracket"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg> РњРђРЁРРќРќРћР• РћРўР”Р•Р›Р•РќРР• [x4 РљР РРў]</span>
+      <button class="flir-lock-point" data-target="engine" title="Машинное отделение (Крит x4)">
+        <span class="lock-bracket"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg> МАШИННОЕ ОТДЕЛЕНИЕ [x4 КРИТ]</span>
       </button>
     </div>
-    <button id="btn-exit-flir" class="btn-flir-exit" style="margin-top: 16px; pointer-events: auto !important; position: relative; z-index: 10000;" onclick="document.getElementById('flir-overlay').classList.remove('active'); if(window.barracudaGame && window.barracudaGame.engine3D) window.barracudaGame.engine3D.cameraMode = 'orbit'; event.stopPropagation();">вњ• Р’Р«РҐРћР” РР— РџР РР¦Р•Р›Рђ</button>
+    <button id="btn-exit-flir" class="btn-flir-exit" style="margin-top: 16px; pointer-events: auto !important; position: relative; z-index: 10000;" onclick="document.getElementById('flir-overlay').classList.remove('active'); if(window.barracudaGame && window.barracudaGame.engine3D) window.barracudaGame.engine3D.cameraMode = 'orbit'; event.stopPropagation();">✕ ВЫХОД ИЗ ПРИЦЕЛА</button>
   </div>
 
   <!-- Screen Flash for Kinetic Strike -->
@@ -94,64 +94,64 @@
     <header class="top-hud-bar">
       <!-- Row 1: Nav Bar -->
       <div class="top-nav-row">
-        <button class="btn-tactical-pause" id="btn-toggle-tma" title="РЎРєСЂС‹С‚СЊ/РџРѕРєР°Р·Р°С‚СЊ HUD">
+        <button class="btn-tactical-pause" id="btn-toggle-tma" title="Скрыть/Показать HUD">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
         </button>
-        <button class="btn-dossier-pill btn-nav-campaign" id="btn-open-campaign" title="РћРїРµСЂР°С†РёРё" style="border-color:rgba(0,255,136,0.6); background:rgba(0,255,136,0.15); color:#00ff88;">
+        <button class="btn-dossier-pill btn-nav-campaign" id="btn-open-campaign" title="Операции" style="border-color:rgba(0,255,136,0.6); background:rgba(0,255,136,0.15); color:#00ff88;">
           <span class="dossier-pill-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></span>
-          <span class="dossier-pill-text">РћРџР•Р РђР¦РР</span>
+          <span class="dossier-pill-text">ОПЕРАЦИИ</span>
         </button>
-        <button class="btn-dossier-pill btn-nav-hangar" id="btn-open-hangar" title="РђРЅРіР°СЂ" style="border-color:rgba(0,240,255,0.6); background:rgba(0,240,255,0.12); color:#00f0ff;">
+        <button class="btn-dossier-pill btn-nav-hangar" id="btn-open-hangar" title="Ангар" style="border-color:rgba(0,240,255,0.6); background:rgba(0,240,255,0.12); color:#00f0ff;">
           <span class="dossier-pill-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M12 22V8"/><path d="M5 12H2a10 10 0 0 0 20 0h-3"/><circle cx="12" cy="5" r="3"/></svg></span>
-          <span class="dossier-pill-text">РђРќР“РђР </span>
+          <span class="dossier-pill-text">АНГАР</span>
         </button>
-        <button class="btn-dossier-pill btn-nav-tactical" id="btn-open-tactical-hub" title="РўР°РєС‚РёРєР°" style="border-color:rgba(0,255,200,0.8); background:rgba(0,255,200,0.18); color:#00ffcc; font-weight:700;">
+        <button class="btn-dossier-pill btn-nav-tactical" id="btn-open-tactical-hub" title="Тактика" style="border-color:rgba(0,255,200,0.8); background:rgba(0,255,200,0.18); color:#00ffcc; font-weight:700;">
           <span class="dossier-pill-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M12 2v20M2 12h20M12 7a5 5 0 1 0 0 10 5 5 0 1 0 0-10zM12 12l5-5"/></svg></span>
-          <span class="dossier-pill-text">РўРђРљРўРРљРђ</span>
+          <span class="dossier-pill-text">ТАКТИКА</span>
         </button>
-        <button class="btn-dossier-pill btn-nav-drawer-toggle" id="btn-open-mobile-drawer" title="РњРµРЅСЋ Рё РѕРїС†РёРё" style="display:none;">
+        <button class="btn-dossier-pill btn-nav-drawer-toggle" id="btn-open-mobile-drawer" title="Меню и опции" style="display:none;">
           <span class="dossier-pill-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg></span>
-          <span class="dossier-pill-text">РњР•РќР®</span>
+          <span class="dossier-pill-text">МЕНЮ</span>
         </button>
-        <button class="btn-dossier-pill btn-desktop-only" id="btn-toggle-dossier" title="РЎРµРєСЂРµС‚РЅРѕРµ РґРѕСЃСЊРµ">
+        <button class="btn-dossier-pill btn-desktop-only" id="btn-toggle-dossier" title="Секретное досье">
           <span class="dossier-pill-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg></span>
-          <span class="dossier-pill-text">Р”РћРЎР¬Р•</span>
+          <span class="dossier-pill-text">ДОСЬЕ</span>
           <span class="dossier-unread-dot" id="dossier-unread-beacon"></span>
         </button>
-        <button class="btn-sector-pill btn-desktop-only" id="btn-open-map" title="РљР°СЂС‚Р°">
+        <button class="btn-sector-pill btn-desktop-only" id="btn-open-map" title="Карта">
           <span class="sector-badge-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg></span>
-          <span id="label-current-sector" class="sector-badge-name">Рћ. Р—РњР•РРќР«Р™</span>
+          <span id="label-current-sector" class="sector-badge-name">О. ЗМЕИНЫЙ</span>
         </button>
-        <button class="btn-help-pill btn-desktop-only" id="btn-open-help" title="РЎРїСЂР°РІРєР°">
+        <button class="btn-help-pill btn-desktop-only" id="btn-open-help" title="Справка">
           <span class="help-pill-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span>
-          <span class="help-pill-text">РЎРџР РђР’РљРђ</span>
+          <span class="help-pill-text">СПРАВКА</span>
         </button>
-        <button class="btn-help-pill btn-desktop-only" id="btn-open-settings" title="РќР°СЃС‚СЂРѕР№РєРё">
+        <button class="btn-help-pill btn-desktop-only" id="btn-open-settings" title="Настройки">
           <span class="help-pill-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>
-          <span class="help-pill-text">РћРџР¦РР</span>
+          <span class="help-pill-text">ОПЦИИ</span>
         </button>
       </div>
 
       <!-- Row 2: Telemetry Strip -->
       <div class="top-stats-row">
         <div class="balance-pill credits-pill">
-          <span class="pill-label">РљР Р•Р”РРўР« $</span>
+          <span class="pill-label">КРЕДИТЫ $</span>
           <span class="pill-value" id="val-credits">$500</span>
         </div>
         <div class="balance-pill buffer-pill">
-          <span class="pill-label">Р‘РЈР¤Р•Р </span>
-          <span class="pill-value" id="val-buffer">0.0 / 5.0 Р“Р‘</span>
+          <span class="pill-label">БУФЕР</span>
+          <span class="pill-value" id="val-buffer">0.0 / 5.0 ГБ</span>
         </div>
-        <div id="booster-widget" class="booster-floating-widget" title="РўР°РєС‚РёС‡РµСЃРєРёР№ СЂР°Р·РіРѕРЅ РјРѕС‰РЅРѕСЃС‚Рё">
+        <div id="booster-widget" class="booster-floating-widget" title="Тактический разгон мощности">
           <div class="booster-inner-btn" id="btn-overclock">
             <span class="booster-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></span>
             <div class="booster-info">
-              <span class="booster-title" id="booster-status-title">Р РђР—Р“РћРќ +200%</span>
-              <span class="booster-sub" id="booster-status-sub">Р“РћРўРћР’</span>
+              <span class="booster-title" id="booster-status-title">РАЗГОН +200%</span>
+              <span class="booster-sub" id="booster-status-sub">ГОТОВ</span>
             </div>
           </div>
         </div>
-        <div class="mini-radar-box" id="mini-radar" title="Р Р°РґР°СЂРЅС‹Р№ СЃРєР°РЅРµСЂ">
+        <div class="mini-radar-box" id="mini-radar" title="Радарный сканер">
           <div class="radar-sweep-cone"></div>
           <div class="radar-drone-blip"></div>
         </div>
@@ -160,29 +160,29 @@
 
     <!-- QUICK COMBAT ACTIONS BAR -->
     <div class="quick-combat-actions-bar">
-      <button class="combat-quick-btn flir-btn" id="btn-open-flir" title="FLIR С‚РµРїР»РѕРІРёР·РѕСЂ">
+      <button class="combat-quick-btn flir-btn" id="btn-open-flir" title="FLIR тепловизор">
         <span class="cq-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></span>
         <span class="cq-text">FLIR</span>
       </button>
-      <button class="combat-quick-btn reb-btn" id="btn-open-cyber" title="Р’Р·Р»РѕРј Р Р­Р‘">
+      <button class="combat-quick-btn reb-btn" id="btn-open-cyber" title="Взлом РЭБ">
         <span class="cq-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242M12 12v9"/></svg></span>
-        <span class="cq-text">Р’Р—Р›РћРњ Р Р­Р‘</span>
+        <span class="cq-text">ВЗЛОМ РЭБ</span>
       </button>
-      <button class="combat-quick-btn missile-btn" id="btn-direct-missile" title="РџСѓСЃРє FPV-РґСЂРѕРЅР°">
+      <button class="combat-quick-btn missile-btn" id="btn-direct-missile" title="Пуск FPV-дрона">
         <span class="cq-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M12 3a9 9 0 0 0-9 9 9 9 0 0 0 9 9 9 9 0 0 0 9-9 9 9 0 0 0-9-9z"/><path d="M12 8a4 4 0 0 0-4 4M8 16h8"/></svg></span>
-        <span class="cq-text">РџРЈРЎРљ FPV</span>
+        <span class="cq-text">ПУСК FPV</span>
       </button>
-      <button class="combat-quick-btn sonar-btn" id="btn-quick-sonar" title="РЎРѕРЅР°СЂ 3D">
+      <button class="combat-quick-btn sonar-btn" id="btn-quick-sonar" title="Сонар 3D">
         <span class="cq-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242M12 12v9"/></svg></span>
-        <span class="cq-text">РЎРћРќРђР  3D</span>
+        <span class="cq-text">СОНАР 3D</span>
       </button>
-      <button class="combat-quick-btn rov-btn" id="btn-quick-rov" title="РњРёРєСЂРѕ-ROV">
+      <button class="combat-quick-btn rov-btn" id="btn-quick-rov" title="Микро-ROV">
         <span class="cq-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/></svg></span>
-        <span class="cq-text">РњРРљР Рћ-ROV</span>
+        <span class="cq-text">МИКРО-ROV</span>
       </button>
-      <button class="combat-quick-btn boat-btn" id="btn-quick-boat" title="РўРµСЃС‚ VSA">
+      <button class="combat-quick-btn boat-btn" id="btn-quick-boat" title="Тест VSA">
         <span class="cq-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M2 12l2 6h16l2-6-4-4-6 2-6-2-4 4z"/></svg></span>
-        <span class="cq-text">РўР•РЎРў VSA</span>
+        <span class="cq-text">ТЕСТ VSA</span>
       </button>
     </div>
 
@@ -196,10 +196,10 @@
             <span class="dossier-badge-text">TOP-SECRET DOSSIER: DECODED</span>
             <span id="dossier-timestamp" class="dossier-time-tag">03:14:22Z</span>
           </div>
-          <button class="btn-close-dossier" id="btn-close-dossier" title="РЎРІРµСЂРЅСѓС‚СЊ РґРѕСЃСЊРµ">вњ•</button>
+          <button class="btn-close-dossier" id="btn-close-dossier" title="Свернуть досье">✕</button>
         </div>
         <div class="dossier-inner-layout">
-          <div class="dossier-terminal-text" id="dossier-body">РРЅРёС†РёР°Р»РёР·Р°С†РёСЏ Р·Р°С‰РёС‰С‘РЅРЅРѕРіРѕ РєР°РЅР°Р»Р° С‚РµР»РµРјРµС‚СЂРёРё...</div>
+          <div class="dossier-terminal-text" id="dossier-body">Инициализация защищённого канала телеметрии...</div>
           <div class="dossier-world-map">
             <div class="map-grid-lines"></div>
             <div class="map-target-box"></div>
@@ -211,23 +211,23 @@
       <nav class="concept-action-rings" id="main-nav-dock">
         <button class="ring-action-btn" data-panel="panel-vessel">
           <div class="ring-circle-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></div>
-          <span class="ring-label">РЎРўР•Р›РЎ-Р”Р РћРќ</span>
+          <span class="ring-label">СТЕЛС-ДРОН</span>
         </button>
         <button class="ring-action-btn" data-panel="panel-modules">
           <div class="ring-circle-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div>
-          <span class="ring-label">РњРћР”РЈР›Р</span>
+          <span class="ring-label">МОДУЛИ</span>
         </button>
         <button class="ring-action-btn" data-panel="panel-weapons">
           <div class="ring-circle-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></div>
-          <span class="ring-label">Р’РћРћР РЈР–Р•РќРР•</span>
+          <span class="ring-label">ВООРУЖЕНИЕ</span>
         </button>
         <button class="ring-action-btn" data-panel="panel-contracts">
           <div class="ring-circle-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></div>
-          <span class="ring-label">РљРћРќРўР РђРљРўР«</span>
+          <span class="ring-label">КОНТРАКТЫ</span>
         </button>
         <button class="ring-action-btn" id="btn-open-techtree">
           <div class="ring-circle-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M10 2v7.31"/><path d="M14 9.3V1.99"/><path d="M8.5 2h7"/><path d="M14 9.3a6.5 6.5 0 1 1-4 0"/><line x1="5.52" y1="16" x2="18.48" y2="16"/></svg></div>
-          <span class="ring-label">Р”Р•Р Р•Р’Рћ РўР•РҐРќРћР›РћР“РР™</span>
+          <span class="ring-label">ДЕРЕВО ТЕХНОЛОГИЙ</span>
         </button>
       </nav>
 
@@ -235,147 +235,147 @@
 
       <div class="concept-slide-panel" id="panel-vessel">
         <div class="panel-header-title">
-          <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg> РЎРўР•Р›РЎ-Р”Р РћРќ // РўР•Р›Р•РњР•РўР РРЇ</span>
-          <button class="btn-buy-action btn-close-panel">вњ•</button>
+          <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg> СТЕЛС-ДРОН // ТЕЛЕМЕТРИЯ</span>
+          <button class="btn-buy-action btn-close-panel">✕</button>
         </div>
         <div class="upgrade-list-scroll">
           <div class="upgrade-item-card">
             <div>
-              <div class="item-card-title">РЎРР›Рђ РљР›РРљРђ</div>
-              <div class="item-card-sub text-green" id="val-click">+1.0 РњР‘/РєР»Рє</div>
+              <div class="item-card-title">СИЛА КЛИКА</div>
+              <div class="item-card-sub text-green" id="val-click">+1.0 МБ/клк</div>
             </div>
-            <button id="btn-quick-sell" class="btn-buy-action">РЎР‘Р РћРЎ 10 РњР‘ вћ” $</button>
+            <button id="btn-quick-sell" class="btn-buy-action">СБРОС 10 МБ ➔ $</button>
           </div>
           <div class="upgrade-item-card">
             <div>
-              <div class="item-card-title">РџРђРЎРЎРР’РќР«Р™ Р”РћРҐРћР”</div>
-              <div class="item-card-sub text-cyan" id="val-passive-usd">+$25/СЃ</div>
+              <div class="item-card-title">ПАССИВНЫЙ ДОХОД</div>
+              <div class="item-card-sub text-cyan" id="val-passive-usd">+$25/с</div>
             </div>
-            <span class="item-card-extra" id="val-passive">+0.0 РњР‘/СЃ</span>
+            <span class="item-card-extra" id="val-passive">+0.0 МБ/с</span>
           </div>
           <div class="upgrade-item-card">
             <div>
-              <div class="item-card-title text-yellow">Р§Р•Р РўР•Р–Р РџР Р•РЎРўРР–Рђ</div>
-              <div class="item-card-sub text-yellow" id="val-multiplier">x1.0 [0 Р§Р–]</div>
+              <div class="item-card-title text-yellow">ЧЕРТЕЖИ ПРЕСТИЖА</div>
+              <div class="item-card-sub text-yellow" id="val-multiplier">x1.0 [0 ЧЖ]</div>
             </div>
-            <span class="item-card-extra" id="val-total-data">Р’РЎР•Р“Рћ: 0 РњР‘</span>
+            <span class="item-card-extra" id="val-total-data">ВСЕГО: 0 МБ</span>
           </div>
           <div class="upgrade-item-card">
             <div>
-              <div class="item-card-title text-cyan">РџРћРўРћРџР›Р•РќРћ РљРћР РђР‘Р›Р•Р™</div>
-              <div class="item-card-sub text-green" id="val-sunken-count">0 Р’Р«РњРџР•Р›РћР’</div>
+              <div class="item-card-title text-cyan">ПОТОПЛЕНО КОРАБЛЕЙ</div>
+              <div class="item-card-sub text-green" id="val-sunken-count">0 ВЫМПЕЛОВ</div>
             </div>
-            <span class="item-card-extra" id="val-kills-status">Р РђРќР“: РћРџР•Р РђРўРћР  Р‘РџРђ</span>
+            <span class="item-card-extra" id="val-kills-status">РАНГ: ОПЕРАТОР БПА</span>
           </div>
         </div>
       </div>
 
       <div class="concept-slide-panel" id="panel-modules">
         <div class="panel-header-title">
-          <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> РњРћР”РЈР›Р РћР‘РћР РЈР”РћР’РђРќРРЇ</span>
-          <button class="btn-buy-action btn-close-panel">вњ•</button>
+          <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> МОДУЛИ ОБОРУДОВАНИЯ</span>
+          <button class="btn-buy-action btn-close-panel">✕</button>
         </div>
         <div class="upgrade-list-scroll">
           <div class="upgrade-item-card">
             <div>
-              <div class="item-card-title">1. РђРќРўР•РќРќРђ SATCOM</div>
-              <div class="item-card-sub text-green" id="tier-hw-satcom">РњРљ 1 // +2.0 РњР‘/РєР»Рє</div>
+              <div class="item-card-title">1. АНТЕННА SATCOM</div>
+              <div class="item-card-sub text-green" id="tier-hw-satcom">МК 1 // +2.0 МБ/клк</div>
             </div>
-            <button class="btn-buy-action" data-buy-hw="satcom" id="cost-hw-satcom">15 РњР‘</button>
+            <button class="btn-buy-action" data-buy-hw="satcom" id="cost-hw-satcom">15 МБ</button>
           </div>
           <div class="upgrade-item-card">
             <div>
-              <div class="item-card-title">2. РћРџРўРРљРђ FLIR (РўРЈР Р•Р›Р¬)</div>
-              <div class="item-card-sub text-green" id="tier-hw-optics">РњРљ 1 // +4.0 РњР‘/РєР»Рє</div>
+              <div class="item-card-title">2. ОПТИКА FLIR (ТУРЕЛЬ)</div>
+              <div class="item-card-sub text-green" id="tier-hw-optics">МК 1 // +4.0 МБ/клк</div>
             </div>
-            <button class="btn-buy-action" data-buy-hw="optics" id="cost-hw-optics">45 РњР‘</button>
+            <button class="btn-buy-action" data-buy-hw="optics" id="cost-hw-optics">45 МБ</button>
           </div>
           <div class="upgrade-item-card">
             <div>
-              <div class="item-card-title">3. Р‘Р РћРќР•РџР›РРўР« РљРћР РџРЈРЎРђ</div>
-              <div class="item-card-sub text-green" id="tier-hw-armor">РњРљ 1 // +1.5 РњР‘/СЃ</div>
+              <div class="item-card-title">3. БРОНЕПЛИТЫ КОРПУСА</div>
+              <div class="item-card-sub text-green" id="tier-hw-armor">МК 1 // +1.5 МБ/с</div>
             </div>
-            <button class="btn-buy-action" data-buy-hw="armor" id="cost-hw-armor">80 РњР‘</button>
+            <button class="btn-buy-action" data-buy-hw="armor" id="cost-hw-armor">80 МБ</button>
           </div>
           <div class="upgrade-item-card">
             <div>
-              <div class="item-card-title">4. Р’РћР”РћРњРЃРўРќР«Р• Р”Р’РР“РђРўР•Р›Р</div>
-              <div class="item-card-sub text-green" id="tier-hw-waterjets">РњРљ 1 // +3.0 РњР‘/СЃ</div>
+              <div class="item-card-title">4. ВОДОМЁТНЫЕ ДВИГАТЕЛИ</div>
+              <div class="item-card-sub text-green" id="tier-hw-waterjets">МК 1 // +3.0 МБ/с</div>
             </div>
-            <button class="btn-buy-action" data-buy-hw="waterjets" id="cost-hw-waterjets">150 РњР‘</button>
+            <button class="btn-buy-action" data-buy-hw="waterjets" id="cost-hw-waterjets">150 МБ</button>
           </div>
         </div>
       </div>
 
       <div class="concept-slide-panel" id="panel-weapons">
         <div class="panel-header-title">
-          <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg> Р’РћРћР РЈР–Р•РќРР• Р РљРР‘Р•Р РЎРРЎРўР•РњР«</span>
-          <button class="btn-buy-action btn-close-panel">вњ•</button>
+          <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg> ВООРУЖЕНИЕ И КИБЕРСИСТЕМЫ</span>
+          <button class="btn-buy-action btn-close-panel">✕</button>
         </div>
         <div class="upgrade-list-scroll">
           <div class="upgrade-item-card">
             <div>
-              <div class="item-card-title text-yellow">РЎРўРђРџР•Р›Р FPV-Р”Р РћРќРћР’</div>
-              <div class="item-card-sub text-green" id="tier-hw-missiles">РњРљ 1 // +50% Рє СѓРґР°СЂСѓ</div>
+              <div class="item-card-title text-yellow">СТАПЕЛИ FPV-ДРОНОВ</div>
+              <div class="item-card-sub text-green" id="tier-hw-missiles">МК 1 // +50% к удару</div>
             </div>
-            <button class="btn-buy-action" data-buy-hw="missiles" id="cost-hw-missiles">300 РњР‘</button>
+            <button class="btn-buy-action" data-buy-hw="missiles" id="cost-hw-missiles">300 МБ</button>
           </div>
           <div class="upgrade-item-card">
             <div>
-              <div class="item-card-title">РЎРќРР¤Р¤Р•Р  РџРђРљР•РўРћР’ (Р Р­Р‘)</div>
-              <div class="item-card-sub text-cyan" id="tier-cyber-sniffer">V.1 // +2.5 РњР‘/СЃ</div>
+              <div class="item-card-title">СНИФФЕР ПАКЕТОВ (РЭБ)</div>
+              <div class="item-card-sub text-cyan" id="tier-cyber-sniffer">V.1 // +2.5 МБ/с</div>
             </div>
-            <button class="btn-buy-action" data-buy-cyber="sniffer" id="cost-cyber-sniffer">30 РњР‘</button>
+            <button class="btn-buy-action" data-buy-cyber="sniffer" id="cost-cyber-sniffer">30 МБ</button>
           </div>
           <div class="upgrade-item-card">
             <div>
-              <div class="item-card-title">РљР’РђРќРўРћР’Р«Р™ Р”Р•РЁРР¤Р РђРўРћР </div>
-              <div class="item-card-sub text-yellow" id="tier-cyber-quantum">V.1 // +12% РљСЂРёС‚ (x5)</div>
+              <div class="item-card-title">КВАНТОВЫЙ ДЕШИФРАТОР</div>
+              <div class="item-card-sub text-yellow" id="tier-cyber-quantum">V.1 // +12% Крит (x5)</div>
             </div>
-            <button class="btn-buy-action" data-buy-cyber="quantum" id="cost-cyber-quantum">100 РњР‘</button>
+            <button class="btn-buy-action" data-buy-cyber="quantum" id="cost-cyber-quantum">100 МБ</button>
           </div>
           <div class="upgrade-item-card">
             <div>
-              <div class="item-card-title">РђР’РўРћ-РЎРР¤РћРќ Р”РђРќРќР«РҐ</div>
-              <div class="item-card-sub text-cyan" id="tier-cyber-autosiphon">V.1 // +$75/СЃ</div>
+              <div class="item-card-title">АВТО-СИФОН ДАННЫХ</div>
+              <div class="item-card-sub text-cyan" id="tier-cyber-autosiphon">V.1 // +$75/с</div>
             </div>
-            <button class="btn-buy-action" data-buy-cyber="autosiphon" id="cost-cyber-autosiphon">200 РњР‘</button>
+            <button class="btn-buy-action" data-buy-cyber="autosiphon" id="cost-cyber-autosiphon">200 МБ</button>
           </div>
         </div>
       </div>
 
       <div class="concept-slide-panel" id="panel-contracts">
         <div class="panel-header-title">
-          <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg> РљРћРќРўР РђРљРўР« Р РЎРџР•Р¦РћРџР•Р РђР¦РР</span>
-          <button class="btn-buy-action btn-close-panel">вњ•</button>
+          <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg> КОНТРАКТЫ И СПЕЦОПЕРАЦИИ</span>
+          <button class="btn-buy-action btn-close-panel">✕</button>
         </div>
         <div class="upgrade-list-scroll">
           <div class="upgrade-item-card">
             <div>
-              <div class="item-card-title text-cyan">РћРџ: РџРћР”Р’РћР”РќР«Р™ РљРђР‘Р•Р›Р¬</div>
-              <div class="item-card-sub text-dim-cyan">+$1,500 // +80 РњР‘</div>
+              <div class="item-card-title text-cyan">ОП: ПОДВОДНЫЙ КАБЕЛЬ</div>
+              <div class="item-card-sub text-dim-cyan">+$1,500 // +80 МБ</div>
               <div class="contract-bar-track">
                 <div id="prog-contract-c1" class="contract-bar-fill"></div>
               </div>
             </div>
-            <button class="btn-buy-action" data-start-contract="c1">РЎРўРђР Рў</button>
+            <button class="btn-buy-action" data-start-contract="c1">СТАРТ</button>
           </div>
           <div class="upgrade-item-card">
             <div>
-              <div class="item-card-title text-cyan">РћРџ: Р РђР”РђР РќРђРЇ Р›РћР’РЈРЁРљРђ</div>
-              <div class="item-card-sub text-dim-cyan">+$6,000 // +300 РњР‘</div>
+              <div class="item-card-title text-cyan">ОП: РАДАРНАЯ ЛОВУШКА</div>
+              <div class="item-card-sub text-dim-cyan">+$6,000 // +300 МБ</div>
               <div class="contract-bar-track">
                 <div id="prog-contract-c2" class="contract-bar-fill"></div>
               </div>
             </div>
-            <button class="btn-buy-action" data-start-contract="c2">РЎРўРђР Рў</button>
+            <button class="btn-buy-action" data-start-contract="c2">СТАРТ</button>
           </div>
           <div class="upgrade-item-card">
             <div>
-              <div class="item-card-title text-yellow">РР Р РћР•Р’РћР“Рћ РЈРџР РђР’Р›Р•РќРРЇ</div>
-              <div class="item-card-sub text-dim-gray">Р¤РѕСЂРјР°С†РёСЏ РІРµРґРѕРјС‹С… РґСЂРѕРЅРѕРІ + РЈРґРІРѕРµРЅРёРµ РїР°СЃСЃРёРІР°</div>
+              <div class="item-card-title text-yellow">ИИ РОЕВОГО УПРАВЛЕНИЯ</div>
+              <div class="item-card-sub text-dim-gray">Формация ведомых дронов + Удвоение пассива</div>
             </div>
-            <button class="btn-buy-action" data-buy-tech="swarmAI" data-cost-bp="1">1 Р§Р–</button>
+            <button class="btn-buy-action" data-buy-tech="swarmAI" data-cost-bp="1">1 ЧЖ</button>
           </div>
         </div>
       </div>
@@ -387,7 +387,7 @@
       <div class="telemetry-dual-gauges">
         <div class="gauge-group">
           <div class="gauge-header-label">
-            <span>Р—РђР РЇР” FPV:</span>
+            <span>ЗАРЯД FPV:</span>
             <span id="label-energy-percent" class="text-green">0%</span>
           </div>
           <div class="concept-bar-track">
@@ -396,7 +396,7 @@
         </div>
         <div class="gauge-group">
           <div class="gauge-header-label">
-            <span id="ship-hp-label" style="color:#ff4444;">Р¦Р•Р›Р¬ [РЈСЂ.1]: 100 / 100 HP</span>
+            <span id="ship-hp-label" style="color:#ff4444;">ЦЕЛЬ [Ур.1]: 100 / 100 HP</span>
           </div>
           <div class="concept-bar-track">
             <div class="concept-bar-fill" id="ship-hp-fill" style="width:100%; background:#ff4444;"></div>
@@ -404,7 +404,7 @@
         </div>
         <div class="gauge-group">
           <div class="gauge-header-label">
-            <span style="color:#ffcc00;">РџР•Р Р•Р—РђР РЇР”РљРђ FPV:</span>
+            <span style="color:#ffcc00;">ПЕРЕЗАРЯДКА FPV:</span>
           </div>
           <div class="concept-bar-track" style="height:4px;">
             <div class="concept-bar-fill" id="cooldown-fill" style="width:100%; background:#ffcc00;"></div>
@@ -412,8 +412,8 @@
         </div>
       </div>
       <div class="bottom-mission-subrow">
-        <span class="mission-tag">РЎРўР•РҐ-РЈР”РђР : FPV-Р”Р РћРќ Р’Р«РЎРћРљРћР™ Р”РђР›Р¬РќРћРЎРўР</span>
-        <button id="btn-assault" class="btn-concept-strike">Р—РђРџРЈРЎРљ FPV-РЁРўРЈР РњРђ</button>
+        <span class="mission-tag">СТЕХ-УДАР: FPV-ДРОН ВЫСОКОЙ ДАЛЬНОСТИ</span>
+        <button id="btn-assault" class="btn-concept-strike">ЗАПУСК FPV-ШТУРМА</button>
       </div>
     </footer>
 
@@ -426,38 +426,38 @@
     <!-- Top Mission Status Bar -->
     <header class="mission-top-header">
       <div class="mission-header-left">
-        <div class="mission-badge" id="hud-mission-code">РћРџР•Р РђР¦РРЇ: В«РќРћР§РќРћР™ РџР РћР Р«Р’В»</div>
-        <div class="mission-timer" id="hud-mission-timer">вЏ±пёЏ 01:45</div>
+        <div class="mission-badge" id="hud-mission-code">ОПЕРАЦИЯ: «НОЧНОЙ ПРОРЫВ»</div>
+        <div class="mission-timer" id="hud-mission-timer">⏱️ 01:45</div>
       </div>
       <div class="mission-objectives-box">
-        <div class="mission-obj-item" id="hud-obj-crates">рџ“¦ РљРѕРЅС‚РµР№РЅРµСЂС‹: <b id="hud-val-crates">0 / 3</b></div>
-        <div class="mission-obj-item" id="hud-obj-target"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg> Р”РёСЃС‚Р°РЅС†РёСЏ: <b id="hud-val-target">140 Рј</b></div>
+        <div class="mission-obj-item" id="hud-obj-crates">📦 Контейнеры: <b id="hud-val-crates">0 / 3</b></div>
+        <div class="mission-obj-item" id="hud-obj-target"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg> Дистанция: <b id="hud-val-target">140 м</b></div>
       </div>
-      <button class="btn-abort-mission" id="btn-abort-sortie" title="Р­РєСЃС‚СЂРµРЅРЅР°СЏ СЌРІР°РєСѓР°С†РёСЏ РЅР° Р±Р°Р·Сѓ">вњ• Р­Р’РђРљРЈРђР¦РРЇ</button>
+      <button class="btn-abort-mission" id="btn-abort-sortie" title="Экстренная эвакуация на базу">✕ ЭВАКУАЦИЯ</button>
     </header>
 
     <!-- Center Compass & Reticle -->
     <div class="mission-center-hud">
       <div class="mission-compass-tape">
-        <span class="compass-marker">Р—</span>
-        <span class="compass-marker">РЎР—</span>
-        <span class="compass-marker text-green" id="hud-compass-heading">в–І РЎ (000В°)</span>
-        <span class="compass-marker">РЎР’</span>
-        <span class="compass-marker">Р’</span>
+        <span class="compass-marker">З</span>
+        <span class="compass-marker">СЗ</span>
+        <span class="compass-marker text-green" id="hud-compass-heading">▲ С (000°)</span>
+        <span class="compass-marker">СВ</span>
+        <span class="compass-marker">В</span>
       </div>
       <div class="mission-crosshair"></div>
-      <div class="mission-warning-banner" id="hud-warning-banner">вљ пёЏ Р’РќРРњРђРќРР•: РњРРќРќРћР• РџРћР›Р• // Р›РЈР§Р РџР РћР–Р•РљРўРћР РћР’</div>
+      <div class="mission-warning-banner" id="hud-warning-banner">⚠️ ВНИМАНИЕ: МИННОЕ ПОЛЕ // ЛУЧИ ПРОЖЕКТОРОВ</div>
     </div>
 
     <!-- Bottom Left: Speedometer & Hull HP & Depth Sounder -->
     <div class="mission-bottom-left">
       <div class="mission-speed-dial">
         <div class="speed-number" id="hud-val-speed">0</div>
-        <div class="speed-unit">РЈР—Р›РћР’ (KTS)</div>
+        <div class="speed-unit">УЗЛОВ (KTS)</div>
       </div>
       <div class="mission-hull-widget">
         <div class="hull-label">
-          <span>Р¦Р•Р›РћРЎРўРќРћРЎРўР¬ РљРћР РџРЈРЎРђ:</span>
+          <span>ЦЕЛОСТНОСТЬ КОРПУСА:</span>
           <span id="hud-val-hp" class="text-green">100%</span>
         </div>
         <div class="hull-bar-track">
@@ -466,10 +466,10 @@
       </div>
       <!-- Echo Sounder / Bathymetry Depth Display -->
       <div class="mission-depth-sounder" id="hud-depth-widget">
-        <span class="depth-icon">рџЊЉ</span>
-        <span class="depth-label">Р­РҐРћР›РћРў:</span>
-        <span class="depth-val text-cyan" id="hud-val-depth">12.4 Рј</span>
-        <span class="shallow-badge" id="hud-shallow-badge" style="display:none;">вљ пёЏ РњР•Р›Р¬</span>
+        <span class="depth-icon">🌊</span>
+        <span class="depth-label">ЭХОЛОТ:</span>
+        <span class="depth-val text-cyan" id="hud-val-depth">12.4 м</span>
+        <span class="shallow-badge" id="hud-shallow-badge" style="display:none;">⚠️ МЕЛЬ</span>
       </div>
     </div>
 
@@ -478,44 +478,44 @@
       <div class="joystick-base">
         <div class="joystick-thumb" id="joystick-thumb-knob"></div>
       </div>
-      <div class="joystick-label">рџ•№пёЏ Р РЈР›Р¬ & Р“РђР—</div>
+      <div class="joystick-label">🕹️ РУЛЬ & ГАЗ</div>
     </div>
 
     <!-- Bottom Right Controls: Boost, VSA, DPS, Sonar & FPV Strike -->
     <div class="mission-bottom-right">
       <div class="mission-tactical-toggles">
-        <button class="btn-tactical-toggle active" id="btn-mission-vsa" title="РљСѓСЂСЃРѕРІР°СЏ СѓСЃС‚РѕР№С‡РёРІРѕСЃС‚СЊ VSA (Р’РљР› / Р’Р«РљР›: Р РµР¶РёРј РґСЂРёС„С‚Р°)">
+        <button class="btn-tactical-toggle active" id="btn-mission-vsa" title="Курсовая устойчивость VSA (ВКЛ / ВЫКЛ: Режим дрифта)">
           <span class="btn-tt-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span>
-          <span class="btn-tt-text" id="hud-vsa-text">VSA: Р’РљР›</span>
+          <span class="btn-tt-text" id="hud-vsa-text">VSA: ВКЛ</span>
         </button>
-        <button class="btn-tactical-toggle" id="btn-mission-dps" title="РЎРёСЃС‚РµРјР° РґРёРЅР°РјРёС‡РµСЃРєРѕРіРѕ РїРѕР·РёС†РёРѕРЅРёСЂРѕРІР°РЅРёСЏ (РђРІС‚Рѕ-СѓРґРµСЂР¶Р°РЅРёРµ)">
+        <button class="btn-tactical-toggle" id="btn-mission-dps" title="Система динамического позиционирования (Авто-удержание)">
           <span class="btn-tt-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M12 22V8"/><path d="M5 12H2a10 10 0 0 0 20 0h-3"/><circle cx="12" cy="5" r="3"/></svg></span>
-          <span class="btn-tt-text" id="hud-dps-text">DPS: Р’Р«РљР›</span>
+          <span class="btn-tt-text" id="hud-dps-text">DPS: ВЫКЛ</span>
         </button>
-        <button class="btn-tactical-toggle" id="btn-mission-sonar" title="Р“РёРґСЂРѕР°РєСѓСЃС‚РёС‡РµСЃРєРёР№ СЃРѕРЅР°СЂ Р±РѕРєРѕРІРѕРіРѕ РѕР±Р·РѕСЂР°">
+        <button class="btn-tactical-toggle" id="btn-mission-sonar" title="Гидроакустический сонар бокового обзора">
           <span class="btn-tt-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242M12 12v9"/></svg></span>
-          <span class="btn-tt-text" id="hud-sonar-text">РЎРћРќРђР </span>
+          <span class="btn-tt-text" id="hud-sonar-text">СОНАР</span>
         </button>
       </div>
       <button class="btn-mission-action btn-mission-boost" id="btn-mission-boost">
         <span class="btn-ma-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></span>
-        <span class="btn-ma-text">Р¤РћР РЎРђР–</span>
+        <span class="btn-ma-text">ФОРСАЖ</span>
       </button>
       <button class="btn-mission-action btn-mission-strike pulse-ready" id="btn-mission-strike">
         <span class="btn-ma-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="M12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg></span>
-        <span class="btn-ma-text">РџРЈРЎРљ FPV</span>
+        <span class="btn-ma-text">ПУСК FPV</span>
       </button>
     </div>
 
     <!-- PC Keybind Hint Bar -->
     <div class="mission-pc-hints">
-      <span><b>[W / S]</b> Р“Р°Р· / Р РµРІРµСЂСЃ</span>
-      <span><b>[A / D]</b> Р СѓР»СЊ</span>
-      <span><b>[Shift]</b> Р¤РѕСЂСЃР°Р¶</span>
-      <span><b>[V]</b> VSA Р”СЂРёС„С‚</span>
-      <span><b>[H]</b> DPS РЇРєРѕСЂСЊ</span>
-      <span><b>[X]</b> РЎРѕРЅР°СЂ</span>
-      <span><b>[РџСЂРѕР±РµР»]</b> РџСѓСЃРє FPV</span>
+      <span><b>[W / S]</b> Газ / Реверс</span>
+      <span><b>[A / D]</b> Руль</span>
+      <span><b>[Shift]</b> Форсаж</span>
+      <span><b>[V]</b> VSA Дрифт</span>
+      <span><b>[H]</b> DPS Якорь</span>
+      <span><b>[X]</b> Сонар</span>
+      <span><b>[Пробел]</b> Пуск FPV</span>
     </div>
   </div>
 
@@ -534,14 +534,14 @@
     <header class="fpv-top-osd">
       <div class="fpv-osd-chip">VTX: 5.8GHz R-8</div>
       <div class="fpv-osd-chip" id="fpv-osd-bat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><rect x="1" y="6" width="18" height="12" rx="2" ry="2"/><line x1="23" y1="13" x2="23" y2="11"/></svg> 25.2V (6S) 100%</div>
-      <div class="fpv-osd-chip" id="fpv-osd-rssi">рџ“¶ RSSI: -42dBm (98%)</div>
-      <div class="fpv-osd-chip" id="fpv-osd-timer">вЏ±пёЏ 00:00</div>
+      <div class="fpv-osd-chip" id="fpv-osd-rssi">📶 RSSI: -42dBm (98%)</div>
+      <div class="fpv-osd-chip" id="fpv-osd-timer">⏱️ 00:00</div>
     </header>
 
     <!-- FPV Gyro Stabilization Minigame Overlay -->
     <div id="fpv-gyro-minigame" class="fpv-gyro-container" style="display: none; position: absolute; top: 15%; left: 50%; transform: translateX(-50%); z-index: 1000; width: 90vw; max-width: 400px; text-align: center; background: rgba(10,0,0,0.8); border: 2px solid red; padding: 20px; border-radius: 12px; box-shadow: 0 0 30px rgba(255,0,0,0.4); backdrop-filter: blur(10px);">
-      <div style="color: #ff3333; font-weight: bold; font-size: 18px; margin-bottom: 5px;">вљ пёЏ РџР Р•Р”РЈРџР Р•Р–Р”Р•РќРР•: РЎР‘РћР™ Р“РР РћРЎРљРћРџРђ вљ пёЏ</div>
-      <div style="color: #ccc; font-size: 13px; margin-bottom: 20px;">РљР°Р»РёР±СЂРѕРІРєР° РїРµСЂРµРґ СѓРґР°СЂРѕРј: СѓРґРµСЂР¶РёРІР°Р№С‚Рµ РјР°СЂРєРµСЂ РІ С†РµРЅС‚СЂРµ!</div>
+      <div style="color: #ff3333; font-weight: bold; font-size: 18px; margin-bottom: 5px;">⚠️ ПРЕДУПРЕЖДЕНИЕ: СБОЙ ГИРОСКОПА ⚠️</div>
+      <div style="color: #ccc; font-size: 13px; margin-bottom: 20px;">Калибровка перед ударом: удерживайте маркер в центре!</div>
       
       <div style="position: relative; width: 200px; height: 200px; border: 2px solid #555; border-radius: 50%; margin: 0 auto 20px auto; background: repeating-radial-gradient(circle at center, rgba(0,255,0,0.1) 0, rgba(0,255,0,0.1) 20px, transparent 20px, transparent 40px);">
         <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 40px; height: 40px; border: 2px solid #0f0; border-radius: 50%; box-shadow: 0 0 10px #0f0;"></div>
@@ -550,17 +550,17 @@
 
       <div style="display: flex; gap: 10px; margin-bottom: 15px;">
         <div style="flex: 1;">
-          <div style="color: #0fc; font-size: 12px; margin-bottom: 5px;">РўРђРќР“РђР–</div>
+          <div style="color: #0fc; font-size: 12px; margin-bottom: 5px;">ТАНГАЖ</div>
           <input type="range" id="gyro-slider-pitch" min="-50" max="50" value="0" style="width: 100%;">
         </div>
         <div style="flex: 1;">
-          <div style="color: #0fc; font-size: 12px; margin-bottom: 5px;">РљР Р•Рќ</div>
+          <div style="color: #0fc; font-size: 12px; margin-bottom: 5px;">КРЕН</div>
           <input type="range" id="gyro-slider-roll" min="-50" max="50" value="0" style="width: 100%;">
         </div>
       </div>
       
       <div style="background: rgba(0,255,0,0.1); border: 1px solid #0f0; border-radius: 6px; padding: 10px;">
-        <div style="color: #0f0; font-size: 14px; margin-bottom: 5px;">РљРђР›РР‘Р РћР’РљРђ: <b id="gyro-pct">0%</b></div>
+        <div style="color: #0f0; font-size: 14px; margin-bottom: 5px;">КАЛИБРОВКА: <b id="gyro-pct">0%</b></div>
         <div style="height: 8px; background: rgba(255,255,255,0.2); border-radius: 4px; overflow: hidden;">
           <div id="gyro-fill" style="width: 0%; height: 100%; background: #0f0; transition: width 0.1s;"></div>
         </div>
@@ -572,7 +572,7 @@
       <div class="fpv-pitch-ladder" id="fpv-pitch-ladder">
         <div class="pitch-line pitch-up">+20</div>
         <div class="pitch-line pitch-up">+10</div>
-        <div class="pitch-horizon">в”Ђв”Ђв”Ђ  в”Ђв”Ђв”Ђ</div>
+        <div class="pitch-horizon">───  ───</div>
         <div class="pitch-line pitch-down">-10</div>
         <div class="pitch-line pitch-down">-20</div>
       </div>
@@ -586,65 +586,65 @@
       <!-- Lock-On Target Box (Tracks Subsystems) -->
       <div class="fpv-target-bracket" id="fpv-target-bracket">
         <div class="target-bracket-corners"></div>
-        <div class="target-bracket-tag" id="fpv-target-tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg> [РњРћРЎРўРРљ] 85Рј</div>
+        <div class="target-bracket-tag" id="fpv-target-tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg> [МОСТИК] 85м</div>
       </div>
 
       <!-- RECONNAISSANCE 3D WAYPOINT HUD (Follows targets in 3D screen space) -->
       <div class="recon-hud-overlay" id="recon-hud-overlay" style="display:none;">
         <div class="recon-objective-banner" id="recon-objective-banner">
-          рџ”­ Р—РђР”РђР§Рђ: РџРѕРґР»РµС‚РёС‚Рµ Рє СЃРІРµС‚СЏС‰РµРјСѓСЃСЏ РјР°СЂРєРµСЂСѓ (&lt;45Рј) Рё СЃРґРµР»Р°Р№С‚Рµ СЃРЅРёРјРѕРє [РџР РћР‘Р•Р› / РўРђРџ]
+          🔭 ЗАДАЧА: Подлетите к светящемуся маркеру (&lt;45м) и сделайте снимок [ПРОБЕЛ / ТАП]
         </div>
 
         <!-- 3D Navigation Compass Arrow (points towards nearest target) -->
         <div class="recon-compass-arrow" id="recon-compass-arrow">
-          <div class="compass-pointer-icon" id="compass-pointer-icon">в–І</div>
-          <div class="compass-label-text" id="recon-compass-label">РљРЈР РЎ: 0В° // 85Рј</div>
+          <div class="compass-pointer-icon" id="compass-pointer-icon">▲</div>
+          <div class="compass-label-text" id="recon-compass-label">КУРС: 0° // 85м</div>
         </div>
 
         <!-- Full-Screen Tap-To-Snap Zone (Mobile) -->
-        <div class="recon-screen-tap-zone" id="recon-screen-tap-zone" title="РўР°РїРЅРёС‚Рµ РґР»СЏ СЃРЅРёРјРєР°"></div>
+        <div class="recon-screen-tap-zone" id="recon-screen-tap-zone" title="Тапните для снимка"></div>
 
         <div class="recon-waypoint-reticle" id="recon-waypoint-reticle" style="display:none;">
           <div class="wp-corner wp-tl"></div>
           <div class="wp-corner wp-tr"></div>
           <div class="wp-corner wp-bl"></div>
           <div class="wp-corner wp-br"></div>
-          <div class="wp-tag-pill" id="wp-target-tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg> Р—Р Рљ "РўРћР " // 65Рј</div>
+          <div class="wp-tag-pill" id="wp-target-tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg> ЗРК "ТОР" // 65м</div>
         </div>
         <button class="btn-recon-snap" id="btn-recon-snap">
-          рџ“ё Р—РђР¤РРљРЎРР РћР’РђРўР¬ Р¦Р•Р›Р¬ [РџР РћР‘Р•Р› / РўРђРџ]
+          📸 ЗАФИКСИРОВАТЬ ЦЕЛЬ [ПРОБЕЛ / ТАП]
         </button>
         <div class="recon-photo-card" id="recon-photo-card">
-          <div class="photo-thumb">рџ“ё</div>
+          <div class="photo-thumb">📸</div>
           <div class="photo-meta">
-            <div class="photo-title" id="photo-last-name">Р—Р Рљ В«РўРћР -Рњ2В»</div>
-            <div class="photo-status">вњ“ Р—РђР¤РРљРЎРР РћР’РђРќРћ</div>
+            <div class="photo-title" id="photo-last-name">ЗРК «ТОР-М2»</div>
+            <div class="photo-status">✓ ЗАФИКСИРОВАНО</div>
           </div>
         </div>
       </div>
 
       <!-- CIWS Anti-Air Flak Alert Banner -->
       <div class="fpv-ciws-alert" id="fpv-ciws-alert">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg> Р’РќРРњРђРќРР•: Р—Р•РќРРўРќР«Р™ РћР“РћРќР¬ CIWS // РњРђРќР•Р’Р РР РЈР™РўР•!
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg> ВНИМАНИЕ: ЗЕНИТНЫЙ ОГОНЬ CIWS // МАНЕВРИРУЙТЕ!
       </div>
     </div>
 
     <!-- Left: Flight Speed (km/h) -->
     <div class="fpv-left-telemetry">
-      <div class="fpv-telem-label">РЎРљРћР РћРЎРўР¬</div>
+      <div class="fpv-telem-label">СКОРОСТЬ</div>
       <div class="fpv-telem-value text-cyan" id="fpv-val-spd">120</div>
-      <div class="fpv-telem-unit">РљРњ/Р§</div>
+      <div class="fpv-telem-unit">КМ/Ч</div>
     </div>
 
     <!-- Right: Flight Altitude (m) & Distance -->
     <div class="fpv-right-telemetry">
-      <div class="fpv-telem-label">Р’Р«РЎРћРўРђ</div>
+      <div class="fpv-telem-label">ВЫСОТА</div>
       <div class="fpv-telem-value text-green" id="fpv-val-alt">14.2</div>
-      <div class="fpv-telem-unit">РњР•РўР РћР’</div>
+      <div class="fpv-telem-unit">МЕТРОВ</div>
       <div class="fpv-telem-divider"></div>
-      <div class="fpv-telem-label">Р”Рћ Р¦Р•Р›Р</div>
+      <div class="fpv-telem-label">ДО ЦЕЛИ</div>
       <div class="fpv-telem-value text-yellow" id="fpv-val-dist">85</div>
-      <div class="fpv-telem-unit">РњР•РўР РћР’</div>
+      <div class="fpv-telem-unit">МЕТРОВ</div>
     </div>
 
     <!-- Bottom Mobile Controls: Flight Joystick & Turbo -->
@@ -652,31 +652,31 @@
       <div class="joystick-base">
         <div class="joystick-thumb" id="fpv-joystick-thumb"></div>
       </div>
-      <div class="joystick-label">рџ•№пёЏ РўРђРќР“РђР– & РљР Р•Рќ</div>
+      <div class="joystick-label">🕹️ ТАНГАЖ & КРЕН</div>
     </div>
 
     <div class="fpv-bottom-actions">
       <button class="btn-fpv-boost" id="btn-fpv-hover" style="background:rgba(0,200,255,0.2);border-color:rgba(0,200,255,0.6);">
-        <span>рџљЃ HOVER</span>
+        <span>🚁 HOVER</span>
       </button>
       <button class="btn-fpv-boost" id="btn-fpv-photo" style="background:rgba(0,255,136,0.2);border-color:rgba(0,255,136,0.6);">
-        <span>рџ“ё Р¤РћРўРћ</span>
+        <span>📸 ФОТО</span>
       </button>
       <button class="btn-fpv-boost" id="btn-fpv-boost">
-        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg> Р¤РћР РЎРђР–</span>
+        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg> ФОРСАЖ</span>
       </button>
       <button class="btn-fpv-detonate" id="btn-fpv-detonate">
-        <span>рџ’Ґ Р”Р•РўРћРќРђР¦РРЇ</span>
+        <span>💥 ДЕТОНАЦИЯ</span>
       </button>
     </div>
 
     <!-- PC Key Hints -->
     <div class="fpv-pc-hints">
-      <span><b>[W / S]</b> РўР°РЅРіР°Р¶ (РџРёРєРёСЂРѕРІР°РЅРёРµ / РџРѕРґСЉС‘Рј)</span>
-      <span><b>[A / D]</b> РљСЂРµРЅ Рё РєСѓСЂСЃ</span>
-      <span><b>[H]</b> Р—Р°РІРёСЃР°РЅРёРµ</span>
-      <span><b>[Shift]</b> Р¤РѕСЂСЃР°Р¶</span>
-      <span><b>[РџСЂРѕР±РµР»]</b> Р¤РѕС‚Рѕ / РЈРґР°СЂ</span>
+      <span><b>[W / S]</b> Тангаж (Пикирование / Подъём)</span>
+      <span><b>[A / D]</b> Крен и курс</span>
+      <span><b>[H]</b> Зависание</span>
+      <span><b>[Shift]</b> Форсаж</span>
+      <span><b>[Пробел]</b> Фото / Удар</span>
     </div>
   </div>
 
@@ -686,14 +686,14 @@
   <div id="mission-gameover-modal" class="tactical-modal-overlay">
     <div class="tactical-modal-card gameover-card">
       <div class="modal-card-header gameover-header">
-        <div class="gameover-skull-icon">рџ’Ђ</div>
-        <h2 class="modal-card-title text-red" id="gameover-title">РЎР’РЇР—Р¬ РџРћРўР•Р РЇРќРђ // THE END</h2>
-        <div class="gameover-subtitle">[РЎРР“РќРђР› Р‘РћР РўРћР’РћР™ РўР•Р›Р•РњР•РўР РР РџР Р•Р Р’РђРќ]</div>
+        <div class="gameover-skull-icon">💀</div>
+        <h2 class="modal-card-title text-red" id="gameover-title">СВЯЗЬ ПОТЕРЯНА // THE END</h2>
+        <div class="gameover-subtitle">[СИГНАЛ БОРТОВОЙ ТЕЛЕМЕТРИИ ПРЕРВАН]</div>
       </div>
       
       <div class="gameover-reason-box">
-        <div class="reason-label">РџР РР§РРќРђ РџРћРўР•Р Р:</div>
-        <div class="reason-text" id="gameover-reason">РљРѕСЂРїСѓСЃ РєР°С‚РµСЂР° СѓРЅРёС‡С‚РѕР¶РµРЅ РґРµС‚РѕРЅР°С†РёРµР№ РјРѕСЂСЃРєРѕР№ РјРёРЅС‹</div>
+        <div class="reason-label">ПРИЧИНА ПОТЕРИ:</div>
+        <div class="reason-text" id="gameover-reason">Корпус катера уничтожен детонацией морской мины</div>
       </div>
 
       <div class="debrief-stats-grid" id="gameover-stats">
@@ -702,10 +702,10 @@
 
       <div class="gameover-actions">
         <button class="btn-gameover-retry" id="btn-gameover-retry">
-          <span class="btn-icon">рџ”„</span> РџРћРџР РћР‘РћР’РђРўР¬ РЎРќРћР’Рђ (RETRY)
+          <span class="btn-icon">🔄</span> ПОПРОБОВАТЬ СНОВА (RETRY)
         </button>
         <button class="btn-gameover-base" id="btn-gameover-base">
-          <span class="btn-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M12 22V8"/><path d="M5 12H2a10 10 0 0 0 20 0h-3"/><circle cx="12" cy="5" r="3"/></svg></span> Р­Р’РђРљРЈРђР¦РРЇ Р’ РЁРўРђР‘
+          <span class="btn-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M12 22V8"/><path d="M5 12H2a10 10 0 0 0 20 0h-3"/><circle cx="12" cy="5" r="3"/></svg></span> ЭВАКУАЦИЯ В ШТАБ
         </button>
       </div>
     </div>
@@ -717,17 +717,17 @@
   <div id="mission-victory-modal" class="tactical-modal-overlay">
     <div class="tactical-modal-card victory-card">
       <div class="modal-card-header victory-header">
-        <div class="victory-medal-icon">рџЏ†</div>
-        <h2 class="modal-card-title text-green" id="victory-title">РћРџР•Р РђР¦РРЇ Р—РђР’Р•Р РЁР•РќРђ // РўР РРЈРњР¤</h2>
-        <div class="victory-rank-badge" id="victory-rank-badge">Р РђРќР“: S (РР”Р•РђР›Р¬РќРћ)</div>
+        <div class="victory-medal-icon">🏆</div>
+        <h2 class="modal-card-title text-green" id="victory-title">ОПЕРАЦИЯ ЗАВЕРШЕНА // ТРИУМФ</h2>
+        <div class="victory-rank-badge" id="victory-rank-badge">РАНГ: S (ИДЕАЛЬНО)</div>
       </div>
 
       <div class="victory-hit-box" id="victory-hit-box">
-        <div class="hit-sub-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg> РџРћР РђР–РЃРќРќР«Р™ РЈР—Р•Р›:</div>
-        <div class="hit-sub-title text-yellow" id="victory-hit-sub">РҐРћР”РћР’РћР™ РњРћРЎРўРРљ (CRITICAL KILL x2.0)</div>
+        <div class="hit-sub-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg> ПОРАЖЁННЫЙ УЗЕЛ:</div>
+        <div class="hit-sub-title text-yellow" id="victory-hit-sub">ХОДОВОЙ МОСТИК (CRITICAL KILL x2.0)</div>
       </div>
 
-      <p class="modal-card-desc" id="victory-desc">РљРѕСЂР°Р±Р»СЊ РїСЂРѕС‚РёРІРЅРёРєР° СѓРЅРёС‡С‚РѕР¶РµРЅ С‚РѕС‡РЅС‹Рј СѓРґР°СЂРѕРј FPV-С€С‚СѓСЂРјРѕРІРёРєР° В«Р‘Р°СЂСЂР°РєСѓРґР°В» Рё Р·Р°С‚РѕРЅСѓР» РІ РјРѕСЂРµ!</p>
+      <p class="modal-card-desc" id="victory-desc">Корабль противника уничтожен точным ударом FPV-штурмовика «Барракуда» и затонул в море!</p>
 
       <div class="debrief-stats-grid" id="victory-stats">
         <!-- Injected dynamically -->
@@ -735,10 +735,10 @@
 
       <div class="victory-actions">
         <button class="btn-victory-retry" id="btn-victory-retry">
-          <span class="btn-icon">рџ”„</span> РџРћР’РўРћР РРўР¬ Р’Р«Р›РђР—РљРЈ
+          <span class="btn-icon">🔄</span> ПОВТОРИТЬ ВЫЛАЗКУ
         </button>
         <button class="btn-victory-claim" id="btn-victory-claim">
-          <span class="btn-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M12 22V8"/><path d="M5 12H2a10 10 0 0 0 20 0h-3"/><circle cx="12" cy="5" r="3"/></svg></span> Р—РђР‘Р РђРўР¬ РљРЈРЁ Р Р’ РЁРўРђР‘
+          <span class="btn-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M12 22V8"/><path d="M5 12H2a10 10 0 0 0 20 0h-3"/><circle cx="12" cy="5" r="3"/></svg></span> ЗАБРАТЬ КУШ И В ШТАБ
         </button>
       </div>
     </div>
@@ -752,57 +752,57 @@
       <div class="mobile-drawer-header">
         <div class="drawer-title-box">
           <span class="drawer-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg></span>
-          <h3>РўРђРљРўРР§Р•РЎРљРћР• РњР•РќР®</h3>
+          <h3>ТАКТИЧЕСКОЕ МЕНЮ</h3>
         </div>
-        <button class="btn-close-modal" id="btn-close-mobile-drawer">вњ•</button>
+        <button class="btn-close-modal" id="btn-close-mobile-drawer">✕</button>
       </div>
 
       <div class="mobile-drawer-grid">
         <button class="drawer-action-btn" id="btn-drawer-tactical">
           <span class="dab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M12 2v20M2 12h20M12 7a5 5 0 1 0 0 10 5 5 0 1 0 0-10zM12 12l5-5"/></svg></span>
           <div class="dab-meta">
-            <span class="dab-title">РўРђРљРўРРљРђ v3.5</span>
-            <span class="dab-sub">РЎРѕРЅР°СЂ, ROV, VSA, РўРµСЃС‚С‹</span>
+            <span class="dab-title">ТАКТИКА v3.5</span>
+            <span class="dab-sub">Сонар, ROV, VSA, Тесты</span>
           </div>
         </button>
 
         <button class="drawer-action-btn" id="btn-drawer-map">
           <span class="dab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg></span>
           <div class="dab-meta">
-            <span class="dab-title">РљРђР РўРђ РЎР•РљРўРћР РћР’</span>
-            <span class="dab-sub" id="drawer-sector-name">Рћ. Р—РјРµРёРЅС‹Р№</span>
+            <span class="dab-title">КАРТА СЕКТОРОВ</span>
+            <span class="dab-sub" id="drawer-sector-name">О. Змеиный</span>
           </div>
         </button>
 
         <button class="drawer-action-btn" id="btn-drawer-dossier">
           <span class="dab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg></span>
           <div class="dab-meta">
-            <span class="dab-title">РЎР•РљР Р•РўРќРћР• Р”РћРЎР¬Р•</span>
-            <span class="dab-sub">Р”РѕРєСѓРјРµРЅС‚С‹ Рё СЂР°Р·РІРµРґРґР°РЅРЅС‹Рµ</span>
+            <span class="dab-title">СЕКРЕТНОЕ ДОСЬЕ</span>
+            <span class="dab-sub">Документы и разведданные</span>
           </div>
         </button>
 
         <button class="drawer-action-btn" id="btn-drawer-settings">
           <span class="dab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>
           <div class="dab-meta">
-            <span class="dab-title">РќРђРЎРўР РћР™РљР</span>
-            <span class="dab-sub">Р“СЂР°С„РёРєР°, Р·РІСѓРє, СЃР±СЂРѕСЃ</span>
+            <span class="dab-title">НАСТРОЙКИ</span>
+            <span class="dab-sub">Графика, звук, сброс</span>
           </div>
         </button>
 
         <button class="drawer-action-btn" id="btn-drawer-help">
           <span class="dab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span>
           <div class="dab-meta">
-            <span class="dab-title">РЎРџР РђР’РљРђ Р РџРћРњРћР©Р¬</span>
-            <span class="dab-sub">РЈРїСЂР°РІР»РµРЅРёРµ Рё РјРµС…Р°РЅРёРєРё</span>
+            <span class="dab-title">СПРАВКА И ПОМОЩЬ</span>
+            <span class="dab-sub">Управление и механики</span>
           </div>
         </button>
 
         <button class="drawer-action-btn" id="btn-drawer-mute">
-          <span class="dab-icon" id="drawer-mute-icon">рџ”Љ</span>
+          <span class="dab-icon" id="drawer-mute-icon">🔊</span>
           <div class="dab-meta">
-            <span class="dab-title">Р—Р’РЈРљРћР’Р«Р• Р­Р¤Р¤Р•РљРўР«</span>
-            <span class="dab-sub" id="drawer-mute-status">Р’РљР›Р®Р§Р•РќР«</span>
+            <span class="dab-title">ЗВУКОВЫЕ ЭФФЕКТЫ</span>
+            <span class="dab-sub" id="drawer-mute-status">ВКЛЮЧЕНЫ</span>
           </div>
         </button>
       </div>
@@ -813,35 +813,35 @@
   <div id="map-modal" class="tactical-modal-overlay">
     <div class="tactical-modal-card">
       <div class="modal-card-header">
-        <h2 class="modal-card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg> РўР•РђРўР  Р‘РћР•Р’Р«РҐ Р”Р•Р™РЎРўР’РР™ // Р§РЃР РќРћР• РњРћР Р•</h2>
-        <button class="btn-close-modal" id="btn-close-map">вњ•</button>
+        <h2 class="modal-card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg> ТЕАТР БОЕВЫХ ДЕЙСТВИЙ // ЧЁРНОЕ МОРЕ</h2>
+        <button class="btn-close-modal" id="btn-close-map">✕</button>
       </div>
-      <p class="modal-card-desc">Р’С‹Р±РµСЂРёС‚Рµ СЃРµРєС‚РѕСЂ СЂР°Р·РІС‘СЂС‚С‹РІР°РЅРёСЏ. РљР°Р¶РґС‹Р№ СЂР°Р№РѕРЅ РјРµРЅСЏРµС‚ РїРѕРіРѕРґСѓ 3D-РѕРєРµР°РЅР°, РІСЂР°Р¶РµСЃРєРёРµ РєРѕСЂР°Р±Р»Рё Рё РјРЅРѕР¶РёС‚РµР»Рё РЅР°РіСЂР°Рґ.</p>
+      <p class="modal-card-desc">Выберите сектор развёртывания. Каждый район меняет погоду 3D-океана, вражеские корабли и множители наград.</p>
       <div class="sector-cards-grid">
         <div class="sector-choice-card active" data-sector="sector-1">
-          <div class="sector-choice-title">1. РћРЎРўР РћР’ Р—РњР•РРќР«Р™</div>
-          <div class="sector-choice-sub">РЁС‚РѕСЂРј // Р Р°Р·РІРµРґРєР° Рё РїР°С‚СЂСѓР»СЊ</div>
-          <div class="sector-choice-reward">РќРђР“Р РђР”Р«: x1.0 // РЎР›РћР–РќРћРЎРўР¬: РќРћР РњРђ</div>
+          <div class="sector-choice-title">1. ОСТРОВ ЗМЕИНЫЙ</div>
+          <div class="sector-choice-sub">Шторм // Разведка и патруль</div>
+          <div class="sector-choice-reward">НАГРАДЫ: x1.0 // СЛОЖНОСТЬ: НОРМА</div>
         </div>
         <div class="sector-choice-card" data-sector="sector-2">
-          <div class="sector-choice-title">2. РЎР•Р’РђРЎРўРћРџРћР›Р¬РЎРљРђРЇ Р‘РЈРҐРўРђ</div>
-          <div class="sector-choice-sub">РќРѕС‡РЅРѕР№ СЂРµР№Рґ // РџСЂРѕСЂС‹РІ Р±РѕРЅРѕРІ Рё РџР’Рћ</div>
-          <div class="sector-choice-reward">РќРђР“Р РђР”Р«: x1.8 // РЎР›РћР–РќРћРЎРўР¬: Р’Р«РЎРћРљРђРЇ</div>
+          <div class="sector-choice-title">2. СЕВАСТОПОЛЬСКАЯ БУХТА</div>
+          <div class="sector-choice-sub">Ночной рейд // Прорыв бонов и ПВО</div>
+          <div class="sector-choice-reward">НАГРАДЫ: x1.8 // СЛОЖНОСТЬ: ВЫСОКАЯ</div>
         </div>
         <div class="sector-choice-card" data-sector="sector-3">
-          <div class="sector-choice-title">3. РќРћР’РћР РћРЎРЎРР™РЎРљРР™ РўР•Р РњРРќРђР›</div>
-          <div class="sector-choice-sub">Р—Р°РєР°С‚ // РћС…РѕС‚Р° РЅР° СЂР°РґР°СЂРЅС‹Р№ С„СЂРµРіР°С‚</div>
-          <div class="sector-choice-reward">РќРђР“Р РђР”Р«: x2.5 // РЎР›РћР–РќРћРЎРўР¬: Р­Р›РРўРђ</div>
+          <div class="sector-choice-title">3. НОВОРОССИЙСКИЙ ТЕРМИНАЛ</div>
+          <div class="sector-choice-sub">Закат // Охота на радарный фрегат</div>
+          <div class="sector-choice-reward">НАГРАДЫ: x2.5 // СЛОЖНОСТЬ: ЭЛИТА</div>
         </div>
         <div class="sector-choice-card" data-sector="sector-4">
-          <div class="sector-choice-title">4. Р”Р•Р›Р¬РўРђ Р”РќР•РџР Рђ</div>
-          <div class="sector-choice-sub">Р Р°СЃСЃРІРµС‚РЅС‹Р№ С‚СѓРјР°РЅ // РџР»Р°РІРЅРё Рё РїСЂРѕС‚РѕРєРё</div>
-          <div class="sector-choice-reward">РќРђР“Р РђР”Р«: x3.2 // РЎР›РћР–РќРћРЎРўР¬: РњРђРљРЎРРњРЈРњ</div>
+          <div class="sector-choice-title">4. ДЕЛЬТА ДНЕПРА</div>
+          <div class="sector-choice-sub">Рассветный туман // Плавни и протоки</div>
+          <div class="sector-choice-reward">НАГРАДЫ: x3.2 // СЛОЖНОСТЬ: МАКСИМУМ</div>
         </div>
         <div class="sector-choice-card" data-sector="sector-5">
-          <div class="sector-choice-title" style="color:#00ffcc;">5. РљРРќР‘РЈР РќРЎРљРђРЇ РљРћРЎРђ</div>
-          <div class="sector-choice-sub">Р—Р°РєР°С‚ РЅР°Рґ Р»РёРјР°РЅРѕРј // РџРµСЃС‡Р°РЅС‹Рµ РѕС‚РјРµР»Рё Рё СЌС…РѕР»РѕС‚</div>
-          <div class="sector-choice-reward">РќРђР“Р РђР”Р«: x4.0 // РЎР›РћР–РќРћРЎРўР¬: РњР•Р›РљРћР’РћР”Р¬Р•</div>
+          <div class="sector-choice-title" style="color:#00ffcc;">5. КИНБУРНСКАЯ КОСА</div>
+          <div class="sector-choice-sub">Закат над лиманом // Песчаные отмели и эхолот</div>
+          <div class="sector-choice-reward">НАГРАДЫ: x4.0 // СЛОЖНОСТЬ: МЕЛКОВОДЬЕ</div>
         </div>
       </div>
     </div>
@@ -851,59 +851,59 @@
   <div id="cyber-modal" class="tactical-modal-overlay">
     <div class="tactical-modal-card cyber-card">
       <div class="modal-card-header">
-        <h2 class="modal-card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242M12 12v9"/></svg> Р Р­Р‘ // Р”Р•РЁРР¤Р РћР’РљРђ Р РђР”РРћРЎРџР•РљРўР Рђ</h2>
-        <button class="btn-close-modal" id="btn-close-cyber">вњ•</button>
+        <h2 class="modal-card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242M12 12v9"/></svg> РЭБ // ДЕШИФРОВКА РАДИОСПЕКТРА</h2>
+        <button class="btn-close-modal" id="btn-close-cyber">✕</button>
       </div>
-      <p class="modal-card-desc">РЎРѕРІРјРµСЃС‚РёС‚Рµ С‡Р°СЃС‚РѕС‚Сѓ РїРµСЂРµС…РІР°С‚Р° СЃ РЅРµСЃСѓС‰РµР№ РІРѕР»РЅРѕР№ РІСЂР°Р¶РµСЃРєРѕРіРѕ СЂР°РґР°СЂР° РґР»СЏ РёР·РІР»РµС‡РµРЅРёСЏ СЂР°Р·РІРµРґРґР°РЅРЅС‹С…. <strong>Р’СЂРµРјСЏ РѕРіСЂР°РЅРёС‡РµРЅРѕ!</strong></p>
-      <p id="cyber-timer-label" class="cyber-timer-display">РўРђР™РњР•Р : 30СЃ</p>
+      <p class="modal-card-desc">Совместите частоту перехвата с несущей волной вражеского радара для извлечения разведданных. <strong>Время ограничено!</strong></p>
+      <p id="cyber-timer-label" class="cyber-timer-display">ТАЙМЕР: 30с</p>
       
       <canvas id="cyber-wave-canvas" width="600" height="220"></canvas>
       
       <div class="cyber-controls-row">
         <div class="cyber-slider-group">
-          <label>Р§РђРЎРўРћРўРђ (РњР“С†): <span id="cyber-freq-val">142.5</span></label>
+          <label>ЧАСТОТА (МГц): <span id="cyber-freq-val">142.5</span></label>
           <input type="range" id="cyber-slider-freq" min="50" max="250" value="100" class="cyber-range-input">
         </div>
         <div class="cyber-slider-group">
-          <label>РђРњРџР›РРўРЈР”Рђ: <span id="cyber-amp-val">1.0</span></label>
+          <label>АМПЛИТУДА: <span id="cyber-amp-val">1.0</span></label>
           <input type="range" id="cyber-slider-amp" min="0.2" max="2.0" step="0.1" value="0.5" class="cyber-range-input">
         </div>
       </div>
 
       <div class="cyber-action-row">
-        <div id="cyber-match-status" class="cyber-match-label">РЎРћР’РџРђР”Р•РќРР• РЎРџР•РљРўР Рђ: 0%</div>
-        <button id="btn-cyber-submit" class="btn-buy-action">Р’Р—Р›РћРњРђРўР¬ РљРђРќРђР› (+$2,000 / +50 РњР‘)</button>
+        <div id="cyber-match-status" class="cyber-match-label">СОВПАДЕНИЕ СПЕКТРА: 0%</div>
+        <button id="btn-cyber-submit" class="btn-buy-action">ВЗЛОМАТЬ КАНАЛ (+$2,000 / +50 МБ)</button>
       </div>
     </div>
   </div>
 
   <!-- FPV Assault Minigame Modal -->
-  <div id="assault-modal" role="dialog" aria-modal="true" aria-label="FPV-РЁС‚СѓСЂРј">
+  <div id="assault-modal" role="dialog" aria-modal="true" aria-label="FPV-Штурм">
     <div style="text-align: center;">
-      <h1 class="modal-main-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="M12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg> FPV-РЁРўРЈР Рњ // РџР РћР Р«Р’ РџР’Рћ</h1>
-      <p id="modal-timer" class="modal-sub-timer">Р’Р Р•РњРЇ: 15.0СЃ</p>
+      <h1 class="modal-main-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="M12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg> FPV-ШТУРМ // ПРОРЫВ ПВО</h1>
+      <p id="modal-timer" class="modal-sub-timer">ВРЕМЯ: 15.0с</p>
     </div>
     <canvas id="fpv-canvas" width="900" height="500"></canvas>
     <div class="modal-action-box">
       <div class="modal-lock-track">
         <div id="lock-bar-fill" class="modal-lock-fill"></div>
       </div>
-      <p id="lock-status-label" class="modal-status-text">РќРђР–РњР [РџР РћР‘Р•Р›] РР›Р РљРћРЎРќРРЎР¬ Р­РљР РђРќРђ Р”Р›РЇ Р’Р—Р›РЃРўРђ</p>
+      <p id="lock-status-label" class="modal-status-text">НАЖМИ [ПРОБЕЛ] ИЛИ КОСНИСЬ ЭКРАНА ДЛЯ ВЗЛЁТА</p>
     </div>
   </div>
 
   <!-- Random Event Banner -->
   <div id="event-banner" class="event-banner-overlay">
     <div class="event-banner-inner">
-      <div class="event-banner-icon">вљ </div>
+      <div class="event-banner-icon">⚠</div>
       <div class="event-banner-content">
-        <div class="event-banner-title-text" id="event-banner-title">РЎРћР‘Р«РўРР•</div>
-        <div class="event-banner-desc-text" id="event-banner-desc">РћРїРёСЃР°РЅРёРµ СЃРѕР±С‹С‚РёСЏ</div>
+        <div class="event-banner-title-text" id="event-banner-title">СОБЫТИЕ</div>
+        <div class="event-banner-desc-text" id="event-banner-desc">Описание события</div>
         <div class="event-banner-progress-text" id="event-banner-progress"></div>
       </div>
       <div class="event-banner-right">
-        <span class="event-banner-countdown" id="event-banner-timer">12СЃ</span>
-        <button class="btn-event-action" id="event-banner-action" style="display:none;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg> Р”Р•Р™РЎРўР’РР•</button>
+        <span class="event-banner-countdown" id="event-banner-timer">12с</span>
+        <button class="btn-event-action" id="event-banner-action" style="display:none;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg> ДЕЙСТВИЕ</button>
       </div>
     </div>
   </div>
@@ -914,72 +914,72 @@
   <!-- HELP / TACTICAL MANUAL MODAL -->
   <div id="help-modal" class="help-modal-overlay">
     <div class="help-modal-content">
-      <button class="help-close-btn" id="btn-close-help" title="Р—Р°РєСЂС‹С‚СЊ СЂСѓРєРѕРІРѕРґСЃС‚РІРѕ">вњ•</button>
+      <button class="help-close-btn" id="btn-close-help" title="Закрыть руководство">✕</button>
       
       <div class="help-header">
-        <div class="help-badge">РРќРЎРўР РЈРљР¦РРЇ РћРџР•Р РђРўРћР Рђ // РЎР•РљР Р•РўРќРћ</div>
-        <h2 class="help-title">рџ“– РўРђРљРўРР§Р•РЎРљРР™ РЎРџР РђР’РћР§РќРРљ В«Р‘РђР Р РђРљРЈР”РђВ»</h2>
-        <p class="help-subtitle">Р‘РѕРµРІРѕРµ СЂСѓРєРѕРІРѕРґСЃС‚РІРѕ РїРѕ СѓРїСЂР°РІР»РµРЅРёСЋ Р°РІС‚РѕРЅРѕРјРЅС‹Рј РјРѕСЂСЃРєРёРј СѓРґР°СЂРЅС‹Рј РґСЂРѕРЅРѕРј</p>
+        <div class="help-badge">ИНСТРУКЦИЯ ОПЕРАТОРА // СЕКРЕТНО</div>
+        <h2 class="help-title">📖 ТАКТИЧЕСКИЙ СПРАВОЧНИК «БАРРАКУДА»</h2>
+        <p class="help-subtitle">Боевое руководство по управлению автономным морским ударным дроном</p>
       </div>
 
       <div class="help-sections-grid">
         <!-- Section 1 -->
         <div class="help-card">
           <div class="help-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242M12 12v9"/></svg></div>
-          <h3 class="help-card-title">1. Р РђР”РРћР РђР—Р’Р•Р”РљРђ Р Р”РћР‘Р«Р§Рђ (SIGINT)</h3>
+          <h3 class="help-card-title">1. РАДИОРАЗВЕДКА И ДОБЫЧА (SIGINT)</h3>
           <p class="help-card-text">
-            РўР°РїС‹ РїРѕ 3D-РґСЂРѕРЅСѓ РїРµСЂРµС…РІР°С‚С‹РІР°СЋС‚ Р·Р°С€РёС„СЂРѕРІР°РЅРЅСѓСЋ СЂР°РґРёРѕ-С‚РµР»РµРјРµС‚СЂРёСЋ РІСЂР°РіР°. РљР°Р¶РґС‹Р№ РєР»РёРє РіРµРЅРµСЂРёСЂСѓРµС‚ <strong>РњР‘ СЂР°Р·РІРµРґРґР°РЅРЅС‹С…</strong> Рё <strong>$ С„РёРЅР°РЅСЃРѕРІС‹Рµ РєСЂРµРґРёС‚С‹</strong>, Р° С‚Р°РєР¶Рµ РЅР°РєР°РїР»РёРІР°РµС‚ Р·Р°СЂСЏРґ Р±РѕРµРІРѕР№ Р±Р°С‚Р°СЂРµРё FPV-С€С‚СѓСЂРјР°.
+            Тапы по 3D-дрону перехватывают зашифрованную радио-телеметрию врага. Каждый клик генерирует <strong>МБ разведданных</strong> и <strong>$ финансовые кредиты</strong>, а также накапливает заряд боевой батареи FPV-штурма.
           </p>
         </div>
 
         <!-- Section 2 -->
         <div class="help-card">
           <div class="help-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="M12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg></div>
-          <h3 class="help-card-title">2. FPV-РЁРўРЈР Рњ Р РЈР”РђР  РџРћ РљРћР РђР‘Р›РЇРњ</h3>
+          <h3 class="help-card-title">2. FPV-ШТУРМ И УДАР ПО КОРАБЛЯМ</h3>
           <p class="help-card-text">
-            РљРѕСЂР°Р±Р»Рё РїСЂРѕС‚РёРІРЅРёРєР° СѓРЅРёС‡С‚РѕР¶Р°СЋС‚СЃСЏ РєРёРЅРµС‚РёС‡РµСЃРєРёРјРё СѓРґР°СЂР°РјРё! РџРѕ РЅР°РєРѕРїР»РµРЅРёСЋ С€РєР°Р»С‹ РЅР°Р¶РјРёС‚Рµ <strong>В«FPV-РЁРўРЈР РњВ»</strong>: СѓРїСЂР°РІР»СЏР№С‚Рµ С€С‚СѓСЂРјРѕРІС‹Рј РґСЂРѕРЅРѕРј, РѕР±С…РѕРґРёС‚Рµ Р·РѕРЅС‹ РџР’Рћ Рё РїРѕСЂР°Р¶Р°Р№С‚Рµ С„Р»Р°РіРјР°РЅС‹, Р·Р°СЂР°Р±Р°С‚С‹РІР°СЏ СЂРµРґРєРёРµ С‚СЂРѕС„РµРё Рё С‡РµСЂС‚РµР¶Рё РїСЂРµСЃС‚РёР¶Р°.
+            Корабли противника уничтожаются кинетическими ударами! По накоплению шкалы нажмите <strong>«FPV-ШТУРМ»</strong>: управляйте штурмовым дроном, обходите зоны ПВО и поражайте флагманы, зарабатывая редкие трофеи и чертежи престижа.
           </p>
         </div>
 
         <!-- Section 3 -->
         <div class="help-card">
           <div class="help-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg></div>
-          <h3 class="help-card-title">3. РЎР®Р–Р•РўРќРђРЇ РљРђРњРџРђРќРРЇ (4 РђРљРўРђ)</h3>
+          <h3 class="help-card-title">3. СЮЖЕТНАЯ КАМПАНИЯ (4 АКТА)</h3>
           <p class="help-card-text">
-            РџСЂРѕС…РѕРґРёС‚Рµ Р±РѕРµРІС‹Рµ РѕРїРµСЂР°С†РёРё: <em>В«РўРµРЅСЊ РЅР°Рґ Р—РјРµРёРЅС‹РјВ»</em> $\rightarrow$ <em>В«РџСЂРѕСЂС‹РІ РЎРµРІР°СЃС‚РѕРїРѕР»СЊСЃРєРёС… Р±РѕРЅРѕРІВ»</em> $\rightarrow$ <em>В«РћС…РѕС‚Р° РЅР° РќРѕРІРѕСЂРѕСЃСЃРёР№СЃРєРёР№ С‚РµСЂРјРёРЅР°Р»В»</em> $\rightarrow$ <em>В«Р›РёРєРІРёРґР°С†РёСЏ СЃСѓРїРµСЂ-С„Р»Р°РіРјР°РЅР° Р›РµРІРёР°С„Р°РЅВ»</em> СЃ РґРёР°Р»РѕРіР°РјРё С€С‚Р°Р±Р° Рё РѕС„РёС†РµСЂРѕРІ Р Р­Р‘.
+            Проходите боевые операции: <em>«Тень над Змеиным»</em> $\rightarrow$ <em>«Прорыв Севастопольских бонов»</em> $\rightarrow$ <em>«Охота на Новороссийский терминал»</em> $\rightarrow$ <em>«Ликвидация супер-флагмана Левиафан»</em> с диалогами штаба и офицеров РЭБ.
           </p>
         </div>
 
         <!-- Section 4 -->
         <div class="help-card">
-          <div class="help-card-icon">рџ› пёЏ</div>
-          <h3 class="help-card-title">4. РђРќР“РђР  РљРћР РџРЈРЎРћР’ Р РљРЈР—РќРР¦Рђ</h3>
+          <div class="help-card-icon">🛠️</div>
+          <h3 class="help-card-title">4. АНГАР КОРПУСОВ И КУЗНИЦА</h3>
           <p class="help-card-text">
-            РћС‚РєСЂС‹РІР°Р№С‚Рµ РЅРѕРІС‹Рµ РїСЂРѕС‚РѕС‚РёРїС‹: <strong>Phantom</strong> (СЃС‚РµР»СЃ), <strong>Strike</strong> (СЂР°РєРµС‚РѕРЅРѕСЃРµС†), <strong>Aegis</strong> (С„Р»Р°РіРјР°РЅ Р Р­Р‘ СЃ СЂРѕРµРј). РЎРѕР·РґР°РІР°Р№С‚Рµ РІ РљСѓР·РЅРёС†Рµ РјРѕРґСѓР»Рё РёР· С‚СЂРѕС„РµРµРІ: <em>Р‘СЂРѕРЅСЏ В«РўРёС‚Р°РЅ-РњВ»</em>, <em>РљРІР°РЅС‚РѕРІС‹Р№ РґРµС€РёС„СЂР°С‚РѕСЂ</em>, <em>Р‘РѕРµРіРѕР»РѕРІРєР° X-9</em> Рё <em>Р’РµРґРѕРјС‹Р№ СЂРѕР№</em>.
+            Открывайте новые прототипы: <strong>Phantom</strong> (стелс), <strong>Strike</strong> (ракетоносец), <strong>Aegis</strong> (флагман РЭБ с роем). Создавайте в Кузнице модули из трофеев: <em>Броня «Титан-М»</em>, <em>Квантовый дешифратор</em>, <em>Боеголовка X-9</em> и <em>Ведомый рой</em>.
           </p>
         </div>
 
         <!-- Section 5 -->
         <div class="help-card">
-          <div class="help-card-icon">рџ“»</div>
-          <h3 class="help-card-title">5. Р Р­Р‘ Р РЎРљРђРќРР РћР’РђРќРР• Р§РђРЎРўРћРў</h3>
+          <div class="help-card-icon">📻</div>
+          <h3 class="help-card-title">5. РЭБ И СКАНИРОВАНИЕ ЧАСТОТ</h3>
           <p class="help-card-text">
-            Р’Р·Р»Р°РјС‹РІР°Р№С‚Рµ СЂР°РґР°СЂС‹ РїСЂРѕС‚РёРІРЅРёРєР° РІ РјРёРЅРё-РёРіСЂРµ Р Р­Р‘: СЃРѕРїРѕСЃС‚Р°РІСЊС‚Рµ С‡Р°СЃС‚РѕС‚Сѓ Рё Р°РјРїР»РёС‚СѓРґСѓ РІРѕР»РЅС‹ СЃ СЃРёРіРЅР°Р»РѕРј РІСЂР°Р¶РµСЃРєРѕРіРѕ РєРѕСЂР°Р±Р»СЏ РґР»СЏ РїРµСЂРµС…РІР°С‚Р° РґР°РЅРЅС‹С… Рё РѕС‚РєР»СЋС‡РµРЅРёСЏ СЃРёСЃС‚РµРј РїРѕРјРµС….
+            Взламывайте радары противника в мини-игре РЭБ: сопоставьте частоту и амплитуду волны с сигналом вражеского корабля для перехвата данных и отключения систем помех.
           </p>
         </div>
 
         <!-- Section 6 -->
         <div class="help-card">
-          <div class="help-card-icon">рџ§¬</div>
-          <h3 class="help-card-title">6. РќРРћРљР  Р Р”Р•Р Р•Р’Рћ РўР•РҐРќРћР›РћР“РР™</h3>
+          <div class="help-card-icon">🧬</div>
+          <h3 class="help-card-title">6. НИОКР И ДЕРЕВО ТЕХНОЛОГИЙ</h3>
           <p class="help-card-text">
-            РРЅРІРµСЃС‚РёСЂСѓР№С‚Рµ С‚РµСЂР°Р±Р°Р№С‚С‹ РґР°РЅРЅС‹С… РІ 13 СѓРЅРёРєР°Р»СЊРЅС‹С… РІРµС‚РІРµР№ РќРРћРљР : РѕС‚РєСЂС‹РІР°Р№С‚Рµ Р°РІС‚РѕРЅРѕРјРЅСѓСЋ РґРѕР±С‹С‡Сѓ, РєРІР°РЅС‚РѕРІРѕРµ СѓСЃРєРѕСЂРµРЅРёРµ, СЂРѕРµРІРѕР№ РёСЃРєСѓСЃСЃС‚РІРµРЅРЅС‹Р№ РёРЅС‚РµР»Р»РµРєС‚ Рё Р±РµР·Р»РёРјРёС‚РЅС‹Р№ РЅР°РєРѕРїРёС‚РµР»СЊ Nexus.
+            Инвестируйте терабайты данных в 13 уникальных ветвей НИОКР: открывайте автономную добычу, квантовое ускорение, роевой искусственный интеллект и безлимитный накопитель Nexus.
           </p>
         </div>
       </div>
 
       <div class="help-footer-row">
-        <button class="btn-buy-action" id="btn-help-understood" style="max-width: 280px; margin: 0 auto;">РџР РРќРЇРўРћ Р’ Р РђР‘РћРўРЈ <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M12 22V8"/><path d="M5 12H2a10 10 0 0 0 20 0h-3"/><circle cx="12" cy="5" r="3"/></svg></button>
+        <button class="btn-buy-action" id="btn-help-understood" style="max-width: 280px; margin: 0 auto;">ПРИНЯТО В РАБОТУ <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M12 22V8"/><path d="M5 12H2a10 10 0 0 0 20 0h-3"/><circle cx="12" cy="5" r="3"/></svg></button>
       </div>
     </div>
   </div>
@@ -987,7 +987,7 @@
   <!-- TECH TREE MODAL (TACTICAL R&D MATRIX) -->
   <div id="techtree-modal" class="help-modal-overlay">
     <div class="help-modal-content tt-modal-container">
-      <button class="help-close-btn" id="btn-close-techtree" title="Р—Р°РєСЂС‹С‚СЊ РќРРћРљР ">вњ•</button>
+      <button class="help-close-btn" id="btn-close-techtree" title="Закрыть НИОКР">✕</button>
       
       <!-- Tech Tree Top Header -->
       <div class="tt-top-header">
@@ -995,37 +995,37 @@
           <span class="tt-badge-pulse"></span>
           <span>CYBERNETICS // R&D MATRIX v2.4</span>
         </div>
-        <h2 class="tt-title">рџ§¬ Р”Р•Р Р•Р’Рћ РўР•РҐРќРћР›РћР“РР™ В«Р‘РђР РђРљРЈР”РђВ»</h2>
+        <h2 class="tt-title">🧬 ДЕРЕВО ТЕХНОЛОГИЙ «БАРАКУДА»</h2>
         <div class="tt-telemetry-row">
           <div class="tt-telemetry-pill">
-            <span class="tt-telemetry-label">Р”РћРЎРўРЈРџРќРћ Р”РђРќРќР«РҐ:</span>
-            <span class="tt-telemetry-val text-green" id="tt-user-data">0.0 РњР‘</span>
+            <span class="tt-telemetry-label">ДОСТУПНО ДАННЫХ:</span>
+            <span class="tt-telemetry-val text-green" id="tt-user-data">0.0 МБ</span>
           </div>
           <div class="tt-telemetry-pill">
-            <span class="tt-telemetry-label">РР—РЈР§Р•РќРћ РЈР—Р›РћР’:</span>
+            <span class="tt-telemetry-label">ИЗУЧЕНО УЗЛОВ:</span>
             <span class="tt-telemetry-val text-cyan" id="tt-global-progress">0 / 13 [0%]</span>
           </div>
         </div>
 
         <!-- Filter Branch Tabs -->
         <div class="tt-filter-tabs">
-          <button class="tt-tab-btn active" data-filter="all">Р’РЎР• Р’Р•РўР’Р (13)</button>
-          <button class="tt-tab-btn" data-filter="stealth">рџ•µпёЏ РЎРўР•Р›РЎ / Р Р­Р‘ (4)</button>
-          <button class="tt-tab-btn" data-filter="firepower"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg> РћР“РќР•Р’РђРЇ РњРћР©Р¬ (4)</button>
-          <button class="tt-tab-btn" data-filter="engineering"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> РРќР–Р•РќР•Р РРЇ (5)</button>
+          <button class="tt-tab-btn active" data-filter="all">ВСЕ ВЕТВИ (13)</button>
+          <button class="tt-tab-btn" data-filter="stealth">🕵️ СТЕЛС / РЭБ (4)</button>
+          <button class="tt-tab-btn" data-filter="firepower"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg> ОГНЕВАЯ МОЩЬ (4)</button>
+          <button class="tt-tab-btn" data-filter="engineering"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> ИНЖЕНЕРИЯ (5)</button>
         </div>
       </div>
 
       <!-- Tech Tree Branches Grid -->
       <div id="techtree-grid" class="tt-matrix-grid">
         
-        <!-- Branch 1: РЎРўР•Р›РЎ / Р Р­Р‘ -->
+        <!-- Branch 1: СТЕЛС / РЭБ -->
         <div class="tt-branch tt-branch-stealth" data-branch="stealth">
           <div class="tt-branch-header">
-            <div class="tt-branch-icon">рџ•µпёЏ</div>
+            <div class="tt-branch-icon">🕵️</div>
             <div class="tt-branch-info">
-              <div class="tt-branch-title">РЎРўР•Р›РЎ & РљРР‘Р•Р -Р Р­Р‘</div>
-              <div class="tt-branch-sub">РњР°СЃРєРёСЂРѕРІРєР°, РїРµСЂРµС…РІР°С‚ Рё РґРµС€РёС„СЂРѕРІРєР°</div>
+              <div class="tt-branch-title">СТЕЛС & КИБЕР-РЭБ</div>
+              <div class="tt-branch-sub">Маскировка, перехват и дешифровка</div>
             </div>
             <div class="tt-branch-counter" id="tt-count-stealth">0/4</div>
           </div>
@@ -1034,10 +1034,10 @@
             <div class="tt-node-tier">T-1</div>
             <div class="tt-node-icon-wrap"><span class="tt-node-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242M12 12v9"/></svg></span></div>
             <div class="tt-node-body">
-              <div class="tt-node-name">РЎРќРР¤Р¤Р•Р  РџРђРљР•РўРћР’</div>
-              <div class="tt-node-desc">+2.5 РњР‘/СЃ РїР°СЃСЃРёРІРЅРѕ</div>
+              <div class="tt-node-name">СНИФФЕР ПАКЕТОВ</div>
+              <div class="tt-node-desc">+2.5 МБ/с пассивно</div>
             </div>
-            <div class="tt-node-cost-badge">500 РњР‘</div>
+            <div class="tt-node-cost-badge">500 МБ</div>
           </div>
 
           <div class="tt-conduit"><div class="tt-conduit-pulse"></div></div>
@@ -1046,22 +1046,22 @@
             <div class="tt-node-tier">T-2</div>
             <div class="tt-node-icon-wrap"><span class="tt-node-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/></svg></span></div>
             <div class="tt-node-body">
-              <div class="tt-node-name">РљР’РђРќРўРћР’Р«Р™ Р”Р•РЁРР¤Р РђРўРћР </div>
-              <div class="tt-node-desc">+12% С€Р°РЅСЃ РєСЂРёС‚Р° (x5)</div>
+              <div class="tt-node-name">КВАНТОВЫЙ ДЕШИФРАТОР</div>
+              <div class="tt-node-desc">+12% шанс крита (x5)</div>
             </div>
-            <div class="tt-node-cost-badge">5,000 РњР‘</div>
+            <div class="tt-node-cost-badge">5,000 МБ</div>
           </div>
 
           <div class="tt-conduit"><div class="tt-conduit-pulse"></div></div>
 
           <div class="tt-node" data-tt="ghost_protocol" data-tt-req="quantum" data-tt-cost="50000" data-tier="3">
             <div class="tt-node-tier">T-3</div>
-            <div class="tt-node-icon-wrap"><span class="tt-node-icon">рџ‘»</span></div>
+            <div class="tt-node-icon-wrap"><span class="tt-node-icon">👻</span></div>
             <div class="tt-node-body">
-              <div class="tt-node-name">РџР РћРўРћРљРћР› В«РџР РР—Р РђРљВ»</div>
-              <div class="tt-node-desc">-40% РїСЂРµРїСЏС‚СЃС‚РІРёР№ РІ FPV</div>
+              <div class="tt-node-name">ПРОТОКОЛ «ПРИЗРАК»</div>
+              <div class="tt-node-desc">-40% препятствий в FPV</div>
             </div>
-            <div class="tt-node-cost-badge">50,000 РњР‘</div>
+            <div class="tt-node-cost-badge">50,000 МБ</div>
           </div>
 
           <div class="tt-conduit"><div class="tt-conduit-pulse"></div></div>
@@ -1070,32 +1070,32 @@
             <div class="tt-node-tier">T-4</div>
             <div class="tt-node-icon-wrap"><span class="tt-node-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span></div>
             <div class="tt-node-body">
-              <div class="tt-node-name">Р Р­Р‘ РљРћРњРџР›Р•РљРЎ</div>
-              <div class="tt-node-desc">-50% РєСѓР»РґР°СѓРЅ РїСѓСЃРєР° FPV</div>
+              <div class="tt-node-name">РЭБ КОМПЛЕКС</div>
+              <div class="tt-node-desc">-50% кулдаун пуска FPV</div>
             </div>
-            <div class="tt-node-cost-badge">250,000 РњР‘</div>
+            <div class="tt-node-cost-badge">250,000 МБ</div>
           </div>
         </div>
 
-        <!-- Branch 2: РћР“РќР•Р’РђРЇ РњРћР©Р¬ -->
+        <!-- Branch 2: ОГНЕВАЯ МОЩЬ -->
         <div class="tt-branch tt-branch-firepower" data-branch="firepower">
           <div class="tt-branch-header">
             <div class="tt-branch-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></div>
             <div class="tt-branch-info">
-              <div class="tt-branch-title">РћР“РќР•Р’РђРЇ РњРћР©Р¬</div>
-              <div class="tt-branch-sub">РЈРґР°СЂРЅС‹Рµ РєРѕРјРїР»РµРєСЃС‹ Рё РґСЂРѕРЅС‹-РєР°РјРёРєР°РґР·Рµ</div>
+              <div class="tt-branch-title">ОГНЕВАЯ МОЩЬ</div>
+              <div class="tt-branch-sub">Ударные комплексы и дроны-камикадзе</div>
             </div>
             <div class="tt-branch-counter" id="tt-count-firepower">0/4</div>
           </div>
 
           <div class="tt-node" data-tt="optics" data-tt-req="" data-tt-cost="800" data-tier="1">
             <div class="tt-node-tier">T-1</div>
-            <div class="tt-node-icon-wrap"><span class="tt-node-icon">рџ”­</span></div>
+            <div class="tt-node-icon-wrap"><span class="tt-node-icon">🔭</span></div>
             <div class="tt-node-body">
-              <div class="tt-node-name">РћРџРўРРљРђ FLIR</div>
-              <div class="tt-node-desc">+4.0 РњР‘/РєР»РёРє</div>
+              <div class="tt-node-name">ОПТИКА FLIR</div>
+              <div class="tt-node-desc">+4.0 МБ/клик</div>
             </div>
-            <div class="tt-node-cost-badge">800 РњР‘</div>
+            <div class="tt-node-cost-badge">800 МБ</div>
           </div>
 
           <div class="tt-conduit"><div class="tt-conduit-pulse"></div></div>
@@ -1104,44 +1104,44 @@
             <div class="tt-node-tier">T-2</div>
             <div class="tt-node-icon-wrap"><span class="tt-node-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="M12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg></span></div>
             <div class="tt-node-body">
-              <div class="tt-node-name">РЎРўРђРџР•Р›Р FPV-Р”Р РћРќРћР’</div>
-              <div class="tt-node-desc">+50% СЃРёР»Р° СѓРґР°СЂР° РґСЂРѕРЅР°</div>
+              <div class="tt-node-name">СТАПЕЛИ FPV-ДРОНОВ</div>
+              <div class="tt-node-desc">+50% сила удара дрона</div>
             </div>
-            <div class="tt-node-cost-badge">8,000 РњР‘</div>
+            <div class="tt-node-cost-badge">8,000 МБ</div>
           </div>
 
           <div class="tt-conduit"><div class="tt-conduit-pulse"></div></div>
 
           <div class="tt-node" data-tt="plasma_warhead" data-tt-req="missiles" data-tt-cost="80000" data-tier="3">
             <div class="tt-node-tier">T-3</div>
-            <div class="tt-node-icon-wrap"><span class="tt-node-icon">рџ’Ґ</span></div>
+            <div class="tt-node-icon-wrap"><span class="tt-node-icon">💥</span></div>
             <div class="tt-node-body">
-              <div class="tt-node-name">РџР›РђР—РњР•РќРќРђРЇ Р‘Р§</div>
-              <div class="tt-node-desc">+100% СЃРєРѕСЂРѕСЃС‚СЊ Р·Р°СЂСЏРґР° С€С‚СѓСЂРјР°</div>
+              <div class="tt-node-name">ПЛАЗМЕННАЯ БЧ</div>
+              <div class="tt-node-desc">+100% скорость заряда штурма</div>
             </div>
-            <div class="tt-node-cost-badge">80,000 РњР‘</div>
+            <div class="tt-node-cost-badge">80,000 МБ</div>
           </div>
 
           <div class="tt-conduit"><div class="tt-conduit-pulse"></div></div>
 
           <div class="tt-node" data-tt="swarm_ai" data-tt-req="plasma_warhead" data-tt-cost="500000" data-tier="4">
             <div class="tt-node-tier">T-4</div>
-            <div class="tt-node-icon-wrap"><span class="tt-node-icon">рџ¤–</span></div>
+            <div class="tt-node-icon-wrap"><span class="tt-node-icon">🤖</span></div>
             <div class="tt-node-body">
-              <div class="tt-node-name">Р РћР™ РР</div>
-              <div class="tt-node-desc">Р РѕР№ СЌСЃРєРѕСЂС‚Р° + x2 СѓСЂРѕРЅ С„Р»РѕС‚Сѓ</div>
+              <div class="tt-node-name">РОЙ ИИ</div>
+              <div class="tt-node-desc">Рой эскорта + x2 урон флоту</div>
             </div>
-            <div class="tt-node-cost-badge">500,000 РњР‘</div>
+            <div class="tt-node-cost-badge">500,000 МБ</div>
           </div>
         </div>
 
-        <!-- Branch 3: РРќР–Р•РќР•Р РРЇ -->
+        <!-- Branch 3: ИНЖЕНЕРИЯ -->
         <div class="tt-branch tt-branch-engineering" data-branch="engineering">
           <div class="tt-branch-header">
             <div class="tt-branch-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div>
             <div class="tt-branch-info">
-              <div class="tt-branch-title">РРќР–Р•РќР•Р РРЇ & Р‘РђР—Рђ</div>
-              <div class="tt-branch-sub">Р­РЅРµСЂРіРµС‚РёРєР°, СЃРїСѓС‚РЅРёРєРё Рё РёРЅС„СЂР°СЃС‚СЂСѓРєС‚СѓСЂР°</div>
+              <div class="tt-branch-title">ИНЖЕНЕРИЯ & БАЗА</div>
+              <div class="tt-branch-sub">Энергетика, спутники и инфраструктура</div>
             </div>
             <div class="tt-branch-counter" id="tt-count-engineering">0/5</div>
           </div>
@@ -1150,10 +1150,10 @@
             <div class="tt-node-tier">T-1</div>
             <div class="tt-node-icon-wrap"><span class="tt-node-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242M12 12v9"/></svg></span></div>
             <div class="tt-node-body">
-              <div class="tt-node-name">РђРќРўР•РќРќРђ SATCOM</div>
-              <div class="tt-node-desc">+2.0 РњР‘/РєР»РёРє</div>
+              <div class="tt-node-name">АНТЕННА SATCOM</div>
+              <div class="tt-node-desc">+2.0 МБ/клик</div>
             </div>
-            <div class="tt-node-cost-badge">300 РњР‘</div>
+            <div class="tt-node-cost-badge">300 МБ</div>
           </div>
 
           <div class="tt-conduit"><div class="tt-conduit-pulse"></div></div>
@@ -1162,22 +1162,22 @@
             <div class="tt-node-tier">T-2</div>
             <div class="tt-node-icon-wrap"><span class="tt-node-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span></div>
             <div class="tt-node-body">
-              <div class="tt-node-name">Р‘Р РћРќР•РџР›РРўР« РљРћР РџРЈРЎРђ</div>
-              <div class="tt-node-desc">+1 Р¶РёР·РЅСЊ РІ FPV, +1.5 РњР‘/СЃ</div>
+              <div class="tt-node-name">БРОНЕПЛИТЫ КОРПУСА</div>
+              <div class="tt-node-desc">+1 жизнь в FPV, +1.5 МБ/с</div>
             </div>
-            <div class="tt-node-cost-badge">3,000 РњР‘</div>
+            <div class="tt-node-cost-badge">3,000 МБ</div>
           </div>
 
           <div class="tt-conduit"><div class="tt-conduit-pulse"></div></div>
 
           <div class="tt-node" data-tt="waterjets" data-tt-req="armor" data-tt-cost="15000" data-tier="3">
             <div class="tt-node-tier">T-3</div>
-            <div class="tt-node-icon-wrap"><span class="tt-node-icon">рџ’Ё</span></div>
+            <div class="tt-node-icon-wrap"><span class="tt-node-icon">💨</span></div>
             <div class="tt-node-body">
-              <div class="tt-node-name">Р’РћР”РћРњРЃРўРќР«Р• Р”Р’РР“РђРўР•Р›Р</div>
-              <div class="tt-node-desc">+3.0 РњР‘/СЃ + РєРёР»СЊРІР°С‚РµСЂРЅС‹Р№ СЃР»РµРґ</div>
+              <div class="tt-node-name">ВОДОМЁТНЫЕ ДВИГАТЕЛИ</div>
+              <div class="tt-node-desc">+3.0 МБ/с + кильватерный след</div>
             </div>
-            <div class="tt-node-cost-badge">15,000 РњР‘</div>
+            <div class="tt-node-cost-badge">15,000 МБ</div>
           </div>
 
           <div class="tt-conduit"><div class="tt-conduit-pulse"></div></div>
@@ -1186,22 +1186,22 @@
             <div class="tt-node-tier">T-4</div>
             <div class="tt-node-icon-wrap"><span class="tt-node-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span></div>
             <div class="tt-node-body">
-              <div class="tt-node-name">РђР’РўРћ-РЎРР¤РћРќ Р”РђРќРќР«РҐ</div>
-              <div class="tt-node-desc">+$75/СЃ РїР°СЃСЃРёРІРЅС‹С… РєСЂРµРґРёС‚РѕРІ</div>
+              <div class="tt-node-name">АВТО-СИФОН ДАННЫХ</div>
+              <div class="tt-node-desc">+$75/с пассивных кредитов</div>
             </div>
-            <div class="tt-node-cost-badge">75,000 РњР‘</div>
+            <div class="tt-node-cost-badge">75,000 МБ</div>
           </div>
 
           <div class="tt-conduit"><div class="tt-conduit-pulse"></div></div>
 
           <div class="tt-node" data-tt="data_nexus" data-tt-req="autosiphon" data-tt-cost="400000" data-tier="5">
             <div class="tt-node-tier">T-5</div>
-            <div class="tt-node-icon-wrap"><span class="tt-node-icon">рџЊђ</span></div>
+            <div class="tt-node-icon-wrap"><span class="tt-node-icon">🌐</span></div>
             <div class="tt-node-body">
-              <div class="tt-node-name">Р”РђРўРђ-РќР•РљРЎРЈРЎ</div>
-              <div class="tt-node-desc">x2 РєРѕ РІСЃРµРјСѓ РїР°СЃСЃРёРІРЅРѕРјСѓ РґРѕС…РѕРґСѓ</div>
+              <div class="tt-node-name">ДАТА-НЕКСУС</div>
+              <div class="tt-node-desc">x2 ко всему пассивному доходу</div>
             </div>
-            <div class="tt-node-cost-badge">400,000 РњР‘</div>
+            <div class="tt-node-cost-badge">400,000 МБ</div>
           </div>
         </div>
       </div>
@@ -1216,23 +1216,23 @@
           </div>
           <div class="tt-inspector-info">
             <div class="tt-inspector-header">
-              <span class="tt-inspector-branch" id="tt-detail-branch">РќРРћРљР  РљРћР РџРЈРЎРђ</span>
-              <h3 class="tt-inspector-name" id="tt-detail-name">Р’Р«Р‘Р•Р РРўР• РЈР—Р•Р› РўР•РҐРќРћР›РћР“РР™</h3>
+              <span class="tt-inspector-branch" id="tt-detail-branch">НИОКР КОРПУСА</span>
+              <h3 class="tt-inspector-name" id="tt-detail-name">ВЫБЕРИТЕ УЗЕЛ ТЕХНОЛОГИЙ</h3>
             </div>
-            <p class="tt-inspector-desc" id="tt-detail-desc">РќР°Р¶РјРёС‚Рµ РЅР° Р»СЋР±РѕР№ РјРѕРґСѓР»СЊ РІ РјР°С‚СЂРёС†Рµ РёСЃСЃР»РµРґРѕРІР°РЅРёР№ РІС‹С€Рµ, С‡С‚РѕР±С‹ РёР·СѓС‡РёС‚СЊ РїРѕРґСЂРѕР±РЅС‹Рµ С‚Р°РєС‚РёРєРѕ-С‚РµС…РЅРёС‡РµСЃРєРёРµ С…Р°СЂР°РєС‚РµСЂРёСЃС‚РёРєРё Рё Р°РєС‚РёРІРёСЂРѕРІР°С‚СЊ РјРѕРґРµСЂРЅРёР·Р°С†РёСЋ.</p>
+            <p class="tt-inspector-desc" id="tt-detail-desc">Нажмите на любой модуль в матрице исследований выше, чтобы изучить подробные тактико-технические характеристики и активировать модернизацию.</p>
             <div class="tt-inspector-metrics" id="tt-detail-stats"></div>
           </div>
         </div>
 
         <div class="tt-inspector-right">
           <div id="tt-detail-status-wrap">
-            <div class="tt-status-pill ready">в—‰ Р’Р«Р‘Р•Р РРўР• РўР•РҐРќРћР›РћР“РР®</div>
+            <div class="tt-status-pill ready">◉ ВЫБЕРИТЕ ТЕХНОЛОГИЮ</div>
           </div>
-          <button id="tt-btn-action-buy" class="tt-btn-action-research">РР—РЈР§РРўР¬ РњРћР”РЈР›Р¬</button>
+          <button id="tt-btn-action-buy" class="tt-btn-action-research">ИЗУЧИТЬ МОДУЛЬ</button>
           
           <div class="tt-carousel-nav">
-            <button id="tt-nav-prev" title="РџСЂРµРґС‹РґСѓС‰Р°СЏ С‚РµС…РЅРѕР»РѕРіРёСЏ">в—„ РџР Р•Р”Р«Р”РЈР©РђРЇ</button>
-            <button id="tt-nav-next" title="РЎР»РµРґСѓСЋС‰Р°СЏ С‚РµС…РЅРѕР»РѕРіРёСЏ">РЎР›Р•Р”РЈР®Р©РђРЇ в–є</button>
+            <button id="tt-nav-prev" title="Предыдущая технология">◄ ПРЕДЫДУЩАЯ</button>
+            <button id="tt-nav-next" title="Следующая технология">СЛЕДУЮЩАЯ ►</button>
           </div>
         </div>
       </div>
@@ -1243,21 +1243,21 @@
   <div id="settings-modal" class="help-modal-overlay">
     <div class="help-modal-content" style="max-width: 480px;">
       <div class="help-modal-header">
-        <h2><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> РќРђРЎРўР РћР™РљР РЎРРЎРўР•РњР«</h2>
-        <button class="btn-close-help" id="btn-close-settings">вњ•</button>
+        <h2><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> НАСТРОЙКИ СИСТЕМЫ</h2>
+        <button class="btn-close-help" id="btn-close-settings">✕</button>
       </div>
       <div class="help-modal-body">
         <div class="help-section">
-          <h3>рџ”Љ РђРЈР”РРћ Р РЎР’РЇР—Р¬</h3>
+          <h3>🔊 АУДИО И СВЯЗЬ</h3>
           <div style="display:flex; gap:12px; align-items:center; margin-bottom:14px;">
-            <button id="setting-sound" class="btn-buy-action" style="flex:1;">рџ”Љ Р—Р’РЈРљ: Р’РљР›</button>
+            <button id="setting-sound" class="btn-buy-action" style="flex:1;">🔊 ЗВУК: ВКЛ</button>
           </div>
-          <div style="font-size:12px; color:#8da4af; margin-bottom:6px;">Р“Р РћРњРљРћРЎРўР¬ РўРђРљРўРР§Р•РЎРљРРҐ РЎРР“РќРђР›РћР’:</div>
+          <div style="font-size:12px; color:#8da4af; margin-bottom:6px;">ГРОМКОСТЬ ТАКТИЧЕСКИХ СИГНАЛОВ:</div>
           <input type="range" id="setting-volume" min="0" max="100" value="70" style="width:100%;">
         </div>
         <div class="help-section">
-          <h3>рџ’ѕ РЈРџР РђР’Р›Р•РќРР• Р”РђРќРќР«РњР</h3>
-          <button id="btn-new-game" class="btn-buy-action" style="background:rgba(255,40,40,0.2); border-color:#ff4444; color:#ff6666; width:100%;">вљ пёЏ РЎР‘Р РћРЎРРўР¬ РџР РћР“Р Р•РЎРЎ / РќРћР’РђРЇ РР“Р Рђ</button>
+          <h3>💾 УПРАВЛЕНИЕ ДАННЫМИ</h3>
+          <button id="btn-new-game" class="btn-buy-action" style="background:rgba(255,40,40,0.2); border-color:#ff4444; color:#ff6666; width:100%;">⚠️ СБРОСИТЬ ПРОГРЕСС / НОВАЯ ИГРА</button>
         </div>
       </div>
     </div>
@@ -1270,7 +1270,7 @@
         <span class="comms-live-dot"></span>
         <span id="comms-channel-tag">SECURE COMMS // CH-12 [ENCRYPTED]</span>
       </div>
-      <button class="comms-close-btn" id="btn-close-comms" title="РЎРІРµСЂРЅСѓС‚СЊ СЂР°РґРёРѕРєР°РЅР°Р»">вњ•</button>
+      <button class="comms-close-btn" id="btn-close-comms" title="Свернуть радиоканал">✕</button>
     </div>
     <div class="comms-main-content">
       <div class="comms-avatar-box" id="comms-avatar-icon">
@@ -1278,9 +1278,9 @@
         <span class="comms-avatar-badge" id="comms-speaker-role">HQ</span>
       </div>
       <div class="comms-text-pane">
-        <div class="comms-speaker-name" id="comms-speaker-title">РЁРўРђР‘ [РњРђРЇРљ]</div>
-        <div class="comms-callsign-sub" id="comms-speaker-sub">Р“Р•РќР•Р РђР›Р¬РќР«Р™ РћРџР•Р РђРўРР’РќР«Р™ Р¦Р•РќРўР  // Р§РЃР РќРћР• РњРћР Р•</div>
-        <div class="comms-dialogue-body" id="comms-dialogue-text">РРЅРёС†РёР°Р»РёР·Р°С†РёСЏ Р·Р°С‰РёС‰С‘РЅРЅРѕРіРѕ РєР°РЅР°Р»Р° С‚РµР»РµРјРµС‚СЂРёРё...</div>
+        <div class="comms-speaker-name" id="comms-speaker-title">ШТАБ [МАЯК]</div>
+        <div class="comms-callsign-sub" id="comms-speaker-sub">ГЕНЕРАЛЬНЫЙ ОПЕРАТИВНЫЙ ЦЕНТР // ЧЁРНОЕ МОРЕ</div>
+        <div class="comms-dialogue-body" id="comms-dialogue-text">Инициализация защищённого канала телеметрии...</div>
       </div>
     </div>
     <div class="comms-choices-tray" id="comms-choices-container">
@@ -1291,31 +1291,31 @@
   <!-- CAMPAIGN STORY OPERATIONS MODAL -->
   <div id="campaign-modal" class="help-modal-overlay">
     <div class="help-modal-content campaign-modal-container">
-      <button class="help-close-btn" id="btn-close-campaign" title="Р—Р°РєСЂС‹С‚СЊ РѕРїРµСЂР°С†РёРё">вњ•</button>
+      <button class="help-close-btn" id="btn-close-campaign" title="Закрыть операции">✕</button>
       
       <div style="text-align:center; margin-bottom:16px;">
         <div style="font-family:'Rajdhani',monospace; font-size:11px; color:#00ff88; letter-spacing:2px;">OPERATIONAL COMMAND // DNIPRO RIVER THEATER</div>
-        <h2 style="font-family:'Rajdhani',sans-serif; font-size:24px; font-weight:800; color:#fff; margin:4px 0;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M14.5 17.5L3 6V3h3l11.5 11.5"/><path d="M13 19l6-6"/><path d="M16 16l4 4"/><path d="M19 21l2-2"/><path d="M8.5 6.5L21 19v3h-3L6.5 10.5"/><path d="M5 11l6-6"/><path d="M8 8L4 4"/><path d="M3 5l2-2"/></svg> Р‘РћР•Р’Р«Р• РћРџР•Р РђР¦РР В«РҐР•Р РЎРћРќРЎРљРР™ Р РЈР‘Р•Р–В»</h2>
-        <p style="color:#8da4af; font-size:12px;">РўР°РєС‚РёС‡РµСЃРєРёРµ РѕРїРµСЂР°С†РёРё РЅР° Р”РЅРµРїСЂРµ: СЂР°Р·РІРµРґРєР°, Р Р­Р‘-СЃР°Р±РѕС‚Р°Р¶, FPV-СѓРґР°СЂ Рё Р»РёРєРІРёРґР°С†РёСЏ РѕР±СЉРµРєС‚РѕРІ.</p>
+        <h2 style="font-family:'Rajdhani',sans-serif; font-size:24px; font-weight:800; color:#fff; margin:4px 0;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M14.5 17.5L3 6V3h3l11.5 11.5"/><path d="M13 19l6-6"/><path d="M16 16l4 4"/><path d="M19 21l2-2"/><path d="M8.5 6.5L21 19v3h-3L6.5 10.5"/><path d="M5 11l6-6"/><path d="M8 8L4 4"/><path d="M3 5l2-2"/></svg> БОЕВЫЕ ОПЕРАЦИИ «ХЕРСОНСКИЙ РУБЕЖ»</h2>
+        <p style="color:#8da4af; font-size:12px;">Тактические операции на Днепре: разведка, РЭБ-саботаж, FPV-удар и ликвидация объектов.</p>
       </div>
 
       <!-- Acts Navigation Tabs -->
       <div class="campaign-acts-nav">
         <div class="campaign-act-tab active" data-act="1">
-          <div class="campaign-act-tag">РђРљРў I</div>
-          <div class="campaign-act-title">рџЊ‰ РўР•РќР¬ РђРќРўРћРќРћР’РЎРљРћР“Рћ</div>
+          <div class="campaign-act-tag">АКТ I</div>
+          <div class="campaign-act-title">🌉 ТЕНЬ АНТОНОВСКОГО</div>
         </div>
         <div class="campaign-act-tab" data-act="2">
-          <div class="campaign-act-tag">РђРљРў II</div>
-          <div class="campaign-act-title">рџЊ™ РќРћР§Р¬ РќРђР” РљРђРҐРћР’РљРћР™</div>
+          <div class="campaign-act-tag">АКТ II</div>
+          <div class="campaign-act-title">🌙 НОЧЬ НАД КАХОВКОЙ</div>
         </div>
         <div class="campaign-act-tab" data-act="3">
-          <div class="campaign-act-tag">РђРљРў III</div>
-          <div class="campaign-act-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M12 22V8"/><path d="M5 12H2a10 10 0 0 0 20 0h-3"/><circle cx="12" cy="5" r="3"/></svg> РҐР•Р РЎРћРќРЎРљРР™ Р РЈР‘Р•Р–</div>
+          <div class="campaign-act-tag">АКТ III</div>
+          <div class="campaign-act-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M12 22V8"/><path d="M5 12H2a10 10 0 0 0 20 0h-3"/><circle cx="12" cy="5" r="3"/></svg> ХЕРСОНСКИЙ РУБЕЖ</div>
         </div>
         <div class="campaign-act-tab" data-act="4">
-          <div class="campaign-act-tag">РђРљРў IV // Р¤РРќРђР›</div>
-          <div class="campaign-act-title">рџ’Ђ Р”Р•Р›Р¬РўРђ Р РђРЎРЎР’Р•РўРђ</div>
+          <div class="campaign-act-tag">АКТ IV // ФИНАЛ</div>
+          <div class="campaign-act-title">💀 ДЕЛЬТА РАССВЕТА</div>
         </div>
       </div>
 
@@ -1330,12 +1330,12 @@
   <!-- DRONE HANGAR & SALVAGE/CRAFTING FORGE MODAL -->
   <div id="hangar-modal" class="help-modal-overlay">
     <div class="help-modal-content hangar-modal-container">
-      <button class="help-close-btn" id="btn-close-hangar" title="Р—Р°РєСЂС‹С‚СЊ Р°РЅРіР°СЂ">вњ•</button>
+      <button class="help-close-btn" id="btn-close-hangar" title="Закрыть ангар">✕</button>
 
       <div style="text-align:center; margin-bottom:18px;">
         <div style="font-family:'Rajdhani',monospace; font-size:11px; color:#00f0ff; letter-spacing:2px;">NAVAL DRONE YARD // PROTOYPE HANGAR</div>
-        <h2 style="font-family:'Rajdhani',sans-serif; font-size:24px; font-weight:800; color:#fff; margin:4px 0;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M12 22V8"/><path d="M5 12H2a10 10 0 0 0 20 0h-3"/><circle cx="12" cy="5" r="3"/></svg> РђРќР“РђР  РџР РћРўРћРўРРџРћР’ Р Р¦Р•РҐ РљР РђР¤РўРђ</h2>
-        <p style="color:#8da4af; font-size:12px;">Р’С‹Р±РёСЂР°Р№С‚Рµ СЃРїРµС†РёР°Р»РёР·РёСЂРѕРІР°РЅРЅС‹Рµ 3D-РєРѕСЂРїСѓСЃР° РєР°С‚РµСЂРѕРІ Рё СЃРѕР·РґР°РІР°Р№С‚Рµ РІРѕРµРЅРЅС‹Рµ РјРѕРґСѓР»Рё РёР· С‚СЂРѕС„РµР№РЅРѕРіРѕ Р»СѓС‚Р°.</p>
+        <h2 style="font-family:'Rajdhani',sans-serif; font-size:24px; font-weight:800; color:#fff; margin:4px 0;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M12 22V8"/><path d="M5 12H2a10 10 0 0 0 20 0h-3"/><circle cx="12" cy="5" r="3"/></svg> АНГАР ПРОТОТИПОВ И ЦЕХ КРАФТА</h2>
+        <p style="color:#8da4af; font-size:12px;">Выбирайте специализированные 3D-корпуса катеров и создавайте военные модули из трофейного лута.</p>
       </div>
 
       <!-- Prototypes Cards Grid -->
@@ -1343,94 +1343,94 @@
         <!-- MK1 PHANTOM -->
         <div class="proto-card selected" data-proto="phantom">
           <div>
-            <span class="proto-badge">MK-1 // РЎРўР•Р›РЎ</span>
-            <div class="proto-title">BARRACUDA В«PHANTOMВ»</div>
-            <div class="proto-role">Р Р°Р·РІРµРґС‹РІР°С‚РµР»СЊРЅРѕ-РґРёРІРµСЂСЃРёРѕРЅРЅР°СЏ РїР»Р°С‚С„РѕСЂРјР°</div>
+            <span class="proto-badge">MK-1 // СТЕЛС</span>
+            <div class="proto-title">BARRACUDA «PHANTOM»</div>
+            <div class="proto-role">Разведывательно-диверсионная платформа</div>
             <div class="proto-stats-list">
-              <div class="proto-stat-item"><span>РЎС‚РµР»СЃ-РјР°СЃРєРёСЂРѕРІРєР°:</span><span class="proto-stat-val text-green">95% (-40% РїСЂРµРїСЏС‚СЃС‚РІРёР№)</span></div>
-              <div class="proto-stat-item"><span>РЎР±РѕСЂ СЂР°Р·РІРµРґРґР°РЅРЅС‹С…:</span><span class="proto-stat-val text-cyan">+50% Рє РњР‘</span></div>
-              <div class="proto-stat-item"><span>РЎРєРѕСЂРѕСЃС‚СЊ РІР·Р»РѕРјР° Р Р­Р‘:</span><span class="proto-stat-val text-yellow">+30% РІСЂРµРјРµРЅРё</span></div>
+              <div class="proto-stat-item"><span>Стелс-маскировка:</span><span class="proto-stat-val text-green">95% (-40% препятствий)</span></div>
+              <div class="proto-stat-item"><span>Сбор разведданных:</span><span class="proto-stat-val text-cyan">+50% к МБ</span></div>
+              <div class="proto-stat-item"><span>Скорость взлома РЭБ:</span><span class="proto-stat-val text-yellow">+30% времени</span></div>
             </div>
           </div>
-          <button class="btn-launch-mission btn-proto-select" data-select-proto="phantom" style="background:#00ff88;">Р’Р«Р‘Р РђРќ РљРћР РџРЈРЎ</button>
+          <button class="btn-launch-mission btn-proto-select" data-select-proto="phantom" style="background:#00ff88;">ВЫБРАН КОРПУС</button>
         </div>
 
         <!-- MK2 STRIKE -->
         <div class="proto-card" data-proto="strike">
           <div>
-            <span class="proto-badge" style="color:#ff5555; background:rgba(255,85,85,0.15); border-color:#ff5555;">MK-2 // РЁРўРЈР РњРћР’РРљ</span>
-            <div class="proto-title">BARRACUDA В«STRIKEВ»</div>
-            <div class="proto-role">РўСЏР¶С‘Р»С‹Р№ СѓРґР°СЂРЅС‹Р№ СЂР°РєРµС‚РѕРЅРѕСЃРµС†</div>
+            <span class="proto-badge" style="color:#ff5555; background:rgba(255,85,85,0.15); border-color:#ff5555;">MK-2 // ШТУРМОВИК</span>
+            <div class="proto-title">BARRACUDA «STRIKE»</div>
+            <div class="proto-role">Тяжёлый ударный ракетоносец</div>
             <div class="proto-stats-list">
-              <div class="proto-stat-item"><span>РЈСЂРѕРЅ FPV-СѓРґР°СЂР°:</span><span class="proto-stat-val text-green">+100% (x2 СѓСЂРѕРЅ)</span></div>
-              <div class="proto-stat-item"><span>РљСЂРёС‚РёС‡РµСЃРєРёР№ РјРЅРѕР¶РёС‚РµР»СЊ:</span><span class="proto-stat-val text-yellow">Р”Рѕ x12 РљСЂРёС‚</span></div>
-              <div class="proto-stat-item"><span>РљСѓР»РґР°СѓРЅ РїСѓСЃРєР° FPV:</span><span class="proto-stat-val text-cyan">-30% Р·Р°РґРµСЂР¶РєР°</span></div>
+              <div class="proto-stat-item"><span>Урон FPV-удара:</span><span class="proto-stat-val text-green">+100% (x2 урон)</span></div>
+              <div class="proto-stat-item"><span>Критический множитель:</span><span class="proto-stat-val text-yellow">До x12 Крит</span></div>
+              <div class="proto-stat-item"><span>Кулдаун пуска FPV:</span><span class="proto-stat-val text-cyan">-30% задержка</span></div>
             </div>
           </div>
-          <button class="btn-launch-mission btn-proto-select" data-select-proto="strike" style="background:rgba(255,255,255,0.15); color:#fff;">РђРљРўРР’РР РћР’РђРўР¬</button>
+          <button class="btn-launch-mission btn-proto-select" data-select-proto="strike" style="background:rgba(255,255,255,0.15); color:#fff;">АКТИВИРОВАТЬ</button>
         </div>
 
         <!-- MK3 AEGIS -->
         <div class="proto-card" data-proto="aegis">
           <div>
-            <span class="proto-badge" style="color:#00f0ff; background:rgba(0,240,255,0.15); border-color:#00f0ff;">MK-3 // Р¤Р›РђР“РњРђРќ Р Р­Р‘</span>
-            <div class="proto-title">BARRACUDA В«AEGISВ»</div>
-            <div class="proto-role">РљРѕРјРїР»РµРєСЃ СЂР°РґРёРѕСЌР»РµРєС‚СЂРѕРЅРЅРѕР№ Р±РѕСЂСЊР±С‹ Рё Р РѕР№ РР</div>
+            <span class="proto-badge" style="color:#00f0ff; background:rgba(0,240,255,0.15); border-color:#00f0ff;">MK-3 // ФЛАГМАН РЭБ</span>
+            <div class="proto-title">BARRACUDA «AEGIS»</div>
+            <div class="proto-role">Комплекс радиоэлектронной борьбы и Рой ИИ</div>
             <div class="proto-stats-list">
-              <div class="proto-stat-item"><span>РђРІС‚Рѕ-РїРѕРґР°РІР»РµРЅРёРµ Р Р­Р‘:</span><span class="proto-stat-val text-cyan">РџР°СЃСЃРёРІРЅС‹Р№ РІР·Р»РѕРј</span></div>
-              <div class="proto-stat-item"><span>Р РѕР№ РІРµРґРѕРјС‹С… РґСЂРѕРЅРѕРІ:</span><span class="proto-stat-val text-green">+100% РїР°СЃСЃРёРІРЅС‹Р№ $</span></div>
-              <div class="proto-stat-item"><span>Р—Р°С‰РёС‚Р° РѕС‚ РџР’Рћ:</span><span class="proto-stat-val text-yellow">+2 Р”РѕРї. Р–РёР·РЅРё РІ FPV</span></div>
+              <div class="proto-stat-item"><span>Авто-подавление РЭБ:</span><span class="proto-stat-val text-cyan">Пассивный взлом</span></div>
+              <div class="proto-stat-item"><span>Рой ведомых дронов:</span><span class="proto-stat-val text-green">+100% пассивный $</span></div>
+              <div class="proto-stat-item"><span>Защита от ПВО:</span><span class="proto-stat-val text-yellow">+2 Доп. Жизни в FPV</span></div>
             </div>
           </div>
-          <button class="btn-launch-mission btn-proto-select" data-select-proto="aegis" style="background:rgba(255,255,255,0.15); color:#fff;">РђРљРўРР’РР РћР’РђРўР¬</button>
+          <button class="btn-launch-mission btn-proto-select" data-select-proto="aegis" style="background:rgba(255,255,255,0.15); color:#fff;">АКТИВИРОВАТЬ</button>
         </div>
 
         <!-- MK4 COAXIAL VTOL -->
         <div class="proto-card" data-proto="coaxial_vtol">
           <div>
-            <span class="proto-badge" style="color:#ffbb00; background:rgba(255,187,0,0.15); border-color:#ffbb00;">MK-4 // РўРЇР–Р•Р›Р«Р™ VTOL</span>
-            <div class="proto-title">BARRACUDA В«COAXIAL-VTOLВ»</div>
-            <div class="proto-role">РЎРѕРѕСЃРЅС‹Р№ С‚СЏР¶РµР»С‹Р№ СЂР°РєРµС‚РѕРЅРѕСЃРµС† РїСЂРѕСЂС‹РІР°</div>
+            <span class="proto-badge" style="color:#ffbb00; background:rgba(255,187,0,0.15); border-color:#ffbb00;">MK-4 // ТЯЖЕЛЫЙ VTOL</span>
+            <div class="proto-title">BARRACUDA «COAXIAL-VTOL»</div>
+            <div class="proto-role">Соосный тяжелый ракетоносец прорыва</div>
             <div class="proto-stats-list">
-              <div class="proto-stat-item"><span>Р‘СЂРѕРЅРµРїСЂРѕР±РёС‚РёРµ Р‘Р§:</span><span class="proto-stat-val text-yellow">+220% СѓСЂРѕРЅ РїРѕ РєРѕСЂР°Р±Р»СЏРј</span></div>
-              <div class="proto-stat-item"><span>РЁС‚РѕСЂРјРѕРІРѕР№ РІР·Р»РµС‚ (VTOL):</span><span class="proto-stat-val text-green">РРјРјСѓРЅРёС‚РµС‚ Рє РєР°С‡РєРµ</span></div>
-              <div class="proto-stat-item"><span>РР-С‚РµСЂРјРёРЅР°Р» NPU:</span><span class="proto-stat-val text-cyan">РћРїС‚РёС‡РµСЃРєРёР№ Р°РІС‚РѕР·Р°С…РІР°С‚</span></div>
+              <div class="proto-stat-item"><span>Бронепробитие БЧ:</span><span class="proto-stat-val text-yellow">+220% урон по кораблям</span></div>
+              <div class="proto-stat-item"><span>Штормовой взлет (VTOL):</span><span class="proto-stat-val text-green">Иммунитет к качке</span></div>
+              <div class="proto-stat-item"><span>ИИ-терминал NPU:</span><span class="proto-stat-val text-cyan">Оптический автозахват</span></div>
             </div>
           </div>
-          <button class="btn-launch-mission btn-proto-select" data-select-proto="coaxial_vtol" style="background:rgba(255,255,255,0.15); color:#fff;">РђРљРўРР’РР РћР’РђРўР¬</button>
+          <button class="btn-launch-mission btn-proto-select" data-select-proto="coaxial_vtol" style="background:rgba(255,255,255,0.15); color:#fff;">АКТИВИРОВАТЬ</button>
         </div>
       </div>
 
       <!-- FPV Avionics & PID Flight Controller Firmware Panel -->
       <div class="avionics-pid-section">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-          <h3 style="font-family:'Rajdhani',sans-serif; font-size:16px; color:#00f0ff; margin:0;">рџ•№пёЏ РђР’РРћРќРРљРђ FPV & PID-Р Р•Р“РЈР›РЇРўРћР Р« (STM32 FIRMWARE)</h3>
-          <span style="font-size:11px; color:#8da4af;">РРЅРґРёРІРёРґСѓР°Р»СЊРЅР°СЏ РєР°Р»РёР±СЂРѕРІРєР° РґРёРЅР°РјРёРєРё С€С‚СѓСЂРјРѕРІРѕРіРѕ РґСЂРѕРЅР°</span>
+          <h3 style="font-family:'Rajdhani',sans-serif; font-size:16px; color:#00f0ff; margin:0;">🕹️ АВИОНИКА FPV & PID-РЕГУЛЯТОРЫ (STM32 FIRMWARE)</h3>
+          <span style="font-size:11px; color:#8da4af;">Индивидуальная калибровка динамики штурмового дрона</span>
         </div>
         <div class="pid-controls-grid">
           <div class="pid-card">
             <div class="pid-header">
-              <span>P-GAIN (РњРђРќР•Р’Р Р•РќРќРћРЎРўР¬)</span>
+              <span>P-GAIN (МАНЕВРЕННОСТЬ)</span>
               <b class="text-green" id="val-pid-p">1.0x</b>
             </div>
             <input type="range" class="pid-slider" id="slider-pid-p" min="0.5" max="2.0" step="0.1" value="1.0">
-            <div class="pid-hint">Р’С‹С€Рµ вЂ” СЂРµР·С‡Рµ СѓРєР»РѕРЅРµРЅРёРµ РѕС‚ Р·РµРЅРёС‚РѕРє CIWS, РЅРёР¶Рµ вЂ” РїР»Р°РІРЅС‹Р№ РїСЂРёС†РµР».</div>
+            <div class="pid-hint">Выше — резче уклонение от зениток CIWS, ниже — плавный прицел.</div>
           </div>
           <div class="pid-card">
             <div class="pid-header">
-              <span>D-GAIN (Р”Р•РњРџР¤РР РћР’РђРќРР• Р’Р•РўР Рђ)</span>
+              <span>D-GAIN (ДЕМПФИРОВАНИЕ ВЕТРА)</span>
               <b class="text-cyan" id="val-pid-d">1.0x</b>
             </div>
             <input type="range" class="pid-slider" id="slider-pid-d" min="0.5" max="2.0" step="0.1" value="1.0">
-            <div class="pid-hint">Р“Р°СЃРёС‚ СЂС‹РІРєРё РѕС‚ С€С‚РѕСЂРјРѕРІС‹С… РїРѕСЂС‹РІРѕРІ Рё СЃРіР»Р°Р¶РёРІР°РµС‚ СЃС‚Р°Р±РёР»РёР·Р°С†РёСЋ.</div>
+            <div class="pid-hint">Гасит рывки от штормовых порывов и сглаживает стабилизацию.</div>
           </div>
           <div class="pid-card">
             <div class="pid-header">
-              <span>STICK EXPO (Р­РљРЎРџРћРќР•РќРўРђ)</span>
+              <span>STICK EXPO (ЭКСПОНЕНТА)</span>
               <b class="text-yellow" id="val-pid-expo">1.0x</b>
             </div>
             <input type="range" class="pid-slider" id="slider-pid-expo" min="1.0" max="2.5" step="0.1" value="1.0">
-            <div class="pid-hint">РњСЏРіРєРёР№ С†РµРЅС‚СЂ РґР»СЏ С‚РѕС‡РЅРѕРіРѕ РЅР°РІРµРґРµРЅРёСЏ РЅР° РјРѕСЃС‚РёРє + Р°РіСЂРµСЃСЃРёРІРЅС‹Р№ РєСЂР°Р№.</div>
+            <div class="pid-hint">Мягкий центр для точного наведения на мостик + агрессивный край.</div>
           </div>
         </div>
       </div>
@@ -1438,37 +1438,37 @@
       <!-- Salvage Inventory & Crafting Forge -->
       <div class="salvage-forge-section">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-          <h3 style="font-family:'Rajdhani',sans-serif; font-size:16px; color:#ffcc00; margin:0;">рџ’  РўР РћР¤Р•Р Р Р¦Р•РҐ РњРћР”Р•Р РќРР—РђР¦РР (SALVAGE FORGE)</h3>
-          <span style="font-size:11px; color:#8da4af;">Р”РѕР±С‹РІР°РµС‚СЃСЏ РїСЂРё РїРѕС‚РѕРїР»РµРЅРёРё РєРѕСЂР°Р±Р»РµР№ Рё РІ S-СЂР°РЅРіР°С… FPV</span>
+          <h3 style="font-family:'Rajdhani',sans-serif; font-size:16px; color:#ffcc00; margin:0;">💠 ТРОФЕИ И ЦЕХ МОДЕРНИЗАЦИИ (SALVAGE FORGE)</h3>
+          <span style="font-size:11px; color:#8da4af;">Добывается при потоплении кораблей и в S-рангах FPV</span>
         </div>
 
         <div class="salvage-inventory-bar">
           <div class="salvage-inv-pill">
-            <span class="salvage-inv-icon">рџ“¦</span>
+            <span class="salvage-inv-icon">📦</span>
             <div>
-              <div class="salvage-inv-label">Р§РЃР РќР«Р• РЇР©РРљР:</div>
-              <div class="salvage-inv-val" id="val-salvage-box">0 С€С‚</div>
+              <div class="salvage-inv-label">ЧЁРНЫЕ ЯЩИКИ:</div>
+              <div class="salvage-inv-val" id="val-salvage-box">0 шт</div>
             </div>
           </div>
           <div class="salvage-inv-pill">
-            <span class="salvage-inv-icon">рџ’Ћ</span>
+            <span class="salvage-inv-icon">💎</span>
             <div>
-              <div class="salvage-inv-label">РњРРљР РћР§РРџР« GaN:</div>
-              <div class="salvage-inv-val" id="val-salvage-chips">0 С€С‚</div>
+              <div class="salvage-inv-label">МИКРОЧИПЫ GaN:</div>
+              <div class="salvage-inv-val" id="val-salvage-chips">0 шт</div>
             </div>
           </div>
           <div class="salvage-inv-pill">
             <span class="salvage-inv-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span>
             <div>
-              <div class="salvage-inv-label">РўРРўРђРќРћР’Р«Р™ РЎРџР›РђР’:</div>
-              <div class="salvage-inv-val" id="val-salvage-titanium">0 С€С‚</div>
+              <div class="salvage-inv-label">ТИТАНОВЫЙ СПЛАВ:</div>
+              <div class="salvage-inv-val" id="val-salvage-titanium">0 шт</div>
             </div>
           </div>
           <div class="salvage-inv-pill">
             <span class="salvage-inv-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/></svg></span>
             <div>
-              <div class="salvage-inv-label">РР-РЇР”Р Рђ В«Р›Р•Р’РРђР¤РђРќВ»:</div>
-              <div class="salvage-inv-val" id="val-salvage-aicore">0 С€С‚</div>
+              <div class="salvage-inv-label">ИИ-ЯДРА «ЛЕВИАФАН»:</div>
+              <div class="salvage-inv-val" id="val-salvage-aicore">0 шт</div>
             </div>
           </div>
         </div>
@@ -1489,13 +1489,13 @@
       <div class="sonar-panel-header">
         <div class="sonar-header-title">
           <span class="sonar-ping-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242M12 12v9"/></svg></span>
-          <span>Р“РР”Р РћРђРљРЈРЎРўРР§Р•РЎРљРР™ РЎРћРќРђР  Р‘РћРљРћР’РћР“Рћ РћР‘Р—РћР Рђ (SSS-500)</span>
+          <span>ГИДРОАКУСТИЧЕСКИЙ СОНАР БОКОВОГО ОБЗОРА (SSS-500)</span>
         </div>
         <div class="sonar-header-status">
-          <span id="sonar-telemetry-depth">Р“Р›РЈР‘РРќРђ: 12.4 Рј</span> // 
-          <span id="sonar-telemetry-freq">Р§РђРЎРўРћРўРђ: 450 РєР“С† CHIRP</span>
+          <span id="sonar-telemetry-depth">ГЛУБИНА: 12.4 м</span> // 
+          <span id="sonar-telemetry-freq">ЧАСТОТА: 450 кГц CHIRP</span>
         </div>
-        <button class="btn-close-sonar" id="btn-close-sonar">вњ• Р—РђРљР Р«РўР¬</button>
+        <button class="btn-close-sonar" id="btn-close-sonar">✕ ЗАКРЫТЬ</button>
       </div>
       <div class="sonar-waterfall-viewport">
         <canvas id="sonar-waterfall-canvas" width="600" height="260"></canvas>
@@ -1504,11 +1504,11 @@
       </div>
       <div class="sonar-panel-footer">
         <div class="sonar-legend">
-          <span>рџџ© Р”РќРћ / Р‘РђРўРРњР•РўР РРЇ</span>
-          <span>рџџЁ РђРќРћРњРђР›РР / РљРђР‘Р•Р›Р</span>
-          <span>рџџҐ РњРРќРќР«Р• РџРћРЎРўРђРќРћР’РљР</span>
+          <span>🟩 ДНО / БАТИМЕТРИЯ</span>
+          <span>🟨 АНОМАЛИИ / КАБЕЛИ</span>
+          <span>🟥 МИННЫЕ ПОСТАНОВКИ</span>
         </div>
-        <div class="sonar-speed-alert" id="sonar-speed-alert">Р Р•Р–РРњ: РћРџРўРРњРђР›Р¬РќРђРЇ РЎРљРћР РћРЎРўР¬ РЎРљРђРќРР РћР’РђРќРРЇ (12 РЈР—Р›РћР’)</div>
+        <div class="sonar-speed-alert" id="sonar-speed-alert">РЕЖИМ: ОПТИМАЛЬНАЯ СКОРОСТЬ СКАНИРОВАНИЯ (12 УЗЛОВ)</div>
       </div>
     </div>
   </div>
@@ -1521,29 +1521,29 @@
     <div class="rov-scan-lines"></div>
 
     <header class="rov-top-hud">
-      <div class="rov-hud-chip">РўР•Р›Р•РЈРџР РђР’Р›РЇР•РњР«Р™ РњРРљР Рћ-ROV В«РЎРџР РЈРў-1В»</div>
-      <div class="rov-hud-chip" id="rov-hud-depth">Р“Р›РЈР‘РРќРђ: 6.8 Рј</div>
-      <div class="rov-hud-chip" id="rov-hud-tether">РўР РћРЎ: 24.5 Рј</div>
-      <button class="btn-abort-mission" id="btn-exit-rov">вњ• Р’РЎРџР›Р«РўРР•</button>
+      <div class="rov-hud-chip">ТЕЛЕУПРАВЛЯЕМЫЙ МИКРО-ROV «СПРУТ-1»</div>
+      <div class="rov-hud-chip" id="rov-hud-depth">ГЛУБИНА: 6.8 м</div>
+      <div class="rov-hud-chip" id="rov-hud-tether">ТРОС: 24.5 м</div>
+      <button class="btn-abort-mission" id="btn-exit-rov">✕ ВСПЛЫТИЕ</button>
     </header>
 
     <div class="rov-center-hud">
       <div class="rov-target-reticle">
         <div class="rov-magnetometer-readout">
-          <div class="mag-label">РњРђР“РќРРўРћРњР•РўР  (nT)</div>
+          <div class="mag-label">МАГНИТОМЕТР (nT)</div>
           <div class="mag-val text-yellow" id="rov-val-mag">48,250 nT</div>
           <div class="mag-bar-track"><div class="mag-bar-fill" id="rov-fill-mag" style="width:50%;"></div></div>
         </div>
         <div class="rov-crosshair-bracket"></div>
       </div>
       <div class="rov-siphon-prompt" id="rov-siphon-prompt">
-        <button class="btn-siphon-action" id="btn-trigger-siphon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/></svg> РџРћР”РљР›Р®Р§РРўР¬ РЎРР¤РћРќ Р”РђРќРќР«РҐ</button>
+        <button class="btn-siphon-action" id="btn-trigger-siphon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/></svg> ПОДКЛЮЧИТЬ СИФОН ДАННЫХ</button>
       </div>
     </div>
 
     <div class="rov-bottom-hud">
       <div class="rov-siphon-progress-box">
-        <div class="siphon-label">РЎРРќРҐР РћРќРР—РђР¦РРЇ РЎРР¤РћРќРђ: <b id="rov-siphon-pct">0%</b></div>
+        <div class="siphon-label">СИНХРОНИЗАЦИЯ СИФОНА: <b id="rov-siphon-pct">0%</b></div>
         <div class="siphon-bar-track"><div class="siphon-bar-fill" id="rov-siphon-fill" style="width:0%;"></div></div>
       </div>
     </div>
@@ -1556,12 +1556,12 @@
     <div class="tactical-hub-container">
       <div class="tactical-hub-header">
         <div class="tactical-hub-title">
-          <span class="th-badge">РђР РЎР•РќРђР› v3.5</span>
-          <h2><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M12 2v20M2 12h20M12 7a5 5 0 1 0 0 10 5 5 0 1 0 0-10zM12 12l5-5"/></svg> Р¦Р•РќРўР  РўРђРљРўРР§Р•РЎРљРРҐ РЎРРЎРўР•Рњ Р РРЎРџР«РўРђРќРР™</h2>
+          <span class="th-badge">АРСЕНАЛ v3.5</span>
+          <h2><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M12 2v20M2 12h20M12 7a5 5 0 1 0 0 10 5 5 0 1 0 0-10zM12 12l5-5"/></svg> ЦЕНТР ТАКТИЧЕСКИХ СИСТЕМ И ИСПЫТАНИЙ</h2>
         </div>
-        <button class="btn-close-modal" id="btn-close-tactical-hub">вњ•</button>
+        <button class="btn-close-modal" id="btn-close-tactical-hub">✕</button>
       </div>
-      <p class="tactical-hub-sub">РџСЂСЏРјРѕР№ РґРѕСЃС‚СѓРї Рє РЅРѕРІС‹Рј С‚Р°РєС‚РёС‡РµСЃРєРёРј РјРѕРґСѓР»СЏРј СЃРёРјСѓР»СЏС‚РѕСЂР° Р‘РџРђ В«Р‘Р°СЂСЂР°РєСѓРґР°В». РџСЂРѕС‚РµСЃС‚РёСЂСѓР№С‚Рµ РєР°Р¶РґСѓСЋ СЃРёСЃС‚РµРјСѓ РІ РґРµР№СЃС‚РІРёРё:</p>
+      <p class="tactical-hub-sub">Прямой доступ к новым тактическим модулям симулятора БПА «Барракуда». Протестируйте каждую систему в действии:</p>
       
       <div class="tactical-cards-grid">
         <!-- 1. 3D Side-Scan Sonar -->
@@ -1569,14 +1569,14 @@
           <div class="th-card-header">
             <span class="th-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242M12 12v9"/></svg></span>
             <div>
-              <div class="th-card-badge text-green">Р“РР”Р РћРђРљРЈРЎРўРРљРђ</div>
-              <div class="th-card-title">3D-РЎРћРќРђР  Р‘РћРљРћР’РћР“Рћ РћР‘Р—РћР Рђ</div>
+              <div class="th-card-badge text-green">ГИДРОАКУСТИКА</div>
+              <div class="th-card-title">3D-СОНАР БОКОВОГО ОБЗОРА</div>
             </div>
           </div>
-          <div class="th-card-desc">Р’РѕРґРѕРїР°РґРЅС‹Р№ РґРёСЃРїР»РµР№ СЌС…РѕР»РѕС‚Р° СЃРєР°РЅРёСЂСѓРµС‚ РїСЂРѕС„РёР»СЊ РґРЅР°, РїРѕРґРІРѕРґРЅС‹Рµ РїСЂРµРїСЏС‚СЃС‚РІРёСЏ Рё РјРёРЅРЅС‹Рµ РїРѕР»СЏ. РљР°С‡РµСЃС‚РІРѕ РѕС‚СЂРёСЃРѕРІРєРё Р·Р°РІРёСЃРёС‚ РѕС‚ СЃРєРѕСЂРѕСЃС‚Рё С…РѕРґР°.</div>
+          <div class="th-card-desc">Водопадный дисплей эхолота сканирует профиль дна, подводные препятствия и минные поля. Качество отрисовки зависит от скорости хода.</div>
           <div class="th-card-footer">
-            <span class="th-hotkey">Р“РћР РЇР§РђРЇ РљР›РђР’РРЁРђ: [X]</span>
-            <button class="btn-th-action" id="btn-th-launch-sonar">в–¶ Р—РђРџРЈРЎРўРРўР¬ РЎРћРќРђР </button>
+            <span class="th-hotkey">ГОРЯЧАЯ КЛАВИША: [X]</span>
+            <button class="btn-th-action" id="btn-th-launch-sonar">▶ ЗАПУСТИТЬ СОНАР</button>
           </div>
         </div>
 
@@ -1585,14 +1585,14 @@
           <div class="th-card-header">
             <span class="th-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/></svg></span>
             <div>
-              <div class="th-card-badge text-cyan">РџРћР”Р’РћР”РќР«Р™ Р”РР’Р•Р РЎРђРќРў</div>
-              <div class="th-card-title">РџР РР’РЇР—РќРћР™ РњРРљР Рћ-ROV</div>
+              <div class="th-card-badge text-cyan">ПОДВОДНЫЙ ДИВЕРСАНТ</div>
+              <div class="th-card-title">ПРИВЯЗНОЙ МИКРО-ROV</div>
             </div>
           </div>
-          <div class="th-card-desc">РЎРїСѓСЃРє С‚РµР»РµСѓРїСЂР°РІР»СЏРµРјРѕРіРѕ РїРѕРґРІРѕРґРЅРѕРіРѕ РґСЂРѕРЅР° РЅР° РєР°Р±РµР»СЊ-С‚СЂРѕСЃРµ. РџРѕРёСЃРє РєРѕРјРјСѓРЅРёРєР°С†РёР№ РїРѕ РјР°РіРЅРёС‚РѕРјРµС‚СЂСѓ (nT) Рё РІСЂРµР·РєР° В«СЃРёС„РѕРЅР° РґР°РЅРЅС‹С…В».</div>
+          <div class="th-card-desc">Спуск телеуправляемого подводного дрона на кабель-тросе. Поиск коммуникаций по магнитометру (nT) и врезка «сифона данных».</div>
           <div class="th-card-footer">
-            <span class="th-hotkey">Р Р•Р–РРњ: Р”РР’Р•Р РЎРРЇ</span>
-            <button class="btn-th-action" id="btn-th-launch-rov">в–¶ РЎРџРЈРЎРўРРўР¬ ROV</button>
+            <span class="th-hotkey">РЕЖИМ: ДИВЕРСИЯ</span>
+            <button class="btn-th-action" id="btn-th-launch-rov">▶ СПУСТИТЬ ROV</button>
           </div>
         </div>
 
@@ -1601,14 +1601,14 @@
           <div class="th-card-header">
             <span class="th-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M2 12l2 6h16l2-6-4-4-6 2-6-2-4 4z"/></svg></span>
             <div>
-              <div class="th-card-badge text-yellow">Р“РР”Р РћР”РРќРђРњРРљРђ</div>
-              <div class="th-card-title">РљРЈР РЎРћР’РђРЇ РЈРЎРўРћР™Р§РР’РћРЎРўР¬ VSA & Р”Р РР¤Рў</div>
+              <div class="th-card-badge text-yellow">ГИДРОДИНАМИКА</div>
+              <div class="th-card-title">КУРСОВАЯ УСТОЙЧИВОСТЬ VSA & ДРИФТ</div>
             </div>
           </div>
-          <div class="th-card-desc">РўСѓРјР±Р»РµСЂ VSA [STAB ON/OFF]. РћС‚РєР»СЋС‡РµРЅРёРµ СЃС‚Р°Р±РёР»РёР·Р°С†РёРё РїРѕР·РІРѕР»СЏРµС‚ РїСѓСЃС‚РёС‚СЊ РєР°С‚РµСЂ РІ СѓРїСЂР°РІР»СЏРµРјС‹Р№ Р·Р°РЅРѕСЃ РЅР° РІРѕР»РЅР°С… РґР»СЏ СѓРєР»РѕРЅРµРЅРёСЏ РѕС‚ РџР’Рћ.</div>
+          <div class="th-card-desc">Тумблер VSA [STAB ON/OFF]. Отключение стабилизации позволяет пустить катер в управляемый занос на волнах для уклонения от ПВО.</div>
           <div class="th-card-footer">
-            <span class="th-hotkey">РўРЈРњР‘Р›Р•Р : [V] // РЇРљРћР Р¬: [H]</span>
-            <button class="btn-th-action" id="btn-th-launch-boat">в–¶ РўР•РЎРў-Р”Р РђР™Р’ РљРђРўР•Р Рђ</button>
+            <span class="th-hotkey">ТУМБЛЕР: [V] // ЯКОРЬ: [H]</span>
+            <button class="btn-th-action" id="btn-th-launch-boat">▶ ТЕСТ-ДРАЙВ КАТЕРА</button>
           </div>
         </div>
 
@@ -1617,30 +1617,30 @@
           <div class="th-card-header">
             <span class="th-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>
             <div>
-              <div class="th-card-badge" style="color:#d070ff;border-color:#d070ff;">РђР’РРћРќРРљРђ FPV</div>
-              <div class="th-card-title">PID-РўР®РќРРќР“ & РР JETSON</div>
+              <div class="th-card-badge" style="color:#d070ff;border-color:#d070ff;">АВИОНИКА FPV</div>
+              <div class="th-card-title">PID-ТЮНИНГ & ИИ JETSON</div>
             </div>
           </div>
-          <div class="th-card-desc">РўРѕРЅРєР°СЏ РЅР°СЃС‚СЂРѕР№РєР° P-Gain, D-Gain Рё СЌРєСЃРїРѕРЅРµРЅС‚С‹ СЃС‚РёРєРѕРІ, РїР»СЋСЃ РѕРїС‚РёС‡РµСЃРєРёР№ NPU С‚РµСЂРјРёРЅР°Р»СЊРЅРѕРіРѕ Р°РІС‚РѕР·Р°С…РІР°С‚Р° С†РµР»Рё РІ СѓСЃР»РѕРІРёСЏС… Р Р­Р‘.</div>
+          <div class="th-card-desc">Тонкая настройка P-Gain, D-Gain и экспоненты стиков, плюс оптический NPU терминального автозахвата цели в условиях РЭБ.</div>
           <div class="th-card-footer">
-            <span class="th-hotkey">РџР РћРўРћРўРРџ: MK-4 COAXIAL</span>
-            <button class="btn-th-action" id="btn-th-open-pid">в–¶ РќРђРЎРўР РћРРўР¬ Р’ РђРќР“РђР Р•</button>
+            <span class="th-hotkey">ПРОТОТИП: MK-4 COAXIAL</span>
+            <button class="btn-th-action" id="btn-th-open-pid">▶ НАСТРОИТЬ В АНГАРЕ</button>
           </div>
         </div>
 
         <!-- 5. Kinburn Spit Shoals -->
         <div class="th-card">
           <div class="th-card-header">
-            <span class="th-card-icon">рџЏќпёЏ</span>
+            <span class="th-card-icon">🏝️</span>
             <div>
-              <div class="th-card-badge text-red">РќРћР’РђРЇ РљРђР РўРђ</div>
-              <div class="th-card-title">РљРРќР‘РЈР РќРЎРљРђРЇ РљРћРЎРђ (РњР•Р›Р)</div>
+              <div class="th-card-badge text-red">НОВАЯ КАРТА</div>
+              <div class="th-card-title">КИНБУРНСКАЯ КОСА (МЕЛИ)</div>
             </div>
           </div>
-          <div class="th-card-desc">Р›Р°Р±РёСЂРёРЅС‚ РїРµСЃС‡Р°РЅС‹С… РєРѕСЃ Р”РЅРµРїСЂРѕРІСЃРєРѕ-Р‘СѓРіСЃРєРѕРіРѕ Р»РёРјР°РЅР°. РџРµСЂРµРјРµРЅРЅР°СЏ РіР»СѓР±РёРЅР° (0.4 вЂ“ 15Рј) Рё СЂРёСЃРє РєР°РІРёС‚Р°С†РёРё РЅР° РјРµР»РєРѕРІРѕРґСЊРµ.</div>
+          <div class="th-card-desc">Лабиринт песчаных кос Днепровско-Бугского лимана. Переменная глубина (0.4 – 15м) и риск кавитации на мелководье.</div>
           <div class="th-card-footer">
-            <span class="th-hotkey">РЎР•РљРўРћР  5 // x4.0 РќРђР“Р РђР”Р«</span>
-            <button class="btn-th-action" id="btn-th-launch-kinburn">в–¶ РџР•Р Р•Р™РўР Р’ РЎР•РљРўРћР </button>
+            <span class="th-hotkey">СЕКТОР 5 // x4.0 НАГРАДЫ</span>
+            <button class="btn-th-action" id="btn-th-launch-kinburn">▶ ПЕРЕЙТИ В СЕКТОР</button>
           </div>
         </div>
       </div>
@@ -1650,10 +1650,9 @@
   <!-- Audio, 3D Engine & Game Logic -->
   <script src="audio.js?v=4.0.9"></script>
   <script src="drone3d.js?v=4.0.9"></script>
-  <script src="game.js?v=5.1.9"></script>
+  <script src="game.js?v=5.2.0"></script>
 </body>
 </html>
-
 
 
 
