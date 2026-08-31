@@ -6221,7 +6221,7 @@ class BarracudaGame {
           const textEl = document.getElementById('hud-vsa-text');
           if (textEl) textEl.textContent = active ? 'VSA: ВКЛ' : 'VSA: ВЫКЛ (ДРИФТ)';
           this.showMissionWarning(active ? '🛡️ VSA АКТИВИРОВАНА — Курсовая стабилизация' : '⚠️ VSA ОТКЛЮЧЕНА — РЕЖИМ ГИДРОДИНАМИЧЕСКОГО ДРИФТА!');
-          if (!active) this.unlockAchievement('vsa_drift');
+          if (!active) this.checkAchievement('vsa_drift');
         }
       });
     }
@@ -6253,7 +6253,7 @@ class BarracudaGame {
         if (this.engine3D) this.engine3D.setSonarActive(this.sonarActive);
         if (sonarPanel) sonarPanel.style.display = this.sonarActive ? 'block' : 'none';
         btnSonar.classList.toggle('active', this.sonarActive);
-        if (this.sonarActive) this.unlockAchievement('sonar_scan');
+        if (this.sonarActive) this.checkAchievement('sonar_scan');
       });
     }
     if (btnCloseSonar && sonarPanel) {
@@ -6304,7 +6304,7 @@ class BarracudaGame {
           this.engine3D.siphonProgress = 100;
           this.engine3D.siphonLocked = true;
           if (window.tacticalAudio) window.tacticalAudio.playSiphonLock();
-          this.unlockAchievement('underwater_siphon');
+          this.checkAchievement('underwater_siphon');
           this.dataMB += 8500;
           this.creditsUSD += 25000;
           this.addNotification('🔮 СИФОН ПОДКЛЮЧЕН', '+8,500 МБ и +$25,000 получены!');

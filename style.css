@@ -6408,3 +6408,55 @@ body::after {
   }
 }
 
+/* Mobile Optimization for Minigames (Siphon, REB) */
+.rov-siphon-prompt {
+  position: absolute;
+  bottom: 15vh; /* position above the progress bar */
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90vw;
+  max-width: 320px;
+  text-align: center;
+  z-index: 100;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.rov-siphon-prompt .btn-siphon-action {
+  width: 100%;
+}
+
+@media (max-width: 650px) {
+  /* Fix Cyber Hack canvas overflow */
+  #cyber-wave-canvas {
+    max-width: 100%;
+    height: auto;
+  }
+  
+  /* Make Cyber Hack modal fit screen */
+  .tactical-modal-card {
+    padding: 12px;
+  }
+  
+  /* Stack controls in Cyber Hack */
+  .cyber-action-row {
+    flex-direction: column;
+    gap: 10px;
+  }
+  #btn-cyber-submit {
+    width: 100%;
+  }
+
+  /* Make Siphon UI compact */
+  .rov-bottom-hud {
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+  }
+  
+  .rov-siphon-progress-box {
+    width: 90vw;
+  }
+}
+
