@@ -68,7 +68,7 @@
       <div>СПЕКТР: 8-14 мкм // УСИЛЕНИЕ x4</div>
       <div id="flir-target-status" style="color:#ffcc00; margin-top:4px;">ЦЕЛЬ: ВРАЖЕСКИЙ КОРАБЛЬ [ЗАХВАТ]</div>
     </div>
-    <div class="flir-weakspots-container">
+    <div class="flir-weakspots-container" style="margin-top: auto;">
       <button class="flir-lock-point" data-target="radar" title="Радарный комплекс (Крит x4)">
         <span class="lock-bracket"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg> РАДАРНЫЙ ПОСТ [x4 КРИТ]</span>
       </button>
@@ -79,7 +79,7 @@
         <span class="lock-bracket"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg> МАШИННОЕ ОТДЕЛЕНИЕ [x4 КРИТ]</span>
       </button>
     </div>
-    <button id="btn-exit-flir" class="btn-flir-exit">✕ ВЫХОД ИЗ ПРИЦЕЛА</button>
+    <button id="btn-exit-flir" class="btn-flir-exit" style="margin-top: 16px; pointer-events: auto !important; position: relative; z-index: 10000;" onclick="document.getElementById('flir-overlay').classList.remove('active'); if(window.barracudaGame && window.barracudaGame.engine3D) window.barracudaGame.engine3D.cameraMode = 'orbit'; event.stopPropagation();">✕ ВЫХОД ИЗ ПРИЦЕЛА</button>
   </div>
 
   <!-- Screen Flash for Kinetic Strike -->
@@ -1620,6 +1620,7 @@
   <script src="game.js?v=4.0.6"></script>
 </body>
 </html>
+
 
 
 
