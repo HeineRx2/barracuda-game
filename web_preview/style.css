@@ -43,7 +43,7 @@ body {
   width: 100%; height: 100%;
   z-index: 1;
   cursor: grab;
-  touch-action: none;
+  touch-action: manipulation;
 }
 #drone-3d-viewport:active { cursor: grabbing; }
 
@@ -78,10 +78,10 @@ body {
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-  pointer-events: none; /* HUD frame itself transparent - buttons below have pointer-events:auto */
+  pointer-events: none;
   padding: 12px 18px;
   box-sizing: border-box;
-  overflow: visible; /* Don't clip buttons/panels that might extend beyond frame */
+  overflow: hidden;
   transition: opacity 0.25s ease;
 }
 
@@ -91,123 +91,67 @@ body {
 }
 
 /* =========================================================================
-   GLOBAL INTERACTIVE ELEMENTS (Fix for PC and Mobile)
-   ========================================================================= */
-/* All interactive UI containers must be clickable */
-.top-hud-bar,
-.top-nav-row,
-.top-stats-row,
-.bottom-hud-bar,
-.booster-floating-widget,
-.booster-inner-btn,
-.concept-action-rings,
-.concept-dossier-card,
-.concept-slide-panel {
-  pointer-events: auto !important;
-}
-
-button,
-.ring-action-btn,
-.btn-buy-action,
-.btn-recon-snap,
-.btn-fpv-boost,
-.combat-quick-btn,
-.drawer-action-btn,
-.btn-dossier-pill,
-.btn-sector-pill,
-.btn-help-pill,
-.btn-tactical-pause {
-  pointer-events: auto !important;
-  cursor: pointer !important;
-  -webkit-tap-highlight-color: transparent;
-  touch-action: manipulation;
-  user-select: none;
-  -webkit-user-select: none;
-}
-
-/* =========================================================================
-   QUICK COMBAT ACTIONS BAR (FLIR, ВЗЛОМ РЭБ, ПУСК FPV, СОНАР)
+   QUICK COMBAT ACTIONS BAR (FLIR, РЭБ, РАКЕТА)
    ========================================================================= */
 .quick-combat-actions-bar {
-  position: absolute;
-  top: 70px;
-  right: 12px;
+  position: relative;
+  margin-top: 8px;
   display: flex;
-  flex-direction: column;
-  gap: 10px;
-  z-index: 40;
+  gap: 8px;
+  z-index: 30;
   pointer-events: auto;
+  align-self: flex-start;
 }
 
 .combat-quick-btn {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 2px;
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 4px;
   font-family: 'Rajdhani', sans-serif;
-  font-size: 8px;
+  font-size: 12px;
   font-weight: 800;
   cursor: pointer;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
-  box-shadow: 0 4px 14px rgba(0,0,0,0.4);
-}
-
-.combat-quick-btn .cq-icon {
-  font-size: 18px;
+  backdrop-filter: blur(10px);
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.6);
 }
 
 .combat-quick-btn.flir-btn {
-  background: rgba(0, 30, 20, 0.45);
-  border: 1px solid rgba(0, 255, 102, 0.5);
+  background: rgba(0, 30, 20, 0.88);
+  border: 1.5px solid var(--tactical-green);
   color: var(--tactical-green);
 }
 .combat-quick-btn.flir-btn:hover {
-  background: rgba(0, 255, 102, 0.8);
+  background: var(--tactical-green);
   color: #000;
   box-shadow: 0 0 16px var(--tactical-green);
-  transform: scale(1.08);
+  transform: scale(1.04);
 }
 
 .combat-quick-btn.reb-btn {
-  background: rgba(0, 25, 35, 0.45);
-  border: 1px solid rgba(0, 229, 255, 0.5);
+  background: rgba(0, 25, 35, 0.88);
+  border: 1.5px solid var(--credit-cyan);
   color: var(--credit-cyan);
 }
 .combat-quick-btn.reb-btn:hover {
-  background: rgba(0, 229, 255, 0.8);
+  background: var(--credit-cyan);
   color: #000;
   box-shadow: 0 0 16px var(--credit-cyan);
-  transform: scale(1.08);
+  transform: scale(1.04);
 }
 
 .combat-quick-btn.missile-btn {
-  background: rgba(45, 15, 10, 0.45);
-  border: 1px solid rgba(255, 42, 42, 0.5);
+  background: rgba(45, 15, 10, 0.88);
+  border: 1.5px solid var(--alarm-red);
   color: #fff;
 }
 .combat-quick-btn.missile-btn:hover {
-  background: rgba(255, 42, 42, 0.8);
+  background: var(--alarm-red);
   color: #000;
   box-shadow: 0 0 18px var(--alarm-red);
-  transform: scale(1.08);
-}
-
-.combat-quick-btn.sonar-btn {
-  background: rgba(10, 20, 45, 0.45);
-  border: 1px solid rgba(100, 150, 255, 0.5);
-  color: #fff;
-}
-.combat-quick-btn.sonar-btn:hover {
-  background: rgba(100, 150, 255, 0.8);
-  box-shadow: 0 0 18px rgba(100, 150, 255, 0.8);
-  color: #000;
-  transform: scale(1.08);
+  transform: scale(1.04);
 }
 
 /* =========================================================================
@@ -387,10 +331,8 @@ button,
   justify-content: space-between;
   align-items: center;
   pointer-events: auto;
-  position: relative;
   z-index: 15;
   gap: 10px;
-  flex-shrink: 0;
 }
 
 .top-nav-row,
@@ -425,28 +367,25 @@ button,
   display: flex;
   align-items: center;
   gap: 6px;
-  background: rgba(8, 22, 30, 0.45);
-  border: 1px solid rgba(0, 255, 102, 0.25);
+  background: var(--hud-bg-glass);
+  border: 1px solid var(--hud-border);
   color: var(--tactical-green);
   padding: 0 12px;
   height: 38px;
-  border-radius: 6px;
+  border-radius: 4px;
   font-family: 'Share Tech Mono', monospace;
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.8px;
   cursor: pointer;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(8px);
   transition: all 0.2s ease;
   position: relative;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
 }
 .btn-dossier-pill:hover, .btn-dossier-pill.active {
-  background: rgba(0, 255, 102, 0.25);
+  background: rgba(0, 255, 102, 0.2);
   border-color: var(--tactical-green);
   box-shadow: 0 0 14px var(--tactical-green-glow);
-  transform: translateY(-1px);
 }
 
 .btn-sector-pill {
@@ -598,13 +537,11 @@ button,
 .concept-action-rings {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
   pointer-events: auto;
   z-index: 25;
   align-items: center;
   margin-left: auto;
-  margin-right: 72px; /* Keep away from quick-combat-actions-bar (which is right:12px, ~60px wide) */
-  padding-bottom: 8px;
 }
 
 .ring-action-btn {
@@ -848,11 +785,11 @@ button,
    TACTICAL MODALS (SECTOR MAP & SIGINT CYBER HACK)
    ========================================================================= */
 .tactical-modal-overlay {
-  position: fixed;
+  position: absolute;
   top: 0; left: 0;
   width: 100%; height: 100%;
   background: rgba(2, 8, 14, 0.92);
-  z-index: 9000;
+  z-index: 90;
   display: none;
   align-items: center;
   justify-content: center;
@@ -1018,20 +955,18 @@ button,
   .top-right-telemetry { margin-right: 80px; gap: 4px; }
 
   .quick-combat-actions-bar {
-    top: 65px;
-    right: 8px;
-    left: auto;
-    flex-direction: column;
-    width: auto;
+    top: 50px;
+    left: 10px;
+    right: 10px;
+    justify-content: space-between;
+    gap: 6px;
   }
   .combat-quick-btn {
-    width: 44px;
-    height: 44px;
+    flex: 1;
+    padding: 6px 4px;
+    font-size: 10px;
+    justify-content: center;
   }
-  .combat-quick-btn .cq-icon { font-size: 16px; }
-  .combat-quick-btn .cq-text { font-size: 7px; display: none; }
-  
-  .btn-desktop-only { display: none !important; }
 
   .booster-floating-widget { top: 10px; right: 10px; }
   .booster-inner-btn { padding: 3px 8px 3px 5px; gap: 4px; }
@@ -1126,16 +1061,16 @@ button,
    ========================================================================= */
 .event-banner-overlay {
   position: fixed;
-  top: 55px;
-  left: 50%;
-  transform: translateX(-50%) translateY(-200%);
+  top: 80px;
+  right: 24px;
+  transform: translateX(120%);
   z-index: 800;
   transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
   pointer-events: none;
 }
 
 .event-banner-overlay.show {
-  transform: translateX(-50%) translateY(0);
+  transform: translateX(0);
   pointer-events: auto;
 }
 
@@ -1511,27 +1446,8 @@ button,
     flex-direction: column;
     justify-content: space-between;
     height: 100%;
-    pointer-events: none; /* Frame itself transparent to allow 3D viewport touches */
+    pointer-events: none;
     overflow: hidden;
-  }
-
-  /* ALL interactive children of game-frame must explicitly be auto */
-  #game-frame button,
-  #game-frame .booster-floating-widget,
-  #game-frame .booster-inner-btn,
-  #game-frame .ring-action-btn,
-  #game-frame .combat-quick-btn,
-  #game-frame .top-hud-bar,
-  #game-frame .top-nav-row,
-  #game-frame .top-stats-row,
-  #game-frame .bottom-hud-bar,
-  #game-frame .quick-combat-actions-bar,
-  #game-frame .concept-action-rings,
-  #game-frame .mini-radar-box {
-    pointer-events: auto !important;
-    touch-action: manipulation;
-    -webkit-tap-highlight-color: rgba(0,255,136,0.15);
-    cursor: pointer;
   }
 
   /* ------------------- TOP HUD BAR (PINNED TO TOP) ------------------- */
@@ -1545,27 +1461,27 @@ button,
   }
 
   .top-nav-row {
-    display: flex;
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
     align-items: center;
-    justify-content: space-between;
-    gap: 2px;
+    gap: 3px;
     width: 100%;
-    height: 28px;
+    height: 32px;
   }
 
   .btn-tactical-pause,
   .btn-dossier-pill,
   .btn-sector-pill,
   .btn-help-pill {
-    height: 26px;
-    padding: 0 2px;
+    height: 30px;
+    padding: 0;
     font-size: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 5px;
+    border-radius: 6px;
     min-width: 0;
-    flex: 1 1 0;
+    width: 100%;
   }
 
   .dossier-pill-text,
@@ -1584,32 +1500,32 @@ button,
   /* Top Stats Row (Grid under a ruler) */
   .top-stats-row {
     display: grid;
-    grid-template-columns: 1fr 1.15fr 1fr 28px;
+    grid-template-columns: 1fr 1.15fr 1fr 32px;
     align-items: center;
-    gap: 3px;
+    gap: 4px;
     width: 100%;
-    height: 26px;
+    height: 30px;
   }
 
   .balance-pill {
     width: 100%;
     min-width: 0;
-    padding: 1px 3px;
-    height: 26px;
+    padding: 2px 4px;
+    height: 30px;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    border-radius: 5px;
+    border-radius: 6px;
   }
   .pill-label {
-    font-size: 6px;
-    letter-spacing: 0.4px;
+    font-size: 6.5px;
+    letter-spacing: 0.5px;
     line-height: 1;
-    margin-bottom: 0;
+    margin-bottom: 1px;
   }
   .pill-value {
-    font-size: 9px;
+    font-size: 9.5px;
     font-weight: 800;
     line-height: 1.1;
     white-space: nowrap;
@@ -1622,57 +1538,61 @@ button,
     width: 100%;
   }
   .booster-inner-btn {
-    padding: 1px 3px;
+    padding: 2px 4px;
     gap: 2px;
-    height: 26px;
-    border-radius: 5px;
+    height: 30px;
+    border-radius: 6px;
     width: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
   }
   .booster-icon {
-    width: 12px;
-    height: 12px;
-    font-size: 8px;
+    width: 14px;
+    height: 14px;
+    font-size: 9px;
   }
   .booster-title {
-    font-size: 7px;
+    font-size: 7.5px;
     font-weight: 800;
   }
   .booster-sub {
-    font-size: 5.5px;
+    font-size: 6px;
   }
 
   .mini-radar-box {
-    width: 28px;
-    height: 26px;
-    border-radius: 5px;
+    width: 32px;
+    height: 30px;
+    border-radius: 6px;
   }
 
-  /* ------------------- QUICK COMBAT ACTIONS BAR ------------------- */
+  /* ------------------- QUICK COMBAT ACTIONS BAR (PINNED DIRECTLY UNDER TOP HUD) ------------------- */
   .quick-combat-actions-bar {
-    top: 54px;
-    right: 6px;
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
+    flex-shrink: 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 4px;
+    width: 100%;
+    height: 28px;
+    margin: 4px 0 0 0;
+    align-self: stretch;
+    pointer-events: auto;
+    z-index: 15;
   }
 
   .combat-quick-btn {
-    width: 36px;
-    height: 36px;
-    padding: 0;
-    font-size: 8px;
-    gap: 1px;
+    width: 100%;
+    padding: 0 4px;
+    font-size: 8.5px;
+    height: 28px;
+    gap: 3px;
     border-radius: 6px;
     display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
   }
-  .cq-icon { font-size: 14px; }
-  .cq-text { font-size: 6px; font-weight: 700; white-space: nowrap; display: none; }
+  .cq-icon { font-size: 11px; }
+  .cq-text { font-size: 8px; font-weight: 700; white-space: nowrap; }
 
   /* ------------------- MIDDLE ARENA (EXPANDS FREELY FOR 3D VIEWPORT) ------------------- */
   .middle-arena {
@@ -1706,9 +1626,9 @@ button,
     display: grid;
     grid-template-columns: repeat(5, 1fr);
     align-items: center;
-    gap: 2px;
+    gap: 3px;
     width: 100%;
-    padding: 0 0 4px 0;
+    padding: 0 0 6px 0;
     pointer-events: auto;
     z-index: 20;
   }
@@ -1717,7 +1637,7 @@ button,
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 1px;
+    gap: 2px;
     background: transparent;
     border: none;
     padding: 0;
@@ -1726,17 +1646,17 @@ button,
   }
 
   .ring-circle-icon {
-    width: 30px;
-    height: 30px;
-    font-size: 13px;
+    width: 36px;
+    height: 36px;
+    font-size: 15px;
     border-radius: 50%;
     background: rgba(10, 25, 32, 0.85);
     border: 1px solid rgba(0, 240, 255, 0.4);
-    box-shadow: 0 0 8px rgba(0, 240, 255, 0.12);
+    box-shadow: 0 0 10px rgba(0, 240, 255, 0.15);
   }
 
   .ring-label {
-    font-size: 6.5px;
+    font-size: 7.5px;
     font-weight: 700;
     letter-spacing: 0;
     white-space: nowrap;
@@ -1753,14 +1673,14 @@ button,
     transform: none !important;
     width: 100vw !important;
     max-width: 100vw !important;
-    max-height: 50vh !important;
-    border-radius: 14px 14px 0 0 !important;
+    max-height: 60vh !important;
+    border-radius: 16px 16px 0 0 !important;
     background: rgba(6, 16, 22, 0.98) !important;
     border: 1px solid rgba(0, 240, 255, 0.4) !important;
     border-bottom: none !important;
-    padding: 10px 12px !important;
+    padding: 12px 14px !important;
     z-index: 200 !important;
-    box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.9) !important;
+    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.9) !important;
     pointer-events: auto;
   }
 
@@ -1770,26 +1690,22 @@ button,
     display: flex;
     flex-direction: column;
     width: 100%;
-    gap: 3px;
-    padding: 5px 8px;
+    gap: 5px;
+    padding: 8px 10px;
     background: rgba(6, 16, 22, 0.94);
     border: 1px solid rgba(0, 240, 255, 0.35);
-    border-radius: 8px;
+    border-radius: 10px;
     backdrop-filter: blur(14px);
-    box-shadow: 0 4px 20px rgba(0,0,0,0.7);
+    box-shadow: 0 4px 25px rgba(0,0,0,0.7);
     pointer-events: auto;
     z-index: 25;
   }
 
   .telemetry-dual-gauges {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
+    display: flex;
+    flex-direction: column;
     width: 100%;
-    gap: 4px 8px;
-  }
-
-  .telemetry-dual-gauges .gauge-group:nth-child(3) {
-    grid-column: 1 / -1;
+    gap: 4px;
   }
 
   .gauge-group {
@@ -1800,25 +1716,23 @@ button,
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-size: 8px;
+    font-size: 9.5px;
     font-weight: 700;
-    margin-bottom: 1px;
+    margin-bottom: 2px;
   }
 
   .concept-bar-track {
     width: 100%;
-    height: 4px;
-    border-radius: 2px;
+    height: 6px;
+    border-radius: 3px;
     background: rgba(255, 255, 255, 0.1);
   }
 
   .bottom-mission-subrow {
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
     width: 100%;
-    gap: 0;
-    border-top: none;
-    padding-top: 0;
+    gap: 3px;
   }
 
   .mission-tag {
@@ -1827,18 +1741,18 @@ button,
 
   .btn-concept-strike {
     width: 100%;
-    height: 30px;
-    font-size: 10px;
+    height: 36px;
+    font-size: 11.5px;
     font-weight: 800;
-    border-radius: 6px;
-    letter-spacing: 0.6px;
+    border-radius: 8px;
+    letter-spacing: 0.8px;
     display: flex;
     align-items: center;
     justify-content: center;
     background: linear-gradient(135deg, rgba(0, 240, 255, 0.25), rgba(0, 255, 136, 0.25));
     border: 1px solid #00f0ff;
     color: #00f0ff;
-    box-shadow: 0 0 12px rgba(0, 240, 255, 0.2);
+    box-shadow: 0 0 15px rgba(0, 240, 255, 0.2);
   }
 }
 
@@ -2728,10 +2642,6 @@ button,
 .campaign-modal-container {
   max-width: 920px;
   width: 94vw;
-  max-height: 88vh;
-  overflow-y: auto;
-  padding: 24px;
-  box-sizing: border-box;
   background: rgba(2, 10, 18, 0.95);
   border: 1px solid rgba(0, 240, 255, 0.3);
   box-shadow: 0 16px 60px rgba(0, 0, 0, 0.85), 0 0 35px rgba(0, 240, 255, 0.15);
@@ -2945,10 +2855,6 @@ button,
 .hangar-modal-container {
   max-width: 960px;
   width: 94vw;
-  max-height: 88vh;
-  overflow-y: auto;
-  padding: 24px;
-  box-sizing: border-box;
   background: rgba(2, 12, 20, 0.96);
   border: 1px solid rgba(0, 255, 136, 0.3);
   box-shadow: 0 16px 60px rgba(0, 0, 0, 0.85), 0 0 35px rgba(0, 255, 136, 0.15);
@@ -3854,7 +3760,7 @@ button,
 
 .fpv-ciws-alert {
   position: absolute;
-  bottom: -120px;
+  bottom: -45px;
   font-family: 'Rajdhani', sans-serif;
   font-size: 12px;
   font-weight: 800;
@@ -4239,16 +4145,16 @@ button,
     display: block !important;
   }
 
-  /* Touch targets for buttons — compact but still tappable */
+  /* Bigger touch targets for buttons */
   .combat-quick-btn {
-    min-width: 36px;
-    min-height: 36px;
-    padding: 4px;
-    font-size: 9px;
+    min-width: 52px;
+    min-height: 44px;
+    padding: 8px 10px;
+    font-size: 10px;
   }
 
-  .combat-quick-btn .cq-icon { font-size: 14px; }
-  .combat-quick-btn .cq-text { font-size: 6px; display: none; }
+  .combat-quick-btn .cq-icon { font-size: 18px; }
+  .combat-quick-btn .cq-text { font-size: 8px; }
 
   /* Larger joystick for easier control */
   .virtual-joystick-container {
@@ -4277,27 +4183,17 @@ button,
     padding: 6px 10px;
   }
 
-  /* FLIR touch targets — tappable but compact */
+  /* FLIR touch targets bigger */
   .flir-lock-point {
-    padding: 10px 14px;
-    font-size: 11px;
-    min-height: 40px;
+    padding: 14px 18px;
+    font-size: 13px;
+    min-height: 48px;
   }
 
   .btn-flir-exit {
-    padding: 10px 18px;
-    font-size: 12px;
-    min-height: 40px;
-  }
-
-  /* FLIR telemetry box compact */
-  .flir-telemetry-box {
-    font-size: 10px;
-    line-height: 1.3;
-    padding: 4px 8px;
-  }
-  .flir-telemetry-box div {
-    font-size: 9px;
+    padding: 14px 24px;
+    font-size: 14px;
+    min-height: 48px;
   }
 
   /* Bigger click area for main taps */
@@ -5586,15 +5482,15 @@ button,
 }
 .recon-objective-banner {
   position: absolute;
-  top: -120px;
+  top: 16px;
   left: 50%;
   transform: translateX(-50%);
   background: rgba(3, 16, 26, 0.88);
   border: 1px solid #00ffcc;
-  padding: 6px 16px;
+  padding: 4px 12px;
   border-radius: 8px;
   font-family: 'Rajdhani', sans-serif;
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 700;
   color: #00ffcc;
   box-shadow: 0 0 20px rgba(0, 255, 200, 0.3);
@@ -5863,34 +5759,42 @@ button,
   .btn-nav-drawer-toggle {
     display: flex !important;
   }
-
-  /* Top Nav Row — ensure touch interactivity without overriding layout */
+  
+  /* Top Nav Row Compact Layout */
   .top-nav-row {
-    pointer-events: auto !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    gap: 4px !important;
+    width: 100% !important;
   }
   .top-nav-row button {
-    pointer-events: auto !important;
-    touch-action: manipulation !important;
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    padding: 4px 6px !important;
+    font-size: 11px !important;
   }
-
-  /* Quick Combat Bar: vertical column on right side */
+  
+  /* Quick Combat Bar: sleek scrollable / compact */
   .quick-combat-actions-bar {
     display: flex !important;
-    flex-direction: column !important;
-    gap: 3px !important;
-    pointer-events: auto !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    gap: 4px !important;
+    padding: 2px 4px !important;
+    -webkit-overflow-scrolling: touch;
   }
   .combat-quick-btn {
-    pointer-events: auto !important;
-    touch-action: manipulation !important;
+    flex: 0 0 auto !important;
+    padding: 4px 8px !important;
+    font-size: 10px !important;
   }
 
-  /* Ensure middle arena and panels are interactive */
+  /* Clean mobile layout with fully clickable controls */
   .middle-arena {
-    pointer-events: none !important;
+    pointer-events: auto !important;
   }
   .concept-action-rings {
-    gap: 2px !important;
+    gap: 6px !important;
     pointer-events: auto !important;
   }
   .concept-dossier-card,
@@ -5922,25 +5826,18 @@ button,
     font-size: 10px !important;
   }
 
-  /* Ensure ALL interactive elements respond immediately to touch */
+  /* Ensure all interactive buttons respond immediately to touch */
   button,
   .ring-action-btn,
   .btn-buy-action,
   .btn-recon-snap,
   .btn-fpv-boost,
   .combat-quick-btn,
-  .booster-inner-btn,
-  .drawer-action-btn,
-  .btn-dossier-pill,
-  .btn-sector-pill,
-  .btn-help-pill,
-  .btn-tactical-pause {
+  .drawer-action-btn {
     touch-action: manipulation !important;
-    -webkit-tap-highlight-color: rgba(0,255,136,0.1) !important;
-    pointer-events: auto !important;
+    -webkit-tap-highlight-color: transparent !important;
     cursor: pointer !important;
-    user-select: none !important;
-    -webkit-user-select: none !important;
+    pointer-events: auto !important;
   }
 
   /* FPV & Recon touch buttons on mobile */
