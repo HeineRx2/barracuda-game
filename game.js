@@ -5311,6 +5311,10 @@ class BarracudaGame {
   startAssault() {
     this.minigameActive = true;
     this.assaultModal.classList.add('active');
+    
+    // Hide main HUD to prevent overlapping
+    const mainHud = document.getElementById('main-hud-layer');
+    if (mainHud) mainHud.style.display = 'none';
 
     // Check if this should be a boss fight
     if (this.shouldTriggerBoss()) {
@@ -5456,6 +5460,8 @@ class BarracudaGame {
 
       setTimeout(() => {
         this.assaultModal.classList.remove('active');
+        const mainHud = document.getElementById('main-hud-layer');
+        if (mainHud && this.uiMode === 'MAIN') mainHud.style.display = '';
         this.updateDossier(DOSSIER_LORE[0], false);
         this.checkAllAchievements();
         this.saveGame();
@@ -5467,6 +5473,8 @@ class BarracudaGame {
 
       setTimeout(() => {
         this.assaultModal.classList.remove('active');
+        const mainHud = document.getElementById('main-hud-layer');
+        if (mainHud && this.uiMode === 'MAIN') mainHud.style.display = '';
       }, 1500);
     }
   }
