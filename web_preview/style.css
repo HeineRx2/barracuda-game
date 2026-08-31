@@ -52,11 +52,15 @@
 }
 
 html, body {
+  margin: 0;
+  padding: 0;
   width: 100%;
   height: 100%;
-  height: 100dvh; /* Use dynamic viewport height to prevent address bar hiding bottom UI */
+  height: 100dvh;
   overflow: hidden;
   position: fixed;
+  overscroll-behavior: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 body {
@@ -189,9 +193,8 @@ body {
 .flir-thermal-view {
   position: absolute;
   top: 0; left: 0;
-  width: 100%; height: 100%;
-  z-index: 60;
-  display: none;
+  z-index: 9999;
+  display: flex;
   flex-direction: column;
   justify-content: space-between;
   align-items: center;
@@ -5881,6 +5884,11 @@ body {
 
 
 
+#game-frame {
+  height: 100vh;
+  height: 100dvh;
+  z-index: 1000 !important;
+}
 
 .svg-icon { width: 1.2em; height: 1.2em; vertical-align: text-bottom; fill: none; stroke-linecap: round; stroke-linejoin: round; }
 
@@ -5892,6 +5900,7 @@ body {
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   padding: 6px 10px;
+  -webkit-clip-path: var(--cut-corner-bottom);
   clip-path: var(--cut-corner-bottom);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
   margin-bottom: 4px;
@@ -5902,10 +5911,11 @@ body {
   border: 1px solid var(--hud-border) !important;
   color: var(--tactical-green) !important;
   border-radius: 0 !important;
+  -webkit-clip-path: var(--cut-corner);
   clip-path: var(--cut-corner);
   transition: all 0.2s ease-out;
-  text-shadow: var(--text-glow-green);
-  box-shadow: var(--box-glow-green);
+  text-shadow: 0 0 5px var(--tactical-green);
+  box-shadow: 0 0 10px rgba(0, 255, 136, 0.2);
 }
 
 .top-nav-row button:hover, .combat-quick-btn:hover {
@@ -5947,6 +5957,7 @@ body {
   border-radius: 0 !important;
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
+  -webkit-clip-path: polygon(12px 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 0 100%, 0 12px);
   clip-path: polygon(12px 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 0 100%, 0 12px);
   padding: 10px 15px !important;
   box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.5);

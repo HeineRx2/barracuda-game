@@ -1989,7 +1989,7 @@ class Barracuda3DEngine {
 
     const loader = new THREE.GLTFLoader();
     loader.load(
-      'assets/barracuda.glb',
+      'assets/barracuda.glb?v=4.0.2',
       (gltf) => {
         try {
           if (this.boatModel) {
