@@ -69,7 +69,7 @@ class Barracuda3DEngine {
     this.shipDamageLevel = 0; // 0-5, increases after each prestige
     this.shipFirePoints = [];
 
-    this.cameraMode = 'orbit'; // 'orbit', 'flir', or 'chase'
+    this._cameraMode = 'orbit'; // 'orbit', 'flir', or 'chase'
     this.flirZoom = 1.0;
 
     // -------------------------------------------------------------
@@ -220,6 +220,26 @@ class Barracuda3DEngine {
     this.createLightningSystem();
     this.createRainSystem();
     this.createParticlePools();
+
+    // Custom Thermal Shader for FLIR mode
+    this.thermalMaterial = new THREE.ShaderMaterial({
+      vertexShader: `
+        varying vec3 vNormal;
+        void main() {
+          vNormal = normalize(normalMatrix * normal);
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }
+      `,
+      fragmentShader: `
+        varying vec3 vNormal;
+        void main() {
+          float intensity = pow(1.0 - max(dot(vNormal, vec3(0.0, 0.0, 1.0)), 0.0), 3.0);
+          gl_FragColor = vec4(0.0, 1.0, 0.4, 1.0) * intensity + vec4(0.0, 0.15, 0.05, 1.0);
+        }
+      `,
+      wireframe: false
+    });
+
     this.loadGLBModel();        // Loads real GLB boat model (falls back to procedural only if error)
     this.setupEvents();
     this.animate();
@@ -450,8 +470,28 @@ class Barracuda3DEngine {
     mesh.scale.set(1, 1, 1);
   }
 
+  get cameraMode() {
+    return this._cameraMode;
+  }
+
+  set cameraMode(mode) {
+    this._cameraMode = mode;
+    if (mode === 'flir') {
+      this.scene.overrideMaterial = this.thermalMaterial;
+      this.scene.background = new THREE.Color(0x001105);
+      if (this.scene.fog) {
+        this.originalFog = this.scene.fog;
+        this.scene.fog = new THREE.FogExp2(0x001105, 0.015);
+      }
+    } else {
+      this.scene.overrideMaterial = null;
+      if (this.skyColor) this.scene.background = this.skyColor;
+      if (this.originalFog) this.scene.fog = this.originalFog;
+    }
+  }
+
   // =========================================================================
-  // SHIP DAMAGE VISUALIZATION
+  // HELPER MATH & UTILSUALIZATION
   // =========================================================================
   updateShipDamage(damageLevel) {
     this.shipDamageLevel = Math.min(5, damageLevel);
@@ -2372,9 +2412,9 @@ class Barracuda3DEngine {
     const dt = 0.016;
 
     // Camera Mode Switching: Cinematic Orbit, FPV 1st-person, Boat Chase, FLIR, or Base Orbit
-    if (this.cameraMode === 'cinematic_orbit') {
+    if (this._cameraMode === 'cinematic_orbit') {
       this.updateCinematicOrbit(dt);
-    } else if (this.cameraMode === 'fpv' && this.fpvFlightActive) {
+    } else if (this._cameraMode === 'fpv' && this.fpvFlightActive) {
       // Handled dynamically in updateFpvFlight
     } else if (this.pilotMode && this.boatModel) {
       // =========================================================================
@@ -2406,7 +2446,7 @@ class Barracuda3DEngine {
 
       // Keep camera upright — no roll
       this.camera.up.set(0, 1, 0);
-    } else if (this.cameraMode === 'flir') {
+    } else if (this._cameraMode === 'flir') {
       // Look directly through thermal FLIR optic towards enemy ship
       const shipPos = this.enemyShip ? this.enemyShip.position : new THREE.Vector3(38, 2, -75);
       this.camera.position.set(0, 2.2, 2.5);
