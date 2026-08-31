@@ -2219,7 +2219,7 @@ class BarracudaGame {
 
       const prestige = this.blueprintsBP;
       const shuffled = shuffleArray(DAILY_QUEST_TEMPLATES).slice(0, 3);
-      this.dailyQuests = shuffled.map((tmpl, i) => {
+      this.dailyQuests = shuffled.map((tmpl) => {
         const n = tmpl.getN(prestige);
         return {
           id: tmpl.id,
@@ -4768,7 +4768,6 @@ class BarracudaGame {
       const cancelLock = (e) => {
         e.preventDefault();
         if (holdTimer) clearTimeout(holdTimer);
-        if (progressInterval) clearInterval(progressInterval);
         btn.classList.remove('locking');
       };
 
@@ -6093,7 +6092,6 @@ class BarracudaGame {
     document.querySelectorAll('.tt-node[data-tt]').forEach(node => {
       const id = node.getAttribute('data-tt');
       const req = node.getAttribute('data-tt-req');
-      const cost = parseInt(node.getAttribute('data-tt-cost')) || 0;
 
       node.classList.remove('tt-locked', 'tt-available', 'tt-unlocked');
 
@@ -6407,7 +6405,7 @@ class BarracudaGame {
     }
     const btnDrawerMute = document.getElementById('btn-drawer-mute');
     if (btnDrawerMute) {
-      btnDrawerMute.onclick = (e) => {
+      btnDrawerMute.onclick = () => {
         this.toggleMute();
         const muteStatus = document.getElementById('drawer-mute-status');
         const muteIcon = document.getElementById('drawer-mute-icon');

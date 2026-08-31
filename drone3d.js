@@ -2849,7 +2849,7 @@ class Barracuda3DEngine {
       }
 
       // Sync module objects to boat:
-      for (const [id, mod] of Object.entries(this.moduleObjects)) {
+      for (const mod of Object.values(this.moduleObjects)) {
         if (mod.userData && mod.userData.modOffset) {
           const off = mod.userData.modOffset;
           const rotOffX = off.x * Math.cos(this.pilotHeading) + off.z * Math.sin(this.pilotHeading);
@@ -3170,8 +3170,6 @@ class Barracuda3DEngine {
   }
 
   setupMissionWorld(config) {
-    const type = config.type || 'sortie';
-
     // 1. Spawning Floating Naval Mines
     const mineCount = config.mineCount !== undefined ? config.mineCount : 6;
     for (let i = 0; i < mineCount; i++) {
