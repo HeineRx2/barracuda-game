@@ -6590,7 +6590,7 @@ body::after {
   align-items: center !important;
   padding: 4px 2px !important;
   gap: 6px !important;
-  margin-top: -8px !important;
+  margin: -8px auto 0 auto !important;
   background: transparent !important;
   border: none !important;
   overflow: visible !important;
