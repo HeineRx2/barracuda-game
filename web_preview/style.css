@@ -21,6 +21,7 @@
   user-select: none;
   -webkit-user-select: none;
   -webkit-touch-callout: none;
+  touch-action: manipulation; /* Disable double-tap zoom globally but allow scroll */
 }
 
 html, body {
@@ -28,7 +29,6 @@ html, body {
   height: 100%;
   overflow: hidden;
   position: fixed;
-  touch-action: none;
 }
 
 body {
@@ -1448,7 +1448,8 @@ body {
     justify-content: space-between;
     height: 100%;
     pointer-events: none;
-    overflow: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
   /* ------------------- TOP HUD BAR (PINNED TO TOP) ------------------- */

@@ -2418,9 +2418,9 @@ class Barracuda3DEngine {
       this.currentRotation.x += (this.targetRotation.x - this.currentRotation.x) * 0.08;
       this.currentRotation.y += (this.targetRotation.y - this.currentRotation.y) * 0.08;
 
-      const trackCenter = new THREE.Vector3(0, 0, 0);
+      const trackCenter = this.boatModel ? this.boatModel.position.clone() : new THREE.Vector3(0, 0, 0);
       const isPortrait = window.innerWidth < window.innerHeight;
-      const R = isPortrait ? 9.2 : 11.2;
+      const R = isPortrait ? 18.0 : 11.2;
       const camX = trackCenter.x + R * Math.sin(this.currentRotation.y) * Math.cos(this.currentRotation.x);
       const camZ = trackCenter.z + R * Math.cos(this.currentRotation.y) * Math.cos(this.currentRotation.x);
       const camY = Math.max(1.2, R * Math.sin(this.currentRotation.x));
