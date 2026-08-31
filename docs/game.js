@@ -1996,6 +1996,7 @@ class BarracudaGame {
     this.initDailyQuests();
     this.init3D();
     this.initDOM();
+    this.initGyroMinigame();
     this.initCampaignAndHangar();
     this.initEvents();
     this.startLoop();
@@ -2219,7 +2220,7 @@ class BarracudaGame {
 
       const prestige = this.blueprintsBP;
       const shuffled = shuffleArray(DAILY_QUEST_TEMPLATES).slice(0, 3);
-      this.dailyQuests = shuffled.map((tmpl, i) => {
+      this.dailyQuests = shuffled.map((tmpl) => {
         const n = tmpl.getN(prestige);
         return {
           id: tmpl.id,
@@ -2995,14 +2996,8 @@ class BarracudaGame {
 
     // Hide base HUD
     const gameFrame = document.getElementById('game-frame');
-    if (gameFrame) gameFrame.style.display = 'none';
-
-    // Show FPV overlay
-    const fpvOverlay = document.getElementById('fpv-flight-overlay');
-    if (fpvOverlay) {
-      fpvOverlay.classList.remove('mission-hud-hidden');
-      fpvOverlay.style.display = 'flex';
-    }
+    // Hide base HUD & modals
+    this.setUIState('FPV');
 
     // Show Recon HUD Overlay with Waypoints
     const reconOverlay = document.getElementById('recon-hud-overlay');
@@ -3279,8 +3274,17 @@ class BarracudaGame {
     this._updateRewDots();
 
     // Button handlers
-    document.getElementById('rew-hack-btn').addEventListener('click', () => this._rewAttemptCapture());
-    document.getElementById('rew-abort-btn').addEventListener('click', () => this._finishRewMission(false));
+    document.getElementById('rew-hack-btn').addEventListener('click', (e) => { e.stopPropagation(); this._rewAttemptCapture(); });
+    document.getElementById('rew-abort-btn').addEventListener('click', (e) => { e.stopPropagation(); this._finishRewMission(false); });
+
+    // Tap-zone for mobile
+    const tapHandler = (e) => {
+      if (e.target.closest('#rew-abort-btn') || e.target.closest('#rew-hack-btn')) return;
+      e.preventDefault();
+      this._rewAttemptCapture();
+    };
+    overlay.addEventListener('mousedown', tapHandler);
+    overlay.addEventListener('touchstart', tapHandler, { passive: false });
 
     // Keyboard handler
     this._rewKeyHandler = (e) => {
@@ -3455,14 +3459,7 @@ class BarracudaGame {
     }
 
     // Hide base HUD, show 3D Mission Boat Cockpit Overlay
-    const gameFrame = document.getElementById('game-frame');
-    if (gameFrame) gameFrame.style.display = 'none';
-
-    const fpvOverlay = document.getElementById('fpv-flight-overlay');
-    if (fpvOverlay) {
-      fpvOverlay.classList.add('mission-hud-hidden');
-      fpvOverlay.style.display = 'none';
-    }
+    this.setUIState('MAIN');
 
     const cockpit = document.getElementById('mission-cockpit-overlay');
     if (cockpit) {
@@ -3508,14 +3505,13 @@ class BarracudaGame {
       boatCockpit.style.display = 'none';
     }
 
-    const fpvOverlay = document.getElementById('fpv-flight-overlay');
-    if (fpvOverlay) {
-      fpvOverlay.classList.remove('mission-hud-hidden');
-      fpvOverlay.style.display = 'flex';
-    }
+    this.setUIState('FPV');
 
     // Start FPV Drone Flight in 3D Engine
     this.engine3D.startFpvFlight((event, data) => this.handle3DMissionEvent(event, data));
+    
+    // Start Gyro Minigame
+    this.startGyroMinigame();
 
     this.showMissionWarning('🚀 FPV-ШТУРМ НАЧАТ: Наводитесь на уязвимые узлы корабля противника!');
     if (window.tacticalAudio) window.tacticalAudio.playPhaseTransition();
@@ -3888,12 +3884,14 @@ class BarracudaGame {
   }
 
   applyPilotInputs() {
+    if (this.gyroActive) return;
     if (this.engine3D && !this.fpvFlightPhase) {
       this.engine3D.setPilotInput(this.inputState.throttle, this.inputState.steer, this.inputState.boost);
     }
   }
 
   applyFpvInputs() {
+    if (this.gyroActive) return;
     if (this.engine3D && this.fpvFlightPhase) {
       const throttle = this.inputState.hover ? 0.0 : 0.8;
       this.engine3D.setFpvInput(this.inputState.fpvYaw, this.inputState.fpvPitch, throttle, this.inputState.boost);
@@ -3968,10 +3966,9 @@ class BarracudaGame {
         reticleEl.style.top = `50%`;
       }
 
-      tagEl.textContent = `🎯 ${nearest.name} [${nearest.dist}м]`;
-
       // Lock-On State (< 45m)
       if (nearest.dist <= 45) {
+        tagEl.innerHTML = `<span style="color:#fff;background:#00ff88;padding:0 4px;border-radius:2px;color:#000;">TARGET DETECTED</span> ${nearest.name} [${nearest.dist}м]`;
         reticleEl.classList.add('locked');
         if (snapBtn) snapBtn.style.display = 'block';
         if (mainCrosshair) mainCrosshair.style.borderColor = '#00ff88';
@@ -3981,6 +3978,7 @@ class BarracudaGame {
           this.reconState.lockedAudioPlayed = true;
         }
       } else {
+        tagEl.textContent = `🎯 ${nearest.name} [${nearest.dist}м]`;
         reticleEl.classList.remove('locked');
         if (snapBtn) snapBtn.style.display = 'none';
         if (mainCrosshair) mainCrosshair.style.borderColor = '';
@@ -4075,6 +4073,18 @@ class BarracudaGame {
       const pitchLadder = document.getElementById('fpv-pitch-ladder');
       if (pitchLadder) {
         pitchLadder.style.transform = `translateY(${telem.pitchDeg * 2.5}px) rotate(${telem.rollDeg}deg)`;
+      }
+
+      // Dynamic Glitch / Static Effect
+      const glitchLayer = document.getElementById('fpv-glitch-layer');
+      if (glitchLayer) {
+        if (telem.glitchAmount > 0) {
+          glitchLayer.style.opacity = telem.glitchAmount.toString();
+          glitchLayer.classList.add('fpv-glitched');
+        } else {
+          glitchLayer.style.opacity = '0';
+          glitchLayer.classList.remove('fpv-glitched');
+        }
       }
 
       // Lock on bracket
@@ -4172,7 +4182,10 @@ class BarracudaGame {
         const magFill = document.getElementById('rov-fill-mag');
         const siphonPct = document.getElementById('rov-siphon-pct');
         const siphonFill = document.getElementById('rov-siphon-fill');
+        const depthEl = document.getElementById('rov-hud-depth');
+        
         if (magVal) magVal.textContent = `${telem.magnetometerNt.toLocaleString()} nT`;
+        if (depthEl) depthEl.textContent = `ГЛУБИНА: ${telem.rovDepth} м`;
         if (magFill) {
           const norm = Math.min(100, Math.max(0, (telem.magnetometerNt - 48000) / 40));
           magFill.style.width = `${norm}%`;
@@ -4206,13 +4219,7 @@ class BarracudaGame {
       cockpit.classList.add('mission-hud-hidden');
       cockpit.style.display = 'none';
     }
-    const fpvOverlay = document.getElementById('fpv-flight-overlay');
-    if (fpvOverlay) {
-      fpvOverlay.classList.add('mission-hud-hidden');
-      fpvOverlay.style.display = 'none';
-    }
-    const gameFrame = document.getElementById('game-frame');
-    if (gameFrame) gameFrame.style.display = 'flex';
+    this.setUIState('MAIN');
 
     const missionElapsedSec = Math.round((Date.now() - (this.sortieStats.startTime || Date.now())) / 1000);
     const m = this.activeMission;
@@ -4532,6 +4539,32 @@ class BarracudaGame {
   // =========================================================================
   // DOM INIT
   // =========================================================================
+  setUIState(mode) {
+    this.uiMode = mode;
+    const mainHud = document.getElementById('main-hud-layer');
+    if (mainHud) {
+      mainHud.style.display = (mode === 'MAIN') ? '' : 'none';
+    }
+
+    if (this.cyberModal) {
+      this.cyberModal.classList.toggle('active', mode === 'CYBER');
+    }
+
+    const rovOverlay = document.getElementById('rov-mission-overlay');
+    if (rovOverlay) {
+      rovOverlay.style.display = (mode === 'ROV') ? 'flex' : 'none';
+    }
+
+    const fpvOverlay = document.getElementById('fpv-flight-overlay');
+    if (fpvOverlay) {
+      if (mode === 'FPV') {
+        fpvOverlay.classList.remove('mission-hud-hidden');
+      } else {
+        fpvOverlay.classList.add('mission-hud-hidden');
+      }
+    }
+  }
+
   initDOM() {
     this.lblBuffer = document.getElementById('val-buffer');
     this.lblCredits = document.getElementById('val-credits');
@@ -4709,17 +4742,51 @@ class BarracudaGame {
     }
 
     document.querySelectorAll('.flir-lock-point').forEach(btn => {
-      btn.addEventListener('click', (e) => {
+      let holdTimer = null;
+      let progressInterval = null;
+      const targetType = btn.getAttribute('data-target');
+      
+      const startLock = (e) => {
+        e.preventDefault();
         e.stopPropagation();
-        const targetType = btn.getAttribute('data-target');
-        let multiplier = 4;
-        if (targetType === 'ammo') multiplier = 8;
-        if (targetType === 'bridge') multiplier = 5;
+        if (window.tacticalAudio) window.tacticalAudio.playSonarPing();
+        
+        btn.classList.add('locking');
+        let progress = 0;
+        
+        progressInterval = setInterval(() => {
+          progress += 10;
+        }, 150);
 
-        this.fireMissileSalvo(multiplier);
-        this.flirOverlay.classList.remove('active');
-        if (this.engine3D) this.engine3D.cameraMode = 'orbit';
-      });
+        holdTimer = setTimeout(() => {
+          clearInterval(progressInterval);
+          btn.classList.remove('locking');
+          
+          if (window.tacticalAudio) window.tacticalAudio.playAlert();
+          
+          let multiplier = 4;
+          if (targetType === 'ammo') multiplier = 8;
+          if (targetType === 'bridge') multiplier = 5;
+
+          this.fireMissileSalvo(multiplier);
+          this.flirOverlay.classList.remove('active');
+          if (this.engine3D) this.engine3D.cameraMode = 'orbit';
+        }, 1500);
+      };
+
+      const cancelLock = (e) => {
+        e.preventDefault();
+        if (holdTimer) clearTimeout(holdTimer);
+        btn.classList.remove('locking');
+      };
+
+      btn.addEventListener('mousedown', startLock);
+      btn.addEventListener('touchstart', startLock, { passive: false });
+      
+      btn.addEventListener('mouseup', cancelLock);
+      btn.addEventListener('mouseleave', cancelLock);
+      btn.addEventListener('touchend', cancelLock);
+      btn.addEventListener('touchcancel', cancelLock);
     });
 
     // Direct 3D Missile Fire
@@ -5269,6 +5336,10 @@ class BarracudaGame {
   }
 
   updateMinigame(dt) {
+    if (this.gyroActive) {
+      this.updateGyroMinigame(dt);
+    }
+    
     if (!this.minigameActive) return;
 
     const result = this.fpvGame.update(dt);
@@ -6034,7 +6105,6 @@ class BarracudaGame {
     document.querySelectorAll('.tt-node[data-tt]').forEach(node => {
       const id = node.getAttribute('data-tt');
       const req = node.getAttribute('data-tt-req');
-      const cost = parseInt(node.getAttribute('data-tt-cost')) || 0;
 
       node.classList.remove('tt-locked', 'tt-available', 'tt-unlocked');
 
@@ -6164,7 +6234,7 @@ class BarracudaGame {
           const textEl = document.getElementById('hud-vsa-text');
           if (textEl) textEl.textContent = active ? 'VSA: ВКЛ' : 'VSA: ВЫКЛ (ДРИФТ)';
           this.showMissionWarning(active ? '🛡️ VSA АКТИВИРОВАНА — Курсовая стабилизация' : '⚠️ VSA ОТКЛЮЧЕНА — РЕЖИМ ГИДРОДИНАМИЧЕСКОГО ДРИФТА!');
-          if (!active) this.unlockAchievement('vsa_drift');
+          if (!active) this.checkAchievement('vsa_drift');
         }
       });
     }
@@ -6196,7 +6266,7 @@ class BarracudaGame {
         if (this.engine3D) this.engine3D.setSonarActive(this.sonarActive);
         if (sonarPanel) sonarPanel.style.display = this.sonarActive ? 'block' : 'none';
         btnSonar.classList.toggle('active', this.sonarActive);
-        if (this.sonarActive) this.unlockAchievement('sonar_scan');
+        if (this.sonarActive) this.checkAchievement('sonar_scan');
       });
     }
     if (btnCloseSonar && sonarPanel) {
@@ -6247,7 +6317,7 @@ class BarracudaGame {
           this.engine3D.siphonProgress = 100;
           this.engine3D.siphonLocked = true;
           if (window.tacticalAudio) window.tacticalAudio.playSiphonLock();
-          this.unlockAchievement('underwater_siphon');
+          this.checkAchievement('underwater_siphon');
           this.dataMB += 8500;
           this.creditsUSD += 25000;
           this.addNotification('🔮 СИФОН ПОДКЛЮЧЕН', '+8,500 МБ и +$25,000 получены!');
@@ -6348,7 +6418,7 @@ class BarracudaGame {
     }
     const btnDrawerMute = document.getElementById('btn-drawer-mute');
     if (btnDrawerMute) {
-      btnDrawerMute.onclick = (e) => {
+      btnDrawerMute.onclick = () => {
         this.toggleMute();
         const muteStatus = document.getElementById('drawer-mute-status');
         const muteIcon = document.getElementById('drawer-mute-icon');
@@ -6516,7 +6586,78 @@ class BarracudaGame {
         }
       });
     }
+  initGyroMinigame() {
+    this.gyroActive = false;
+    this.gyroPitchTrim = 0;
+    this.gyroRollTrim = 0;
+    this.gyroProgress = 0;
+    this.gyroMarkerX = 0;
+    this.gyroMarkerY = 0;
+    
+    this.gyroSliderPitch = document.getElementById('gyro-slider-pitch');
+    this.gyroSliderRoll = document.getElementById('gyro-slider-roll');
+    this.gyroMarker = document.getElementById('gyro-marker');
+    this.gyroPct = document.getElementById('gyro-pct');
+    this.gyroFill = document.getElementById('gyro-fill');
+    this.gyroContainer = document.getElementById('fpv-gyro-minigame');
+
+    if (this.gyroSliderPitch) {
+      this.gyroSliderPitch.addEventListener('input', (e) => { this.gyroPitchTrim = parseInt(e.target.value); });
+    }
+    if (this.gyroSliderRoll) {
+      this.gyroSliderRoll.addEventListener('input', (e) => { this.gyroRollTrim = parseInt(e.target.value); });
+    }
   }
+
+  startGyroMinigame() {
+    this.gyroActive = true;
+    this.gyroProgress = 0;
+    this.gyroPitchTrim = 0;
+    this.gyroRollTrim = 0;
+    this.gyroMarkerX = 0;
+    this.gyroMarkerY = 0;
+    if (this.gyroSliderPitch) this.gyroSliderPitch.value = 0;
+    if (this.gyroSliderRoll) this.gyroSliderRoll.value = 0;
+    if (this.gyroContainer) this.gyroContainer.style.display = 'block';
+    
+    this.showMissionWarning('CRITICAL FAILURE: Calibrate Gyroscope!');
+  }
+
+  updateGyroMinigame(dt) {
+    if (!this.gyroActive) return;
+    
+    this.gyroMarkerX += (Math.random() - 0.5) * 120 * dt;
+    this.gyroMarkerY += (Math.random() - 0.5) * 120 * dt;
+    
+    const effectiveX = this.gyroMarkerX - this.gyroRollTrim;
+    const effectiveY = this.gyroMarkerY + this.gyroPitchTrim;
+
+    const displayX = Math.max(-90, Math.min(90, effectiveX));
+    const displayY = Math.max(-90, Math.min(90, effectiveY));
+
+    if (this.gyroMarker) {
+      this.gyroMarker.style.transform = `translate(calc(-50% + ${displayX}px), calc(-50% + ${displayY}px))`;
+    }
+
+    const dist = Math.sqrt(displayX*displayX + displayY*displayY);
+    if (dist < 20) {
+      this.gyroProgress += 30 * dt;
+    } else {
+      this.gyroProgress -= 15 * dt;
+    }
+    this.gyroProgress = Math.max(0, Math.min(100, this.gyroProgress));
+
+    if (this.gyroPct) this.gyroPct.textContent = Math.floor(this.gyroProgress) + '%';
+    if (this.gyroFill) this.gyroFill.style.width = this.gyroProgress + '%';
+
+    if (this.gyroProgress >= 100) {
+      this.gyroActive = false;
+      if (this.gyroContainer) this.gyroContainer.style.display = 'none';
+      this.showMissionWarning('CALIBRATION COMPLETE: Weapons Hot!');
+      if (window.tacticalAudio) window.tacticalAudio.playSonarPing();
+    }
+  }
+}
 }
 
 window.addEventListener('DOMContentLoaded', () => {
