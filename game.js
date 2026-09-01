@@ -1983,6 +1983,12 @@ class BarracudaGame {
     // === DAILY QUESTS ===
     this.dailyQuests = [];
     this.dailyQuestDate = '';
+
+    // === TROPHY SYSTEM ===
+    this.trophies = []; // Array of { id, name, icon, desc, date, rank }
+
+    // === CREW ===
+    this.crew = { pilot: 1, tech: 1, hacker: 1 }; // Level 1-5
     this.dailyClicks = 0;
     this.dailyDataCollected = 0;
     this.dailyCreditsEarned = 0;
@@ -2132,6 +2138,8 @@ class BarracudaGame {
         savedAt: Date.now(),
         passiveRateMBs: this.getPassiveRate(),
         passiveRateUSDps: this.getUSDPassiveRate()
+        trophies: this.trophies || [],
+        crew: this.crew || { pilot: 1, tech: 1, hacker: 1 }
       };
       localStorage.setItem('barracuda_save', JSON.stringify(data));
     } catch (e) {
@@ -2183,6 +2191,8 @@ class BarracudaGame {
       this._savedAt = data.savedAt || 0;
       this._savedPassiveRateMB = data.passiveRateMBs || 0;
       this._savedPassiveRateUSD = data.passiveRateUSDps || 0;
+      this.trophies = data.trophies || [];
+      this.crew = data.crew || { pilot: 1, tech: 1, hacker: 1 };
 
       // Regenerate contracts for current tier
       this.activeContracts = this.generateContracts();
@@ -2566,7 +2576,7 @@ class BarracudaGame {
       if (this.empState.phase === 'boost') rate *= 3.0;
     }
 
-    return rate * this.getGlobalMultiplier();
+    return rate * this.getGlobalMultiplier() * this.getCrewTechMult();
   }
 
   getUSDPassiveRate() {
@@ -4341,6 +4351,18 @@ class BarracudaGame {
         window.tacticalAudio.playRatingReveal(rank);
       }
       this.addNotification('🏆 ОПЕРАЦИЯ ВЫПОЛНЕНА', `Ранг: ${rank} — Корабль уничтожен! +$${usdEarned.toLocaleString()}`);
+      // Award sortie trophy
+      if (this.activeMission) {
+        this._awardTrophy({
+          id: `sortie_${this.activeMission.id}_${Date.now()}`,
+          name: this.activeMission.title || 'Боевая вылазка',
+          icon: rank === 'S' ? '⭐' : '🎖️',
+          desc: `Ранг ${rank} | ${this.sortieStats.targetSubsystem || 'Ходовой мостик'} | ${missionElapsedSec}сек`,
+          date: new Date().toISOString(),
+          rank: rank,
+          type: 'sortie'
+        });
+      }
     } else {
       // 💀 GAME OVER MODAL (THE END)
       const gameoverModal = document.getElementById('mission-gameover-modal');
@@ -5488,6 +5510,16 @@ class BarracudaGame {
       if (this.bossActive) {
         this.bossesDefeated++;
         this.addNotification('👑 БОСС ПОВЕРЖЕН', `${this.currentBoss.name} — x${bossMult} награды!`);
+        // Award boss trophy
+        this._awardTrophy({
+          id: `boss_${this.currentBoss.id}_${Date.now()}`,
+          name: this.currentBoss.name,
+          icon: '👑',
+          desc: `Уничтожен в ${new Date().toLocaleDateString('ru-RU')} в FPV-штурме`,
+          date: new Date().toISOString(),
+          rank: this.lastAssaultRating || 'A',
+          type: 'boss'
+        });
         this.bossActive = false;
         this.currentBoss = null;
       }
@@ -6769,10 +6801,207 @@ class BarracudaGame {
   }
 }
 
+  // =========================================================================
+  // TROPHY SYSTEM
+  // =========================================================================
+  _awardTrophy(trophy) {
+    if (!this.trophies) this.trophies = [];
+    this.trophies.unshift(trophy); // Newest first
+    if (this.trophies.length > 50) this.trophies = this.trophies.slice(0, 50);
+    this.saveGame();
+    this.renderTrophyGallery();
+  }
+
+  renderTrophyGallery() {
+    const container = document.getElementById('trophy-gallery-content');
+    const countLabel = document.getElementById('trophy-count-label');
+    if (!container) return;
+    if (countLabel) countLabel.textContent = `ТРОФЕЕВ: ${this.trophies.length}`;
+
+    if (!this.trophies || this.trophies.length === 0) {
+      container.innerHTML = '<div style="text-align:center;color:#8da4af;padding:20px;font-size:12px">Здесь будут отображаться ваши трофеи после первой победы</div>';
+      return;
+    }
+
+    const rankColors = { S: '#00ff88', A: '#00f0ff', B: '#ffcc00', C: '#ff9944' };
+    container.innerHTML = this.trophies.map(t => {
+      const color = rankColors[t.rank] || '#8da4af';
+      const dateStr = t.date ? new Date(t.date).toLocaleDateString('ru-RU') : '';
+      return `
+        <div style="display:flex;gap:10px;padding:10px;background:rgba(0,20,35,0.8);border:1px solid ${color}33;border-radius:8px;margin-bottom:6px;align-items:center">
+          <div style="font-size:28px;min-width:36px;text-align:center">${t.icon || '🎖️'}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:12px;font-weight:700;color:${color};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${t.name}</div>
+            <div style="font-size:10px;color:#8da4af;margin-top:2px">${t.desc || ''}</div>
+          </div>
+          <div style="text-align:right;min-width:fit-content">
+            <div style="font-size:16px;font-weight:900;color:${color}">Ранг ${t.rank || '?'}</div>
+            <div style="font-size:9px;color:#667;letter-spacing:1px">${dateStr}</div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  // =========================================================================
+  // CREW UPGRADE SYSTEM
+  // =========================================================================
+  initTrophyAndCrew() {
+    // Trophy modal
+    const btnOpenTrophy = document.getElementById('btn-open-trophy');
+    if (btnOpenTrophy) {
+      btnOpenTrophy.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const modal = document.getElementById('trophy-gallery-modal');
+        if (modal) modal.classList.add('active');
+        this.renderTrophyGallery();
+      });
+    }
+    const btnCloseTrophy = document.getElementById('btn-close-trophy');
+    if (btnCloseTrophy) btnCloseTrophy.addEventListener('click', () => {
+      const modal = document.getElementById('trophy-gallery-modal');
+      if (modal) modal.classList.remove('active');
+    });
+    const btnCloseTrophyBottom = document.getElementById('btn-close-trophy-bottom');
+    if (btnCloseTrophyBottom) btnCloseTrophyBottom.addEventListener('click', () => {
+      const modal = document.getElementById('trophy-gallery-modal');
+      if (modal) modal.classList.remove('active');
+    });
+
+    // Crew modal
+    const btnOpenCrew = document.getElementById('btn-open-crew');
+    if (btnOpenCrew) {
+      btnOpenCrew.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const modal = document.getElementById('crew-upgrade-modal');
+        if (modal) modal.classList.add('active');
+        this._renderCrewUI();
+      });
+    }
+    const btnCloseCrew = document.getElementById('btn-close-crew');
+    if (btnCloseCrew) btnCloseCrew.addEventListener('click', () => {
+      const modal = document.getElementById('crew-upgrade-modal');
+      if (modal) modal.classList.remove('active');
+    });
+
+    // Crew upgrade buttons
+    ['pilot', 'tech', 'hacker'].forEach(role => {
+      const btn = document.getElementById(`btn-crew-${role}`);
+      if (btn) btn.addEventListener('click', () => this._upgradeCrew(role));
+    });
+
+    // Initial render
+    this.renderTrophyGallery();
+    this._renderCrewUI();
+  }
+
+  _getCrewCost(role, level) {
+    const bases = { pilot: { usd: 5000, mb: 50 }, tech: { usd: 4000, mb: 40 }, hacker: { usd: 3500, mb: 35 } };
+    const base = bases[role] || { usd: 5000, mb: 50 };
+    return {
+      usd: Math.floor(base.usd * Math.pow(1.8, level - 1)),
+      mb: Math.floor(base.mb * Math.pow(1.8, level - 1))
+    };
+  }
+
+  _upgradeCrew(role) {
+    if (!this.crew) this.crew = { pilot: 1, tech: 1, hacker: 1 };
+    const currentLevel = this.crew[role] || 1;
+    if (currentLevel >= 5) {
+      this.addNotification('👥 MAX УРОВЕНЬ', `Специалист уже достиг максимума!`);
+      return;
+    }
+    const cost = this._getCrewCost(role, currentLevel);
+    if (this.dataMB < cost.mb || this.creditsUSD < cost.usd) {
+      this.addNotification('⚠️ НЕДОСТАТОЧНО РЕСУРСОВ', `Нужно ${cost.mb} МБ и $${cost.usd.toLocaleString()}`);
+      return;
+    }
+    this.dataMB -= cost.mb;
+    this.creditsUSD -= cost.usd;
+    this.crew[role] = currentLevel + 1;
+    const roleNames = { pilot: 'ПИЛОТ FPV', tech: 'ТЕХНИК', hacker: 'ХАКЕР РЭБ' };
+    this.addNotification(`👥 ${roleNames[role]} УЛУЧШЕН`, `Уровень ${this.crew[role]}/5 — эффективность повышена!`);
+    if (window.tacticalAudio) window.tacticalAudio.playAchievementUnlock();
+    this._renderCrewUI();
+    this.saveGame();
+    this.updateUI();
+  }
+
+  _renderCrewUI() {
+    if (!this.crew) this.crew = { pilot: 1, tech: 1, hacker: 1 };
+    const colors = { pilot: '#00f0ff', tech: '#ffcc00', hacker: '#ff88cc' };
+    ['pilot', 'tech', 'hacker'].forEach(role => {
+      const level = this.crew[role] || 1;
+      const isMax = level >= 5;
+      const cost = this._getCrewCost(role, level);
+      const color = colors[role];
+
+      const levelEl = document.getElementById(`crew-${role}-level`);
+      const barEl = document.getElementById(`crew-${role}-bar`);
+      const costEl = document.getElementById(`crew-${role}-cost`);
+      const btn = document.getElementById(`btn-crew-${role}`);
+
+      if (levelEl) levelEl.textContent = level;
+      if (barEl) barEl.style.width = `${(level / 5) * 100}%`;
+      if (costEl) costEl.textContent = isMax ? 'MAX УРОВЕНЬ' : `+$${cost.usd.toLocaleString()} | +${cost.mb} МБ`;
+      if (btn) {
+        btn.textContent = isMax ? '✓ MAX' : 'ПОВЫСИТЬ';
+        btn.disabled = isMax || this.dataMB < cost.mb || this.creditsUSD < cost.usd;
+        btn.style.opacity = btn.disabled ? '0.4' : '1';
+      }
+    });
+  }
+
+  // Crew multipliers applied to game stats
+  getCrewPilotMult() { return 1.0 + ((this.crew?.pilot || 1) - 1) * 0.10; } // +10% FPV speed per level
+  getCrewTechMult()  { return 1.0 + ((this.crew?.tech  || 1) - 1) * 0.05; } // +5% passive per level
+  getCrewHackerBonus(){ return ((this.crew?.hacker || 1) - 1) * 0.05; }      // +5% REW green zone per level
+
+
 window.addEventListener('DOMContentLoaded', () => {
+  // === LOADING SCREEN ===
+  const loadBar = document.getElementById('brc-load-bar');
+  const loadText = document.getElementById('brc-load-text');
+  const loadScreen = document.getElementById('barracuda-loading-screen');
+
+  const loadSteps = [
+    [10, 'ЗАГРУЗКА НАВИГАЦИОННОЙ КАРТЫ...'],
+    [30, 'КАЛИБРОВКА 3D-ДВИЖКА...'],
+    [55, 'ИНИЦИАЛИЗАЦИЯ ТАКТИЧЕСКИХ СИСТЕМ...'],
+    [75, 'ЗАГРУЗКА ДАННЫХ КАМПАНИИ...'],
+    [90, 'СИНХРОНИЗАЦИЯ СОХРАНЕНИЯ...'],
+    [100, 'СИСТЕМЫ ГОТОВЫ. БАРРАКУДА — НА БОЕВОМ КУРСЕ!'],
+  ];
+
+  let stepIdx = 0;
+  function advanceLoad() {
+    if (stepIdx >= loadSteps.length) return;
+    const [pct, text] = loadSteps[stepIdx++];
+    if (loadBar) loadBar.style.width = pct + '%';
+    if (loadText) loadText.textContent = text;
+    if (stepIdx < loadSteps.length) {
+      setTimeout(advanceLoad, stepIdx === 1 ? 150 : (stepIdx === loadSteps.length ? 400 : 250));
+    }
+  }
+  advanceLoad();
+
+  // Init game
   window.barracudaGame = new BarracudaGame();
   window.barracudaGame.initTechTree();
   window.barracudaGame.initSettings();
   window.barracudaGame.initAdvancedTacticalSystems();
+
+  // Dismiss loading screen after engine is ready
+  setTimeout(() => {
+    if (loadBar) loadBar.style.width = '100%';
+    if (loadText) loadText.textContent = 'СИСТЕМЫ ГОТОВЫ. БАРРАКУДА — НА БОЕВОМ КУРСЕ!';
+    setTimeout(() => {
+      if (loadScreen) {
+        loadScreen.style.opacity = '0';
+        loadScreen.style.visibility = 'hidden';
+        setTimeout(() => { if (loadScreen) loadScreen.remove(); }, 700);
+      }
+    }, 600);
+  }, 1600);
 });
 

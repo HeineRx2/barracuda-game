@@ -51,6 +51,25 @@
   <script src="libs/Sky.js"></script>
 </head>
 <body>
+<div id="barracuda-loading-screen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:linear-gradient(135deg,#020c14 0%,#030f1a 50%,#050811 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:99999;font-family:'Rajdhani',sans-serif;transition:opacity 0.6s ease,visibility 0.6s ease;">
+  <div style="position:relative;width:120px;height:120px;margin-bottom:24px">
+    <div style="position:absolute;inset:0;border-radius:50%;border:2px solid #00f0ff22;animation:brcLoaderPulse 2s infinite"></div>
+    <div style="position:absolute;inset:8px;border-radius:50%;border:1px solid #00f0ff44;animation:brcLoaderPulse 2s 0.4s infinite"></div>
+    <div style="position:absolute;inset:20px;border-radius:50%;border:1px solid #00f0ff66;animation:brcLoaderPulse 2s 0.8s infinite"></div>
+    <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:42px">&#129400;</div>
+  </div>
+  <div style="font-size:clamp(28px,5vw,42px);font-weight:900;letter-spacing:6px;color:#00f0ff;text-shadow:0 0 20px #00f0ff;margin-bottom:4px">BARRACUDA</div>
+  <div style="font-size:11px;letter-spacing:3px;color:#8da4af;margin-bottom:28px">NAVAL TACTICAL SIMULATOR v6.0</div>
+  <div style="width:clamp(200px,50vw,320px);height:3px;background:#0a1a24;border-radius:2px;overflow:hidden;margin-bottom:10px">
+    <div id="brc-load-bar" style="height:100%;width:0%;background:linear-gradient(90deg,#00f0ff,#00ff88);border-radius:2px;transition:width 0.3s ease"></div>
+  </div>
+  <div id="brc-load-text" style="font-size:10px;letter-spacing:2px;color:#8da4af">ИНИЦИАЛИЗАЦИЯ СИСТЕМ...</div>
+  <div style="position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,240,255,0.01) 2px,rgba(0,240,255,0.01) 4px);pointer-events:none"></div>
+</div>
+<style>
+@keyframes brcLoaderPulse{0%{transform:scale(1);opacity:.7}50%{transform:scale(1.08);opacity:.3}100%{transform:scale(1);opacity:.7}}
+</style>
+
 
   <!-- 3D Drone & Ocean Viewport Container -->
   <div id="drone-3d-viewport"></div>
@@ -108,6 +127,14 @@
         <button class="btn-dossier-pill btn-nav-tactical" id="btn-open-tactical-hub" title="Тактика" style="border-color:rgba(0,255,200,0.8); background:rgba(0,255,200,0.18); color:#00ffcc; font-weight:700;">
           <span class="dossier-pill-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M12 2v20M2 12h20M12 7a5 5 0 1 0 0 10 5 5 0 1 0 0-10zM12 12l5-5"/></svg></span>
           <span class="dossier-pill-text">ТАКТИКА</span>
+        </button>
+        <button class="btn-dossier-pill class="btn-dossier-pill" id="btn-open-trophy" title="Галерея побед" style="border-color:rgba(255,204,0,0.6); background:rgba(255,204,0,0.12); color:#ffcc00;">
+          <span class="dossier-pill-icon">&#127942;</span>
+          <span class="dossier-pill-text">ТРОФЕИ</span>
+        </button>
+        <button class="btn-dossier-pill" id="btn-open-crew" title="Прокачка экипажа" style="border-color:rgba(208,112,255,0.6); background:rgba(208,112,255,0.12); color:#d070ff;">
+          <span class="dossier-pill-icon">&#128101;</span>
+          <span class="dossier-pill-text">ЭКИПАЖ</span>
         </button>
         <button class="btn-dossier-pill btn-nav-drawer-toggle" id="btn-open-mobile-drawer" title="Меню и опции" style="display:none;">
           <span class="dossier-pill-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg></span>
@@ -1655,6 +1682,114 @@
   <script src="audio.js?v=4.0.9"></script>
   <script src="drone3d.js?v=4.0.9"></script>
   <script src="game.js?v=6.0.0"></script>
+
+<!-- TROPHY GALLERY MODAL -->
+<div class="help-modal-overlay" id="trophy-gallery-modal">
+  <div class="help-modal-box" style="max-width:520px;width:95%">
+    <div class="help-modal-header">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-size:22px">&#127942;</span>
+        <div>
+          <div style="font-size:14px;font-weight:800;letter-spacing:2px;color:#ffcc00">ГАЛЕРЕЯ ПОБЕД</div>
+          <div style="font-size:10px;color:#8da4af;letter-spacing:1px">ПОТОПЛЕННЫЕ ЦЕЛИ // ТРОФЕИ КОМАНДИРА</div>
+        </div>
+      </div>
+      <button class="btn-close-modal" id="btn-close-trophy">&#10005;</button>
+    </div>
+    <div id="trophy-gallery-content" style="padding:12px;max-height:420px;overflow-y:auto">
+      <div style="text-align:center;color:#8da4af;padding:20px;font-size:12px">Здесь будут отображаться ваши трофеи после первой победы</div>
+    </div>
+    <div style="padding:8px 12px;border-top:1px solid #0a2535;display:flex;justify-content:space-between;align-items:center">
+      <span id="trophy-count-label" style="font-size:10px;color:#8da4af;letter-spacing:1px">ТРОФЕЕВ: 0</span>
+      <button class="btn-buy-action" id="btn-close-trophy-bottom">ЗАКРЫТЬ</button>
+    </div>
+  </div>
+</div>
+
+<!-- CREW UPGRADE MODAL -->
+<div class="help-modal-overlay" id="crew-upgrade-modal">
+  <div class="help-modal-box" style="max-width:540px;width:95%">
+    <div class="help-modal-header">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-size:22px">&#128101;</span>
+        <div>
+          <div style="font-size:14px;font-weight:800;letter-spacing:2px;color:#d070ff">ПРОКАЧКА ЭКИПАЖА</div>
+          <div style="font-size:10px;color:#8da4af;letter-spacing:1px">СПЕЦИАЛИСТЫ // УРОВНИ 1-5</div>
+        </div>
+      </div>
+      <button class="btn-close-modal" id="btn-close-crew">&#10005;</button>
+    </div>
+    <div id="crew-upgrade-content" style="padding:12px;display:flex;flex-direction:column;gap:10px">
+      <!-- Pilot -->
+      <div class="crew-member-card" style="background:rgba(0,20,35,0.8);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:12px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+          <span style="font-size:24px">&#129399;</span>
+          <div style="flex:1">
+            <div style="font-size:13px;font-weight:700;color:#00f0ff">ПИЛОТ FPV</div>
+            <div style="font-size:10px;color:#8da4af" id="crew-pilot-effect">+10% скорость FPV на уровень</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:11px;color:#8da4af">УРОВЕНЬ</div>
+            <div id="crew-pilot-level" style="font-size:20px;font-weight:900;color:#00f0ff">1</div>
+          </div>
+        </div>
+        <div style="height:4px;background:#0a1a24;border-radius:2px;margin-bottom:8px;overflow:hidden">
+          <div id="crew-pilot-bar" style="height:100%;width:20%;background:linear-gradient(90deg,#00f0ff,#00ff88);border-radius:2px;transition:width 0.4s"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span id="crew-pilot-cost" style="font-size:10px;color:#8da4af">+$5,000 | +50 МБ</span>
+          <button class="btn-buy-action" id="btn-crew-pilot" style="color:#00f0ff;border-color:#00f0ff44">ПОВЫСИТЬ</button>
+        </div>
+      </div>
+      <!-- Tech -->
+      <div class="crew-member-card" style="background:rgba(0,20,35,0.8);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:12px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+          <span style="font-size:24px">&#128295;</span>
+          <div style="flex:1">
+            <div style="font-size:13px;font-weight:700;color:#ffcc00">ТЕХНИК</div>
+            <div style="font-size:10px;color:#8da4af" id="crew-tech-effect">+5% пассивный доход на уровень</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:11px;color:#8da4af">УРОВЕНЬ</div>
+            <div id="crew-tech-level" style="font-size:20px;font-weight:900;color:#ffcc00">1</div>
+          </div>
+        </div>
+        <div style="height:4px;background:#0a1a24;border-radius:2px;margin-bottom:8px;overflow:hidden">
+          <div id="crew-tech-bar" style="height:100%;width:20%;background:linear-gradient(90deg,#ffcc00,#ff8800);border-radius:2px;transition:width 0.4s"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span id="crew-tech-cost" style="font-size:10px;color:#8da4af">+$4,000 | +40 МБ</span>
+          <button class="btn-buy-action" id="btn-crew-tech" style="color:#ffcc00;border-color:#ffcc0044">ПОВЫСИТЬ</button>
+        </div>
+      </div>
+      <!-- Hacker -->
+      <div class="crew-member-card" style="background:rgba(0,20,35,0.8);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:12px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+          <span style="font-size:24px">&#128187;</span>
+          <div style="flex:1">
+            <div style="font-size:13px;font-weight:700;color:#ff88cc">ХАКЕР РЭБ</div>
+            <div style="font-size:10px;color:#8da4af" id="crew-hacker-effect">+5% зона РЭБ на уровень, -5% шанс ошибки</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:11px;color:#8da4af">УРОВЕНЬ</div>
+            <div id="crew-hacker-level" style="font-size:20px;font-weight:900;color:#ff88cc">1</div>
+          </div>
+        </div>
+        <div style="height:4px;background:#0a1a24;border-radius:2px;margin-bottom:8px;overflow:hidden">
+          <div id="crew-hacker-bar" style="height:100%;width:20%;background:linear-gradient(90deg,#ff88cc,#d070ff);border-radius:2px;transition:width 0.4s"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span id="crew-hacker-cost" style="font-size:10px;color:#8da4af">+$3,500 | +35 МБ</span>
+          <button class="btn-buy-action" id="btn-crew-hacker" style="color:#ff88cc;border-color:#ff88cc44">ПОВЫСИТЬ</button>
+        </div>
+      </div>
+    </div>
+    <div style="padding:8px 12px;border-top:1px solid #0a2535;font-size:10px;color:#8da4af;text-align:center;letter-spacing:1px">
+      ПИЛОТ: скорость FPV // ТЕХНИК: пассивный доход // ХАКЕР: зона взлома РЭБ
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
 
