@@ -2137,7 +2137,7 @@ class BarracudaGame {
         soundEnabled: this.soundEnabled,
         savedAt: Date.now(),
         passiveRateMBs: this.getPassiveRate(),
-        passiveRateUSDps: this.getUSDPassiveRate()
+        passiveRateUSDps: this.getUSDPassiveRate(),
         trophies: this.trophies || [],
         crew: this.crew || { pilot: 1, tech: 1, hacker: 1 }
       };
