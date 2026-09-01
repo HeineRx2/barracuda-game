@@ -2024,28 +2024,51 @@ class BarracudaGame {
   // DYNAMIC CONTRACT GENERATION
   // =========================================================================
   generateContracts() {
+    // Rarity tiers: common (always), rare (counter>=3 or bp>=5), elite (counter>=6 or bp>=15)
     const templates = [
-      { base: 'ПОДВОДНЫЙ КАБЕЛЬ', costMB: 30, costUSD: 0, rewardUSD: 1500, rewardMB: 80, duration: 6 },
-      { base: 'РАДАРНАЯ ЛОВУШКА', costMB: 150, costUSD: 500, rewardUSD: 6000, rewardMB: 300, duration: 12 },
-      { base: 'КОНВОЙ СНАБЖЕНИЯ', costMB: 80, costUSD: 1000, rewardUSD: 8000, rewardMB: 200, duration: 8 },
-      { base: 'ПЕРЕХВАТ СПУТНИКА', costMB: 200, costUSD: 2000, rewardUSD: 15000, rewardMB: 500, duration: 15 },
-      { base: 'ДЕСАНТНАЯ ОПЕРАЦИЯ', costMB: 120, costUSD: 1500, rewardUSD: 10000, rewardMB: 350, duration: 10 },
-      { base: 'МИННОЕ ЗАГРАЖДЕНИЕ', costMB: 60, costUSD: 300, rewardUSD: 4000, rewardMB: 150, duration: 7 },
+      // COMMON
+      { base: 'ПОДВОДНЫЙ КАБЕЛЬ',    costMB: 30,   costUSD: 0,     rewardUSD: 1500,   rewardMB: 80,   rewardBP: 0,  duration: 6,  rarity: 'common', icon: '📡' },
+      { base: 'РАДАРНАЯ ЛОВУШКА',    costMB: 150,  costUSD: 500,   rewardUSD: 6000,   rewardMB: 300,  rewardBP: 0,  duration: 12, rarity: 'common', icon: '📡' },
+      { base: 'КОНВОЙ СНАБЖЕНИЯ',    costMB: 80,   costUSD: 1000,  rewardUSD: 8000,   rewardMB: 200,  rewardBP: 0,  duration: 8,  rarity: 'common', icon: '🚢' },
+      { base: 'МИННОЕ ЗАГРАЖДЕНИЕ',  costMB: 60,   costUSD: 300,   rewardUSD: 4000,   rewardMB: 150,  rewardBP: 0,  duration: 7,  rarity: 'common', icon: '💣' },
+      { base: 'БЕРЕГОВОЙ ПАТРУЛЬ',   costMB: 40,   costUSD: 200,   rewardUSD: 2500,   rewardMB: 100,  rewardBP: 0,  duration: 5,  rarity: 'common', icon: '🚤' },
+      { base: 'ПЕРЕХВАТ СВЯЗИ',      costMB: 100,  costUSD: 600,   rewardUSD: 5000,   rewardMB: 250,  rewardBP: 0,  duration: 9,  rarity: 'common', icon: '📻' },
+      // RARE
+      { base: 'ПЕРЕХВАТ СПУТНИКА',   costMB: 200,  costUSD: 2000,  rewardUSD: 15000,  rewardMB: 500,  rewardBP: 1,  duration: 15, rarity: 'rare', icon: '🛰️' },
+      { base: 'ДЕСАНТНАЯ ОПЕРАЦИЯ',  costMB: 120,  costUSD: 1500,  rewardUSD: 10000,  rewardMB: 350,  rewardBP: 1,  duration: 10, rarity: 'rare', icon: '⚓' },
+      { base: 'ДИВЕРСИЯ НА СКЛАДЕ',  costMB: 180,  costUSD: 2500,  rewardUSD: 18000,  rewardMB: 600,  rewardBP: 1,  duration: 14, rarity: 'rare', icon: '💥' },
+      { base: 'ОПЕРАЦИЯ «ПРИЗРАК»',  costMB: 250,  costUSD: 3000,  rewardUSD: 22000,  rewardMB: 800,  rewardBP: 2,  duration: 18, rarity: 'rare', icon: '👻' },
+      // ELITE
+      { base: 'УНИЧТОЖЕНИЕ ФЛАГМАНА', costMB: 500, costUSD: 8000,  rewardUSD: 60000,  rewardMB: 2000, rewardBP: 4,  duration: 25, rarity: 'elite', icon: '👑' },
+      { base: 'КОД «НЕПТУН»',        costMB: 800,  costUSD: 15000, rewardUSD: 120000, rewardMB: 5000, rewardBP: 8,  duration: 30, rarity: 'elite', icon: '🔱' },
+      { base: 'ЯДЕРНЫЙ ЩИТ',         costMB: 1000, costUSD: 20000, rewardUSD: 200000, rewardMB: 8000, rewardBP: 12, duration: 35, rarity: 'elite', icon: '☢️' },
+      { base: 'ФИНАЛЬНЫЙ ПРОТОКОЛ',  costMB: 2000, costUSD: 50000, rewardUSD: 500000, rewardMB: 20000,rewardBP: 20, duration: 45, rarity: 'elite', icon: '💀' },
     ];
 
     const scale = 1 + this.contractGenCounter * 0.3;
+    const bp = this.blueprintsBP || 0;
+
+    const available = templates.filter(t => {
+      if (t.rarity === 'common') return true;
+      if (t.rarity === 'rare') return this.contractGenCounter >= 3 || bp >= 5;
+      if (t.rarity === 'elite') return this.contractGenCounter >= 6 || bp >= 15;
+      return true;
+    });
+
     const contracts = [];
-    const shuffled = shuffleArray(templates).slice(0, 3);
+    const shuffled = shuffleArray(available).slice(0, 3);
 
     shuffled.forEach((t, i) => {
+      const rarityBadge = t.rarity === 'elite' ? ' [ЭЛИТА]' : (t.rarity === 'rare' ? ' [РЕДКИЙ]' : '');
       contracts.push({
         id: `c${this.contractGenCounter * 10 + i}`,
-        name: `ОП: ${t.base}`,
+        name: `${t.icon} ОП: ${t.base}${rarityBadge}`,
+        rarity: t.rarity,
         costMB: Math.floor(t.costMB * scale),
         costUSD: Math.floor(t.costUSD * scale),
         rewardUSD: Math.floor(t.rewardUSD * scale),
         rewardMB: Math.floor(t.rewardMB * scale),
-        rewardBP: 0,
+        rewardBP: t.rewardBP || 0,
         progress: 0,
         duration: t.duration,
         active: false,
@@ -2106,7 +2129,9 @@ class BarracudaGame {
         shipMaxHP: this.shipMaxHP,
         shipLevel: this.shipLevel,
         soundEnabled: this.soundEnabled,
-        savedAt: Date.now()
+        savedAt: Date.now(),
+        passiveRateMBs: this.getPassiveRate(),
+        passiveRateUSDps: this.getUSDPassiveRate()
       };
       localStorage.setItem('barracuda_save', JSON.stringify(data));
     } catch (e) {
@@ -2156,6 +2181,8 @@ class BarracudaGame {
       this.shipLevel = data.shipLevel || 1;
       this.soundEnabled = data.soundEnabled !== false;
       this._savedAt = data.savedAt || 0;
+      this._savedPassiveRateMB = data.passiveRateMBs || 0;
+      this._savedPassiveRateUSD = data.passiveRateUSDps || 0;
 
       // Regenerate contracts for current tier
       this.activeContracts = this.generateContracts();
@@ -2180,8 +2207,8 @@ class BarracudaGame {
 
     const maxOffline = 4 * 3600; // 4 hours cap
     const offlineSec = Math.min(elapsed, maxOffline);
-    const passiveMB = this.getPassiveRate();
-    const passiveUSD = this.getUSDPassiveRate();
+    const passiveMB = this._savedPassiveRateMB || this.getPassiveRate();
+    const passiveUSD = this._savedPassiveRateUSD || this.getUSDPassiveRate();
 
     // Apply at 50% efficiency (offline penalty)
     const gainMB = passiveMB * offlineSec * 0.5;
@@ -2211,6 +2238,7 @@ class BarracudaGame {
       // New day — generate new quests, reset counters
       this.dailyQuestDate = today;
       this.dailyClicks = 0;
+      this._dailyBpGivenToday = false;
       this.dailyDataCollected = 0;
       this.dailyCreditsEarned = 0;
       this.dailyAssaults = 0;
@@ -2257,6 +2285,12 @@ class BarracudaGame {
 
     if (allDone && this.dailyQuests.every(q => q.completed)) {
       this.checkAchievement('daily_complete');
+      if (!this._dailyBpGivenToday) {
+        this._dailyBpGivenToday = true;
+        this.blueprintsBP = (this.blueprintsBP || 0) + 1;
+        this.addNotification('📋 ВСЕ ЗАДАНИЯ ВЫПОЛНЕНЫ', 'Ежедневный бонус: +1 Чертёж Престижа!');
+        if (window.tacticalAudio) window.tacticalAudio.playAchievementUnlock();
+      }
     }
   }
 
@@ -3438,7 +3472,7 @@ class BarracudaGame {
     this.activeMission = found;
     this.sortieActive = true;
     this.fpvFlightPhase = false;
-    this.sortieTimeLeft = 300; // 5 minutes
+    this.sortieTimeLeft = Math.max(120, 300 - ((foundAct ? foundAct.act - 1 : 0) * 25)); // Scales harder per act
     this.sortieStats = {
       crates: 0,
       totalCrates: 3,
@@ -4241,18 +4275,35 @@ class BarracudaGame {
       this.salvage.chips = (this.salvage.chips || 0) + 4;
       this.salvage.titanium = (this.salvage.titanium || 0) + 3;
 
-      // Calculate Battle Rating (S / A / B)
+      // Calculate Battle Rating (S / A / B / C)
       let rank = 'S';
-      if (this.sortieStats.flakHitsTaken > 2 || missionElapsedSec > 80) rank = 'A';
+      if (this.sortieStats.flakHitsTaken > 0 || missionElapsedSec > 80) rank = 'A';
       if (this.sortieStats.hitMines > 1 || missionElapsedSec > 110) rank = 'B';
+      if (this.sortieStats.flakHitsTaken > 4 || missionElapsedSec > 160) rank = 'C';
+
+      // 🎯 GLITCH SPLASH — ЦЕЛЬ ПОРАЖЕНА
+      const glitchLayer = document.getElementById('fpv-glitch-layer');
+      if (glitchLayer && this.fpvFlightPhase) {
+        glitchLayer.innerHTML = '<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-family:\'Rajdhani\',sans-serif;font-size:clamp(24px,6vw,52px);font-weight:900;color:#00ff88;letter-spacing:3px;text-shadow:0 0 30px #00ff88;white-space:nowrap">✓ ЦЕЛЬ ПОРАЖЕНА</div>';
+        glitchLayer.classList.add('fpv-glitched');
+        setTimeout(() => { glitchLayer.innerHTML = ''; glitchLayer.classList.remove('fpv-glitched'); }, 1400);
+      }
 
       const victoryModal = document.getElementById('mission-victory-modal');
       const rankBadge = document.getElementById('victory-rank-badge');
       const hitSubTitle = document.getElementById('victory-hit-sub');
       const statsEl = document.getElementById('victory-stats');
 
-      if (rankBadge) rankBadge.textContent = `РАНГ: ${rank} (${rank === 'S' ? 'ИДЕАЛЬНЫЙ ШТУРМ' : (rank === 'A' ? 'ОТЛИЧНЫЙ ПРОРЫВ' : 'УСПЕШНАЯ ОПЕРАЦИЯ')})`;
+      const rankColors = { S: '#00ff88', A: '#00f0ff', B: '#ffcc00', C: '#ff9944' };
+      const rankLabels = { S: 'ИДЕАЛЬНЫЙ ШТУРМ', A: 'ОТЛИЧНЫЙ ПРОРЫВ', B: 'УСПЕШНАЯ ОПЕРАЦИЯ', C: 'ОПЕРАЦИЯ ВЫПОЛНЕНА' };
+      if (rankBadge) {
+        rankBadge.innerHTML = `<span style="font-size:clamp(30px,7vw,58px);font-weight:900;color:${rankColors[rank]};text-shadow:0 0 20px ${rankColors[rank]};display:block;line-height:1.1;animation:fpvAlertBlink 0.5s 4 alternate">РАНГ ${rank}</span><span style="font-size:12px;letter-spacing:2px;color:#8da4af">${rankLabels[rank]}</span>`;
+      }
       if (hitSubTitle) hitSubTitle.textContent = `${this.sortieStats.targetSubsystem || 'Ходовой мостик'} (${this.sortieStats.damageBonus || 'CRITICAL KILL x2.0'})`;
+
+      // Speed bonus for fast strikes
+      const timeBonus = missionElapsedSec < 60 ? Math.floor(usdEarned * 0.25) : 0;
+      if (timeBonus > 0) this.creditsUSD += timeBonus;
 
       if (statsEl) {
         statsEl.innerHTML = `
@@ -4272,6 +4323,15 @@ class BarracudaGame {
             <div class="debrief-stat-label">ТРОФЕЙНЫЙ ЛУТ</div>
             <div class="debrief-stat-val text-cyan">📦x3 💎x4 🛡️x3</div>
           </div>
+          ${timeBonus > 0 ? `<div class="debrief-stat-box"><div class="debrief-stat-label">⚡ БОНУС СКОРОСТИ</div><div class="debrief-stat-val text-green">+$${timeBonus.toLocaleString()}</div></div>` : ''}
+          <div class="debrief-stat-box">
+            <div class="debrief-stat-label">ВРЕМЯ ОПЕРАЦИИ</div>
+            <div class="debrief-stat-val ${missionElapsedSec < 60 ? 'text-green' : 'text-yellow'}">${missionElapsedSec} сек</div>
+          </div>
+          <div class="debrief-stat-box">
+            <div class="debrief-stat-label">ЗЕНИТНЫХ ПОПАДАНИЙ</div>
+            <div class="debrief-stat-val ${this.sortieStats.flakHitsTaken === 0 ? 'text-green' : 'text-red'}">${this.sortieStats.flakHitsTaken === 0 ? '0 — ФАНТОМ!' : this.sortieStats.flakHitsTaken}</div>
+          </div>
         `;
       }
 
@@ -4280,7 +4340,7 @@ class BarracudaGame {
         window.tacticalAudio.playMissionVictory();
         window.tacticalAudio.playRatingReveal(rank);
       }
-      this.addNotification('🏆 ОПЕРАЦИЯ ВЫПОЛНЕНА', `Вражеский корабль уничтожен! Получено: +$${usdEarned.toLocaleString()}`);
+      this.addNotification('🏆 ОПЕРАЦИЯ ВЫПОЛНЕНА', `Ранг: ${rank} — Корабль уничтожен! +$${usdEarned.toLocaleString()}`);
     } else {
       // 💀 GAME OVER MODAL (THE END)
       const gameoverModal = document.getElementById('mission-gameover-modal');
@@ -5496,15 +5556,20 @@ class BarracudaGame {
     this.activeContracts.forEach(c => {
       const card = document.createElement('div');
       card.className = 'upgrade-item-card contract-card-dynamic';
+      const rarityColor = c.rarity === 'elite' ? '#ff9944' : (c.rarity === 'rare' ? '#d070ff' : '#00f0ff');
+      const rarityLabel = c.rarity === 'elite' ? '⭐ ЭЛИТА' : (c.rarity === 'rare' ? '💎 РЕДКИЙ' : '📋 ОБЫЧНЫЙ');
       card.innerHTML = `
-        <div>
-          <div class="item-card-title text-cyan">${c.name}</div>
-          <div class="item-card-sub text-dim-cyan">+$${c.rewardUSD.toLocaleString()} // +${c.rewardMB} МБ</div>
-          <div class="contract-bar-track">
-            <div id="prog-contract-${c.id}" class="contract-bar-fill"></div>
+        <div style="width:100%">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">
+            <div class="item-card-title" style="color:${rarityColor}">${c.name}</div>
+            <span style="font-size:9px;padding:1px 5px;border-radius:4px;border:1px solid ${rarityColor}44;color:${rarityColor};background:${rarityColor}11">${rarityLabel}</span>
+          </div>
+          <div class="item-card-sub text-dim-cyan">+$${c.rewardUSD.toLocaleString()} // +${c.rewardMB} МБ${c.rewardBP > 0 ? ` // +${c.rewardBP} ЧЖ` : ''}</div>
+          <div class="contract-bar-track" style="margin-top:5px">
+            <div id="prog-contract-${c.id}" class="contract-bar-fill" style="background:${rarityColor}"></div>
           </div>
         </div>
-        <button class="btn-buy-action" data-start-contract="${c.id}">СТАРТ</button>
+        <button class="btn-buy-action" data-start-contract="${c.id}" style="border-color:${rarityColor}66;color:${rarityColor}" ${c.completed ? 'disabled' : ''}>${c.completed ? '✓ ВЫПОЛНЕН' : c.active ? '⏳ В РАБОТЕ' : 'СТАРТ'}</button>
       `;
       if (techCard) panel.insertBefore(card, techCard);
       else panel.appendChild(card);
@@ -5690,6 +5755,41 @@ class BarracudaGame {
     const shipData = getEnemyShipData(this.shipLevel);
     if (hpLabel) {
       hpLabel.textContent = `${shipData.icon} ${shipData.name} [Ур.${this.shipLevel}]: ${Math.ceil(this.shipHP).toLocaleString()} / ${this.shipMaxHP.toLocaleString()} HP`;
+    }
+
+    // Daily quest progress bars
+    this._updateDailyQuestProgressBars();
+  }
+
+  _updateDailyQuestProgressBars() {
+    if (!this.dailyQuests || this.dailyQuests.length === 0) return;
+    const container = document.getElementById('daily-quest-progress-panel');
+    if (!container) return;
+
+    container.innerHTML = '';
+    this.dailyQuests.forEach(q => {
+      const tmpl = (typeof DAILY_QUEST_TEMPLATES !== 'undefined' ? DAILY_QUEST_TEMPLATES : []).find(t => t.id === q.id);
+      let current = 0;
+      if (tmpl) {
+        try { current = Math.min(q.target, tmpl.check ? (tmpl.getCurrent ? tmpl.getCurrent(this) : 0) : 0); } catch(e) {}
+      }
+      const pct = q.completed ? 100 : Math.min(100, Math.floor((current / Math.max(1, q.target)) * 100));
+      const color = q.completed ? '#00ff88' : '#00f0ff';
+      container.insertAdjacentHTML('beforeend', `
+        <div style="margin-bottom:6px">
+          <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:2px">
+            <span style="color:${color}">${q.icon || '📋'} ${q.desc}</span>
+            <span style="color:#8da4af">${q.completed ? '✓ ВЫПОЛНЕН' : pct + '%'}</span>
+          </div>
+          <div style="height:3px;background:#0a1a24;border-radius:2px;overflow:hidden">
+            <div style="height:100%;width:${pct}%;background:${color};transition:width 0.3s;border-radius:2px"></div>
+          </div>
+        </div>
+      `);
+    });
+    const allDone = this.dailyQuests.every(q => q.completed);
+    if (allDone) {
+      container.insertAdjacentHTML('beforeend', '<div style="text-align:center;color:#00ff88;font-size:11px;font-weight:700;margin-top:4px;text-shadow:0 0 8px #00ff88">🏆 ВСЕ ЗАДАНИЯ ВЫПОЛНЕНЫ! +1 ЧЖ ПОЛУЧЕН!</div>');
     }
   }
 
