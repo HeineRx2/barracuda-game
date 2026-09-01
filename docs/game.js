@@ -4057,16 +4057,22 @@ class BarracudaGame {
 
   startSortieTimer() {
     clearInterval(this._sortieInterval);
+    // Initialize sortieStats here to ensure it's NEVER missing (prevents crashes on Sortie end)
+    if (!this.sortieStats) {
+      this.sortieStats = { crates: 0, totalCrates: 3, hitMines: 0, detected: 0, flakHitsTaken: 0, startTime: Date.now() };
+    }
+
     this._sortieInterval = setInterval(() => {
       if (!this.sortieActive) {
         clearInterval(this._sortieInterval);
         return;
       }
-      this.sortieTimeLeft--;
+      this.sortieTimeLeft -= 0.1;
 
-      // Update timer HUD
-      const m = Math.floor(this.sortieTimeLeft / 60);
-      const s = this.sortieTimeLeft % 60;
+      // Update timer HUD (ceil so it doesn't show 0 too early)
+      const displayTime = Math.ceil(this.sortieTimeLeft);
+      const m = Math.floor(displayTime / 60);
+      const s = displayTime % 60;
       const timeStr = `⏱️ ${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 
       const timerEl = document.getElementById('hud-mission-timer');
@@ -4265,6 +4271,9 @@ class BarracudaGame {
     }
     this.setUIState('MAIN');
 
+    if (!this.sortieStats) {
+      this.sortieStats = { crates: 0, totalCrates: 3, hitMines: 0, detected: 0, flakHitsTaken: 0, startTime: Date.now() };
+    }
     const missionElapsedSec = Math.round((Date.now() - (this.sortieStats.startTime || Date.now())) / 1000);
     const m = this.activeMission;
 

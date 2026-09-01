@@ -5779,7 +5779,10 @@ body {
   text-align: center;
   letter-spacing: 0.5px;
   pointer-events: auto;
+  text-shadow: none !important;
 }
+
+
 
 /* bannerGlow removed for performance */
 
@@ -6003,6 +6006,7 @@ body {
   pointer-events: none;
   z-index: 160;
   transition: none;
+  text-shadow: none !important;
 }
 
 .compass-pointer-icon {
