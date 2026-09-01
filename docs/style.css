@@ -3487,7 +3487,7 @@ body {
   height: 120px;
   pointer-events: auto;
   touch-action: none;
-  z-index: 2050;
+  z-index: 200;
 }
 
 .joystick-base {
@@ -3932,7 +3932,7 @@ body {
   display: flex;
   gap: 12px;
   pointer-events: auto;
-  z-index: 15;
+  z-index: 200;
 }
 
 .btn-fpv-boost, .btn-fpv-detonate {
