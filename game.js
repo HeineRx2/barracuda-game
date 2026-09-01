@@ -6989,6 +6989,7 @@ window.addEventListener('DOMContentLoaded', () => {
   window.barracudaGame.initTechTree();
   window.barracudaGame.initSettings();
   window.barracudaGame.initAdvancedTacticalSystems();
+  window.barracudaGame.initTrophyAndCrew();
 
   // Dismiss loading screen after engine is ready
   setTimeout(() => {
