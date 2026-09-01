@@ -6581,34 +6581,6 @@ body::after {
   display: none !important;
 }
 
-/* QUICK COMBAT ACTIONS: Unified combat bar */
-.quick-combat-actions-bar {
-  position: relative !important;
-  display: flex !important;
-  flex-wrap: wrap !important;
-  justify-content: center !important;
-  align-items: center !important;
-  padding: 4px 2px !important;
-  gap: 6px !important;
-  margin: -8px auto 0 auto !important;
-  background: transparent !important;
-  border: none !important;
-  overflow: visible !important;
-  width: 100% !important;
-  flex: 0 0 auto !important;
-}
-.combat-quick-btn {
-  display: flex !important;
-  flex: 1 1 calc(33.333% - 8px) !important;
-  min-width: 85px !important;
-  height: auto !important;
-  min-height: 36px !important;
-  font-size: 10px !important;
-  padding: 4px 8px !important;
-  justify-content: center !important;
-  align-items: center !important;
-  border-radius: 6px !important;
-}
 
 /* TOP HUD TWEAKS */
 .top-hud-bar {
@@ -6643,12 +6615,46 @@ body::after {
   justify-content: center !important;
 }
 
-/* END OF FILE */
+
 
 /* FIX 5.1.4: Guarantee all modals and overlays stay above the HUD */
 #assault-modal, #cyber-modal, #victory-modal, #game-over-modal, .help-modal-overlay {
   z-index: 9999 !important;
 }
 
+/* =========================================================================
+   PATCH 6.0: GLOBAL MOBILE TOUCH FIX
+   ========================================================================= */
+@media (hover: none) {
+  * { -webkit-tap-highlight-color: transparent; }
+  button, [role='button'], .ring-action-btn, .combat-quick-btn,
+  .ring-circle-icon, .btn-launch-mission, .btn-buy-action {
+    touch-action: manipulation;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+}
 
+/* =========================================================================
+   PATCH 6.0 PHASE 3 — TROPHY & CREW STYLES
+   ========================================================================= */
+.trophy-gallery-modal .help-modal-box,
+.crew-upgrade-modal .help-modal-box {
+  animation: modalFadeIn 0.3s ease;
+}
 
+#trophy-gallery-content::-webkit-scrollbar { width: 4px; }
+#trophy-gallery-content::-webkit-scrollbar-track { background: #030f1a; }
+#trophy-gallery-content::-webkit-scrollbar-thumb { background: #0a2535; border-radius: 2px; }
+
+.crew-member-card {
+  background: rgba(0,20,35,0.8);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px;
+  padding: 12px;
+  transition: border-color 0.2s, transform 0.15s;
+}
+.crew-member-card:hover {
+  border-color: rgba(255,255,255,0.18);
+  transform: translateY(-1px);
+}
