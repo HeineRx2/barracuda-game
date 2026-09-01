@@ -3840,10 +3840,14 @@ body {
 
 .target-bracket-tag {
   font-family: Rajdhani, sans-serif;
-  font-size: 11px;
-  font-weight: 800;
+  font-size: 13px;
+  font-weight: 500;
   color: #00f0ff;
   letter-spacing: 0.5px;
+  text-shadow: none !important;
+  background: linear-gradient(90deg, transparent, rgba(0, 30, 40, 0.4), transparent);
+  padding: 2px 10px;
+  border-radius: 4px;
 }
 
 .fpv-ciws-alert {
@@ -5823,21 +5827,21 @@ body {
   left: 50%;
   transform: translateX(-50%);
   white-space: nowrap;
-  background: rgb(2 10 16 / 85%);
-  border: 1px solid #00f0ff;
-  padding: 2px 8px;
+  background: linear-gradient(90deg, transparent, rgba(0, 30, 40, 0.6), transparent);
+  border: none;
+  padding: 2px 12px;
   border-radius: 4px;
-  font-family: 'Share Tech Mono', monospace;
-  font-size: 11px;
-  font-weight: 700;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
   color: #00f0ff;
-  box-shadow: 0 0 10px rgb(0 240 255 / 40%);
+  box-shadow: none;
+  text-shadow: none !important;
+  letter-spacing: 0.5px;
 }
 
 .recon-waypoint-reticle.locked .wp-tag-pill {
-  border-color: #0f8;
   color: #0f8;
-  box-shadow: 0 0 15px rgb(0 255 136 / 60%);
 }
 
 .btn-recon-snap {
