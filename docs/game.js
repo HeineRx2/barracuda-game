@@ -6799,7 +6799,6 @@ class BarracudaGame {
       if (window.tacticalAudio) window.tacticalAudio.playSonarPing();
     }
   }
-}
 
   // =========================================================================
   // TROPHY SYSTEM
@@ -6956,7 +6955,7 @@ class BarracudaGame {
   getCrewPilotMult() { return 1.0 + ((this.crew?.pilot || 1) - 1) * 0.10; } // +10% FPV speed per level
   getCrewTechMult()  { return 1.0 + ((this.crew?.tech  || 1) - 1) * 0.05; } // +5% passive per level
   getCrewHackerBonus(){ return ((this.crew?.hacker || 1) - 1) * 0.05; }      // +5% REW green zone per level
-
+}
 
 window.addEventListener('DOMContentLoaded', () => {
   // === LOADING SCREEN ===
