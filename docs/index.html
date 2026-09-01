@@ -620,45 +620,45 @@
         <div class="target-bracket-tag" id="fpv-target-tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg> [МОСТИК] 85м</div>
       </div>
 
-      <!-- RECONNAISSANCE 3D WAYPOINT HUD (Follows targets in 3D screen space) -->
-      <div class="recon-hud-overlay" id="recon-hud-overlay" style="display:none;">
-        <div class="recon-objective-banner" id="recon-objective-banner">
-          🔭 ЗАДАЧА: Подлетите к светящемуся маркеру (&lt;45м) и сделайте снимок [ПРОБЕЛ / ТАП]
-        </div>
-
-        <!-- 3D Navigation Compass Arrow (points towards nearest target) -->
-        <div class="recon-compass-arrow" id="recon-compass-arrow">
-          <div class="compass-pointer-icon" id="compass-pointer-icon">▲</div>
-          <div class="compass-label-text" id="recon-compass-label">КУРС: 0° // 85м</div>
-        </div>
-
-        <!-- Full-Screen Tap-To-Snap Zone (Mobile) -->
-        <div class="recon-screen-tap-zone" id="recon-screen-tap-zone" title="Тапните для снимка"></div>
-
-        <div class="recon-waypoint-reticle" id="recon-waypoint-reticle" style="display:none;">
-          <div class="wp-corner wp-tl"></div>
-          <div class="wp-corner wp-tr"></div>
-          <div class="wp-corner wp-bl"></div>
-          <div class="wp-corner wp-br"></div>
-          <div class="wp-tag-pill" id="wp-target-tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg> ЗРК "ТОР" // 65м</div>
-        </div>
-        <button class="btn-recon-snap" id="btn-recon-snap">
-          📸 ЗАФИКСИРОВАТЬ ЦЕЛЬ [ПРОБЕЛ / ТАП]
-        </button>
-        <div class="recon-photo-card" id="recon-photo-card">
-          <div class="photo-thumb">📸</div>
-          <div class="photo-meta">
-            <div class="photo-title" id="photo-last-name">ЗРК «ТОР-М2»</div>
-            <div class="photo-status">✓ ЗАФИКСИРОВАНО</div>
-          </div>
-        </div>
-      </div>
-
       <!-- CIWS Anti-Air Flak Alert Banner -->
       <div class="fpv-ciws-alert" id="fpv-ciws-alert">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg> ВНИМАНИЕ: ЗЕНИТНЫЙ ОГОНЬ CIWS // МАНЕВРИРУЙТЕ!
       </div>
     </div>
+    <!-- RECONNAISSANCE 3D WAYPOINT HUD — Direct overlay on fpv-flight-overlay -->
+    <div class="recon-hud-overlay" id="recon-hud-overlay" style="display:none;">
+      <div class="recon-objective-banner" id="recon-objective-banner">
+        🔭 ЗАДАЧА: Подлетите к маркеру (&lt;45м) и сделайте снимок
+      </div>
+      <!-- Compass: bottom-right corner -->
+      <div class="recon-compass-arrow" id="recon-compass-arrow">
+        <div class="compass-pointer-icon" id="compass-pointer-icon">▲</div>
+        <div class="compass-label-text" id="recon-compass-label">КУРС: 0°</div>
+      </div>
+      <!-- Full-Screen Tap Zone -->
+      <div class="recon-screen-tap-zone" id="recon-screen-tap-zone" title="Тапните для снимка"></div>
+      <!-- 3D Waypoint Reticle (JS-positioned) -->
+      <div class="recon-waypoint-reticle" id="recon-waypoint-reticle" style="display:none;">
+        <div class="wp-corner wp-tl"></div>
+        <div class="wp-corner wp-tr"></div>
+        <div class="wp-corner wp-bl"></div>
+        <div class="wp-corner wp-br"></div>
+        <div class="wp-tag-pill" id="wp-target-tag">ЗРК "ТОР" // 65м</div>
+      </div>
+      <!-- Snap button: bottom center, above joystick -->
+      <button class="btn-recon-snap" id="btn-recon-snap">
+        📸 ЗАФИКСИРОВАТЬ ЦЕЛЬ [ПРОБЕЛ / ТАП]
+      </button>
+      <!-- Photo card: bottom-right -->
+      <div class="recon-photo-card" id="recon-photo-card">
+        <div class="photo-thumb">📸</div>
+        <div class="photo-meta">
+          <div class="photo-title" id="photo-last-name">ЗРК «ТОР-М2»</div>
+          <div class="photo-status">✓ ЗАФИКСИРОВАНО</div>
+        </div>
+      </div>
+    </div>
+
 
     <!-- Left: Flight Speed (km/h) -->
     <div class="fpv-left-telemetry">
