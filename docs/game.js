@@ -1468,34 +1468,98 @@ class FPVMinigame {
 
       // Obstacles (PVO walls)
       for (const obs of this.obstacles) {
-        // Top wall
         const topH = obs.gapY - this.obstacleGap / 2;
-        const grad = ctx.createLinearGradient(obs.x, 0, obs.x + this.obstacleWidth, 0);
-        grad.addColorStop(0, '#0a1f18');
-        grad.addColorStop(0.5, '#132820');
-        grad.addColorStop(1, '#0a1f18');
-        ctx.fillStyle = grad;
-        ctx.fillRect(obs.x, 0, this.obstacleWidth, topH);
-
-        // Bottom wall
         const botY = obs.gapY + this.obstacleGap / 2;
-        ctx.fillRect(obs.x, botY, this.obstacleWidth, H - botY);
+        const ow = this.obstacleWidth;
 
-        // Red border glow
+        // === TOP WALL — SAM battery structure ===
+        // Main hull
+        const gradTop = ctx.createLinearGradient(obs.x, 0, obs.x + ow, 0);
+        gradTop.addColorStop(0, '#0a1a12');
+        gradTop.addColorStop(0.4, '#162c1e');
+        gradTop.addColorStop(1, '#0a1a12');
+        ctx.fillStyle = gradTop;
+        ctx.fillRect(obs.x, 0, ow, topH);
+
+        // Structural panel lines (armour plates)
+        ctx.strokeStyle = 'rgba(0,255,100,0.08)';
+        ctx.lineWidth = 1;
+        for (let py = 20; py < topH - 10; py += 20) {
+          ctx.beginPath(); ctx.moveTo(obs.x + 4, py); ctx.lineTo(obs.x + ow - 4, py); ctx.stroke();
+        }
+
+        // Red warning light at bottom edge of top wall
+        const warnPulse = 0.5 + 0.5 * Math.sin(this.totalTime * 8);
+        ctx.save();
+        ctx.fillStyle = `rgba(255,40,40,${0.4 + 0.5 * warnPulse})`;
+        ctx.shadowColor = '#ff2222';
+        ctx.shadowBlur = 10 * warnPulse;
+        ctx.beginPath();
+        ctx.arc(obs.x + ow / 2, topH - 8, 4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        ctx.restore();
+
+        // Gun barrel stub pointing downward (ЗУ-23)
+        ctx.fillStyle = '#1a3020';
+        ctx.fillRect(obs.x + ow * 0.3, topH - 16, 6, 16);
+        ctx.fillRect(obs.x + ow * 0.6, topH - 14, 6, 14);
+
+        // Edge border + hazard stripe
         ctx.strokeStyle = '#ff2a2a';
         ctx.lineWidth = 2;
-        ctx.strokeRect(obs.x, 0, this.obstacleWidth, topH);
-        ctx.strokeRect(obs.x, botY, this.obstacleWidth, H - botY);
-
-        // Hazard stripes
-        ctx.fillStyle = '#ffcc00';
-        ctx.fillRect(obs.x, topH - 4, this.obstacleWidth, 4);
-        ctx.fillRect(obs.x, botY, this.obstacleWidth, 4);
+        ctx.strokeRect(obs.x, 0, ow, topH);
+        ctx.fillStyle = 'rgba(255,204,0,0.7)';
+        ctx.fillRect(obs.x, topH - 4, ow, 4);
 
         // Label
-        ctx.fillStyle = '#ff4444';
-        ctx.font = 'bold 10px monospace';
-        ctx.fillText('ПВО', obs.x + 8, topH - 10);
+        ctx.fillStyle = '#ff5555';
+        ctx.font = 'bold 9px monospace';
+        ctx.textAlign = 'left';
+        ctx.fillText('ЗУ-23', obs.x + 4, topH - 20);
+
+        // === BOTTOM WALL — mirror structure ===
+        const gradBot = ctx.createLinearGradient(obs.x, botY, obs.x + ow, botY);
+        gradBot.addColorStop(0, '#0a1a12');
+        gradBot.addColorStop(0.4, '#162c1e');
+        gradBot.addColorStop(1, '#0a1a12');
+        ctx.fillStyle = gradBot;
+        ctx.fillRect(obs.x, botY, ow, H - botY);
+
+        // Panel lines for bottom
+        ctx.strokeStyle = 'rgba(0,255,100,0.08)';
+        ctx.lineWidth = 1;
+        for (let py = botY + 20; py < H - 10; py += 20) {
+          ctx.beginPath(); ctx.moveTo(obs.x + 4, py); ctx.lineTo(obs.x + ow - 4, py); ctx.stroke();
+        }
+
+        // Warning light at top edge of bottom wall
+        ctx.save();
+        ctx.fillStyle = `rgba(255,40,40,${0.4 + 0.5 * warnPulse})`;
+        ctx.shadowColor = '#ff2222';
+        ctx.shadowBlur = 10 * warnPulse;
+        ctx.beginPath();
+        ctx.arc(obs.x + ow / 2, botY + 8, 4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        ctx.restore();
+
+        // Gun barrel stub pointing upward
+        ctx.fillStyle = '#1a3020';
+        ctx.fillRect(obs.x + ow * 0.3, botY, 6, 16);
+        ctx.fillRect(obs.x + ow * 0.6, botY, 6, 14);
+
+        // Edge border + hazard stripe
+        ctx.strokeStyle = '#ff2a2a';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(obs.x, botY, ow, H - botY);
+        ctx.fillStyle = 'rgba(255,204,0,0.7)';
+        ctx.fillRect(obs.x, botY, ow, 4);
+
+        ctx.fillStyle = '#ff5555';
+        ctx.font = 'bold 9px monospace';
+        ctx.textAlign = 'left';
+        ctx.fillText('ЗУ-23', obs.x + 4, botY + 16);
       }
 
       // Data pickups
@@ -1523,23 +1587,42 @@ class FPVMinigame {
         }
       });
 
-      // Interceptors
+      // Interceptors — now with a fire trail
       this.interceptors.forEach(ic => {
         ctx.save();
         ctx.translate(ic.x, ic.y);
-        ctx.fillStyle = '#ff4444';
+
+        // Fire trail behind the missile
+        const trailLen = 18 + Math.random() * 10;
+        const trailGrad = ctx.createLinearGradient(-trailLen, 0, 0, 0);
+        trailGrad.addColorStop(0, 'rgba(255,100,0,0)');
+        trailGrad.addColorStop(0.6, 'rgba(255,160,30,0.5)');
+        trailGrad.addColorStop(1, 'rgba(255,220,80,0.9)');
+        ctx.fillStyle = trailGrad;
+        ctx.beginPath();
+        ctx.moveTo(0, -3);
+        ctx.lineTo(-trailLen, 0);
+        ctx.lineTo(0, 3);
+        ctx.closePath();
+        ctx.fill();
+
+        // Missile body
+        ctx.fillStyle = '#ff3333';
+        ctx.shadowColor = '#ff5555';
+        ctx.shadowBlur = 10;
         ctx.beginPath();
         ctx.moveTo(-ic.size, 0);
         ctx.lineTo(ic.size, -ic.size * 0.5);
         ctx.lineTo(ic.size, ic.size * 0.5);
         ctx.closePath();
         ctx.fill();
-        ctx.shadowColor = '#ff4444';
-        ctx.shadowBlur = 8;
+        ctx.strokeStyle = '#ff8888';
+        ctx.lineWidth = 1;
         ctx.stroke();
         ctx.shadowBlur = 0;
         ctx.restore();
       });
+
 
       // FPV Drone
       if (this.drone.alive) {
@@ -1876,6 +1959,7 @@ class BarracudaGame {
     this.totalDataMB = 0.0;
     this.creditsUSD = 500;
     this.blueprintsBP = 0;
+    this.prestigeLevel = 0;
     this.sunkenShips = 0;
     this.totalClicks = 0;
     this.totalCrits = 0;
@@ -1988,7 +2072,7 @@ class BarracudaGame {
     this.trophies = []; // Array of { id, name, icon, desc, date, rank }
 
     // === CREW ===
-    this.crew = { pilot: 1, tech: 1, hacker: 1 }; // Level 1-5
+    this.crew = { pilot: 1, tech: 1, hacker: 1, commander: 1 }; // Level 1-5
     this.dailyClicks = 0;
     this.dailyDataCollected = 0;
     this.dailyCreditsEarned = 0;
@@ -2095,6 +2179,32 @@ class BarracudaGame {
     }
   }
 
+  cancelContract(contractId) {
+    const idx = this.activeContracts.findIndex(c => c.id === contractId);
+    if (idx === -1) return;
+    const c = this.activeContracts[idx];
+    if (c.active && !c.completed) {
+      this.addNotification('⚠️ АКТИВНЫЙ КОНТРАКТ', 'Невозможно отменить контракт в процессе выполнения!');
+      return;
+    }
+    // Small tax for refreshing a single contract
+    const tax = 500;
+    if (this.dataMB < tax) {
+      this.addNotification('⚠️ НЕДОСТАТОЧНО МБ', `Замена контракта стоит ${tax} МБ разведданных.`);
+      return;
+    }
+    this.dataMB -= tax;
+    // Generate a fresh replacement from a broader pool
+    const pool = this.generateContracts();
+    // Pick one that doesn't already exist in activeContracts
+    const newContract = pool.find(nc => !this.activeContracts.some(ac => ac.name === nc.name)) || pool[0];
+    this.activeContracts[idx] = newContract;
+    this.rebuildContractDOM();
+    this.addNotification('🔄 КОНТРАКТ ОБНОВЛЁН', `Новое задание получено. -${tax} МБ`);
+    this._uiDirty = true;
+  }
+
+
   // =========================================================================
   // SAVE / LOAD (localStorage)
   // =========================================================================
@@ -2108,6 +2218,7 @@ class BarracudaGame {
         assaultChargeMax: this.assaultChargeMax,
         creditsUSD: this.creditsUSD,
         blueprintsBP: this.blueprintsBP,
+        prestigeLevel: this.prestigeLevel,
         sunkenShips: this.sunkenShips,
         totalClicks: this.totalClicks,
         totalCrits: this.totalCrits,
@@ -2159,6 +2270,7 @@ class BarracudaGame {
       this.assaultChargeMax = Math.max(500, Math.floor(500 * (1.0 + (data.blueprintsBP || 0) * 0.4)));
       this.creditsUSD = data.creditsUSD || 500;
       this.blueprintsBP = data.blueprintsBP || 0;
+      this.prestigeLevel = data.prestigeLevel || 0;
       this.sunkenShips = data.sunkenShips || 0;
       this.totalClicks = data.totalClicks || 0;
       this.totalCrits = data.totalCrits || 0;
@@ -2192,7 +2304,7 @@ class BarracudaGame {
       this._savedPassiveRateMB = data.passiveRateMBs || 0;
       this._savedPassiveRateUSD = data.passiveRateUSDps || 0;
       this.trophies = data.trophies || [];
-      this.crew = data.crew || { pilot: 1, tech: 1, hacker: 1 };
+      this.crew = Object.assign({ pilot: 1, tech: 1, hacker: 1, commander: 1 }, data.crew || {});
 
       // Regenerate contracts for current tier
       this.activeContracts = this.generateContracts();
@@ -2233,10 +2345,62 @@ class BarracudaGame {
       const mins = Math.floor((elapsed % 3600) / 60);
       const timeStr = hours > 0 ? `${hours}ч ${mins}м` : `${mins}м`;
 
+      // Show a dramatic "Welcome Back" offline income modal instead of a plain notification
       setTimeout(() => {
-        this.addNotification('🌙 ОФЛАЙН ДОХОД', `За ${timeStr} отсутствия: +${Math.floor(gainMB)} МБ, +$${Math.floor(gainUSD).toLocaleString()}`);
+        const existing = document.getElementById('offline-income-modal');
+        if (existing) existing.remove();
+
+        const modal = document.createElement('div');
+        modal.id = 'offline-income-modal';
+        modal.style.cssText = `
+          position:fixed; inset:0; z-index:9500; display:flex; align-items:center; justify-content:center;
+          background:rgba(0,5,10,0.88); backdrop-filter:blur(12px); animation: offlineFadeIn 0.5s ease;
+        `;
+        modal.innerHTML = `
+          <style>
+            @keyframes offlineFadeIn { from { opacity:0; transform:scale(0.94); } to { opacity:1; transform:scale(1); } }
+            @keyframes offlineScanline { 0% { top:-100%; } 100% { top:100%; } }
+          </style>
+          <div style="
+            position:relative; background:rgba(0,15,25,0.97); border:1.5px solid rgba(0,240,255,0.3);
+            border-radius:16px; padding:36px 44px; max-width:460px; width:90%; text-align:center;
+            box-shadow:0 0 60px rgba(0,200,255,0.2), inset 0 0 40px rgba(0,50,80,0.3);
+            overflow:hidden;
+          ">
+            <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#00f0ff,transparent);animation:offlineScanline 2s linear infinite;pointer-events:none"></div>
+            <div style="font-size:11px;letter-spacing:4px;color:#00f0ff;margin-bottom:12px;opacity:0.8">🌙 БАЗА — ОФЛАЙН-РАПОРТ</div>
+            <div style="font-size:26px;font-weight:900;color:#fff;font-family:Rajdhani,sans-serif;margin-bottom:4px">ДОБРО ПОЖАЛОВАТЬ ОБРАТНО</div>
+            <div style="font-size:13px;color:#8da4af;margin-bottom:28px;letter-spacing:1px">ОТСУТСТВИЕ: ${timeStr} // ПАССИВНЫЙ ДОХОД НАКОПЛЕН</div>
+            <div style="display:flex;gap:16px;justify-content:center;margin-bottom:28px">
+              <div style="flex:1;background:rgba(0,240,255,0.07);border:1px solid rgba(0,240,255,0.2);border-radius:10px;padding:14px 10px">
+                <div style="font-size:24px;font-weight:900;color:#00f0ff;font-family:Rajdhani,sans-serif">+${Math.floor(gainMB)} МБ</div>
+                <div style="font-size:10px;color:#8da4af;letter-spacing:1px;margin-top:4px">📡 РАЗВЕДДАННЫЕ</div>
+              </div>
+              <div style="flex:1;background:rgba(0,255,136,0.07);border:1px solid rgba(0,255,136,0.2);border-radius:10px;padding:14px 10px">
+                <div style="font-size:24px;font-weight:900;color:#00ff88;font-family:Rajdhani,sans-serif">+$${Math.floor(gainUSD).toLocaleString()}</div>
+                <div style="font-size:10px;color:#8da4af;letter-spacing:1px;margin-top:4px">💰 КРЕДИТЫ</div>
+              </div>
+            </div>
+            <div style="font-size:10px;color:#667;margin-bottom:16px">⚡ 50% эффективность офлайн-дохода (максимум 4ч)</div>
+            <button id="offline-income-dismiss" style="
+              background:rgba(0,240,255,0.15); border:1.5px solid #00f0ff; color:#00f0ff; 
+              font-family:Rajdhani,sans-serif; font-size:14px; font-weight:700; letter-spacing:2px;
+              padding:10px 32px; border-radius:8px; cursor:pointer; width:100%;
+              transition:all 0.2s; box-shadow:0 0 16px rgba(0,240,255,0.2);
+            " onmouseover="this.style.background='rgba(0,240,255,0.3)'" onmouseout="this.style.background='rgba(0,240,255,0.15)'">
+              ПРИНЯТЬ К СВЕДЕНИЮ // ПРИСТУПИТЬ К ОПЕРАЦИИ
+            </button>
+          </div>
+        `;
+
+        document.body.appendChild(modal);
+        const dismiss = () => { modal.style.opacity = '0'; modal.style.transition = 'opacity 0.4s'; setTimeout(() => modal.remove(), 420); };
+        modal.querySelector('#offline-income-dismiss').addEventListener('click', dismiss);
+        modal.addEventListener('click', (e) => { if (e.target === modal) dismiss(); });
+        setTimeout(dismiss, 6000);
       }, 2000);
     }
+
   }
 
   // =========================================================================
@@ -2366,8 +2530,19 @@ class BarracudaGame {
 
     const el = document.createElement('div');
     el.className = 'tactical-notification';
-    el.innerHTML = `<div class="notif-title">${latest.title}</div><div class="notif-text">${latest.text}</div>`;
+    el.innerHTML = `<div class="notif-title glitch-effect">${latest.title}</div><div class="notif-text"></div>`;
     container.appendChild(el);
+
+    const textEl = el.querySelector('.notif-text');
+    let i = 0;
+    const typeInterval = setInterval(() => {
+      if (i < latest.text.length) {
+        textEl.textContent += latest.text.charAt(i);
+        i++;
+      } else {
+        clearInterval(typeInterval);
+      }
+    }, 15);
 
     // Animate in
     requestAnimationFrame(() => el.classList.add('show'));
@@ -2538,7 +2713,8 @@ class BarracudaGame {
 
   getGlobalMultiplier() {
     const sectorMult = SECTOR_INFO[this.currentSector]?.mult || 1.0;
-    return (1.0 + this.blueprintsBP * 0.5) * sectorMult;
+    const prestigeMult = 1.0 + (this.prestigeLevel || 0) * 1.5;
+    return (1.0 + this.blueprintsBP * 0.5) * sectorMult * prestigeMult * this.getCrewCommanderMult();
   }
 
   getClickPower() {
@@ -2973,14 +3149,9 @@ class BarracudaGame {
       this.changeSector(actData.sector);
     }
 
-    // Hide base HUD & modals
+    // Hide base HUD & modals — use setUIState so MAIN restore works correctly
     document.querySelectorAll('.help-modal-overlay, .tactical-modal-overlay').forEach(el => el.classList.remove('active'));
-    const gameFrame = document.getElementById('game-frame');
-    if (gameFrame) gameFrame.style.display = 'none';
-
-    // Show ROV overlay
-    const rovOverlay = document.getElementById('rov-mission-overlay');
-    if (rovOverlay) rovOverlay.style.display = 'flex';
+    this.setUIState('ROV'); // this hides gameFrame & mainHud, shows rov-mission-overlay
 
     if (this.engine3D) {
       this.engine3D.startRovMode();
@@ -2989,8 +3160,26 @@ class BarracudaGame {
       window.tacticalAudio.playRovThruster();
     }
     this.startSortieTimer();
-    this.addNotification('🔮 МИКРО-ROV СПУЩЕН', 'Ориентируйтесь по шкале магнитометра и подключите сифон данных!');
-    this.showMissionWarning('🔮 Подводный дрон активен. Нажмите [ПОДКЛЮЧИТЬ СИФОН], когда магнитометр зафиксирует максимум поля!');
+
+    // Reset ROV phase — always start in search mode regardless of previous state
+    this.rovPhase = 'search';
+    this.rovSiphonProgress = 0;
+    if (this._rovSiphonInterval) { clearInterval(this._rovSiphonInterval); this._rovSiphonInterval = null; }
+
+    // Force siphon button to locked/disabled state immediately
+    const btnSiphon = document.getElementById('btn-trigger-siphon');
+    if (btnSiphon) {
+      btnSiphon.disabled = true;
+      btnSiphon.textContent = '⊙ ПОДКЛЮЧИТЬ СИФОН ДАННЫХ';
+      btnSiphon.style.background = 'rgba(50,50,50,0.3)';
+      btnSiphon.style.borderColor = '#333';
+      btnSiphon.style.boxShadow = '';
+      btnSiphon.style.animation = '';
+      btnSiphon.style.color = '#666';
+    }
+
+    this.addNotification('🔮 МИКРО-ROV СПУЩЕН', '📡 Найди кабель: ориентируйся по магнитометру — нужно 350+ нТл!');
+    this.showMissionWarning('🔮 ROV АКТИВЕН: маневрируй [WASD] до 350+ нТл на магнитометре → кнопка СИФОН загорится!');
   }
 
   // =========================================================================
@@ -3228,6 +3417,130 @@ class BarracudaGame {
   // =========================================================================
   // REW (Electronic Warfare) HACK MINIGAME — Timing-based frequency capture
   // =========================================================================
+  startFpvFlightPhase() {
+    if (!this.sortieActive || this.fpvFlightPhase || !this.engine3D) return;
+    this.fpvFlightPhase = true;
+
+    // Switch HUD from Boat Cockpit to FPV OSD
+    const boatCockpit = document.getElementById('mission-cockpit-overlay');
+    if (boatCockpit) {
+      boatCockpit.classList.add('mission-hud-hidden');
+      boatCockpit.style.display = 'none';
+    }
+
+    this.setUIState('FPV');
+
+    // Pass boss flag & pilot FPV speed mult
+    this.engine3D.isBoss = this.bossActive;
+    this.engine3D.fpvSpeedMult = this.getCrewPilotMult();
+
+    // Launch countdown — show 3-2-1 overlay then start FPV (no gyro blocking controls)
+    const fpvOverlayEl = document.getElementById('fpv-flight-overlay');
+    let countEl = document.getElementById('fpv-launch-countdown');
+    if (!countEl && fpvOverlayEl) {
+      countEl = document.createElement('div');
+      countEl.id = 'fpv-launch-countdown';
+      countEl.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,0,0,0.72);z-index:9999;pointer-events:none;';
+      fpvOverlayEl.appendChild(countEl);
+    }
+
+    const targetName = this.activeMission ? this.activeMission.title : 'цель';
+    let tick = 3;
+    const updateCount = () => {
+      if (!countEl) return;
+      if (tick > 0) {
+        countEl.innerHTML = `<div style="font-family:'Rajdhani',monospace;font-size:clamp(60px,16vw,110px);font-weight:900;color:#00ff88;text-shadow:0 0 40px #00ff88,0 0 80px #00ff88;letter-spacing:4px;animation:fpvAlertBlink 0.4s alternate 1;">${tick}</div><div style="font-family:'Rajdhani',monospace;font-size:clamp(13px,3vw,18px);color:#00f0ff;letter-spacing:3px;margin-top:8px;">FPV-ДРОН // ОБРАТНЫЙ ОТСЧЁТ</div>`;
+        tick--;
+        setTimeout(updateCount, 700);
+      } else {
+        // LAUNCH!
+        countEl.innerHTML = `<div style="font-family:'Rajdhani',monospace;font-size:clamp(36px,10vw,72px);font-weight:900;color:#ffcc00;text-shadow:0 0 30px #ffcc00;letter-spacing:6px;">🚀 ПУСК!</div>`;
+        // Start FPV flight now
+        this.engine3D.startFpvFlight((event, data) => this.handle3DMissionEvent(event, data));
+        setTimeout(() => {
+          if (countEl && countEl.parentNode) countEl.parentNode.removeChild(countEl);
+          this.showMissionWarning(`🎯 FPV АКТИВЕН: W/S — тангаж | A/D — рыскание | Лети к «${targetName}»! Зелёная линия — наводка!`);
+        }, 600);
+      }
+    };
+    updateCount();
+
+    this.showMissionWarning('🚀 FPV-ШТУРМ НАЧАТ: Наводитесь на уязвимые узлы корабля противника!');
+    if (window.tacticalAudio) window.tacticalAudio.playPhaseTransition();
+
+  }
+
+  handle3DMissionEvent(event, data) {
+    if (!this.sortieActive) return;
+
+    if (event === 'mine_hit') {
+      if (window.tacticalAudio) window.tacticalAudio.playHeavyExplosion();
+      this.showMissionWarning('💥 ПОДРЫВ НА МИНЕ! -35 HP КОРПУСА');
+      if (!this.sortieStats) this.sortieStats = { hitMines: 0 };
+      this.sortieStats.hitMines++;
+      this.boatHp = Math.max(0, this.boatHp - 35);
+      this.updateUI();
+      if (this.boatHp <= 0) {
+        this.finishSortie(false, 'Уничтожен миной (КРИТИЧЕСКИЙ УРОН)');
+      }
+    } else if (event === 'crate_collected') {
+      if (window.tacticalAudio) window.tacticalAudio.playSalvagePickup();
+      if (!this.sortieStats) this.sortieStats = { crates: 0, totalCrates: 3 };
+      this.sortieStats.crates = data.collected;
+      this.sortieStats.totalCrates = data.total;
+      this.showMissionWarning(`📦 ГРУЗ ПОДНЯТ: ${data.loot} (${data.collected}/${data.total})`);
+      const cratesEl = document.getElementById('hud-val-crates');
+      if (cratesEl) cratesEl.textContent = `${data.collected} / ${data.total}`;
+    } else if (event === 'searchlight_detected') {
+      this.showMissionWarning('⚠️ ВНИМАНИЕ: ОБЛУЧЕНИЕ РАДАРОМ! РИСК УДАРА!');
+      if (!this.sortieStats) this.sortieStats = { detected: 0 };
+      this.sortieStats.detected++;
+    } else if (event === 'tracer_hit') {
+      if (window.tacticalAudio) window.tacticalAudio.playEnemyShoot();
+      this.showMissionWarning('💥 ПОПАДАНИЕ ПВО! -8 HP');
+      if (data.hp <= 0) {
+        this.finishSortie(false, 'Уничтожен зенитным огнем патруля');
+      }
+    } else if (event === 'waypoint_reached') {
+      if (window.tacticalAudio) window.tacticalAudio.playTargetLock();
+      this.showMissionWarning('🎯 ЗОНА ЦЕЛИ ДОСТИГНУТА! НАЖМИТЕ [ПУСК FPV] ДЛЯ УДАРА!');
+    } else if (event === 'fpv_damaged') {
+      if (!this.sortieStats) this.sortieStats = { flakHitsTaken: 0 };
+      this.sortieStats.flakHitsTaken++;
+      const glitchLayer = document.getElementById('fpv-glitch-layer');
+      if (glitchLayer) {
+        glitchLayer.classList.add('fpv-glitched');
+        setTimeout(() => glitchLayer.classList.remove('fpv-glitched'), 200);
+      }
+    } else if (event === 'fpv_crashed') {
+      this.finishSortie(false, data.reason || 'FPV-дрон потерпел крушение');
+    } else if (event === 'fpv_target_hit') {
+      if (!this.sortieStats) this.sortieStats = {};
+      this.sortieStats.targetSubsystem = data.subsystem || 'Ходовой мостик';
+      this.sortieStats.damageBonus = data.damageBonus;
+      this.sortieStats.scoreMult = data.scoreMult || 1.5;
+      
+      if (this.bossActive && data.remainingSubsystems > 0) {
+        this.drones = Math.max(0, this.drones - 1);
+        this.addNotification('💥 ЧАСТИЧНЫЙ УРОН', `Подсистема "${data.subsystem}" уничтожена!`);
+        this.updateUI();
+        
+        setTimeout(() => {
+          if (this.drones > 0) {
+            this.engine3D.startFpvFlight((ev, d) => this.handle3DMissionEvent(ev, d));
+            this.showMissionWarning(`ЗАПУСК СЛЕДУЮЩЕГО ДРОНА... ОСТАЛОСЬ: ${this.drones}`);
+          } else {
+            this.finishSortie(false, 'ЗАКОНЧИЛИСЬ ДРОНЫ ПРИ ШТУРМЕ БОССА');
+          }
+        }, 2000);
+      } else {
+        setTimeout(() => {
+          this.finishSortie(true, 'Успешный удар');
+        }, 2800);
+      }
+    }
+  }
+
   _startRewMission(mission, actData) {
     this.activeMission = mission;
     
@@ -3504,6 +3817,8 @@ class BarracudaGame {
 
     // Hide base HUD, show 3D Mission Boat Cockpit Overlay
     this.setUIState('MAIN');
+    // Mark body as "in sortie" so CSS hides lobby-only elements
+    document.body.classList.add('sortie-active');
 
     const cockpit = document.getElementById('mission-cockpit-overlay');
     if (cockpit) {
@@ -3538,83 +3853,7 @@ class BarracudaGame {
     if (window.tacticalAudio) window.tacticalAudio.playCritPing();
   }
 
-  startFpvFlightPhase() {
-    if (!this.sortieActive || this.fpvFlightPhase || !this.engine3D) return;
-    this.fpvFlightPhase = true;
 
-    // Switch HUD from Boat Cockpit to FPV OSD
-    const boatCockpit = document.getElementById('mission-cockpit-overlay');
-    if (boatCockpit) {
-      boatCockpit.classList.add('mission-hud-hidden');
-      boatCockpit.style.display = 'none';
-    }
-
-    this.setUIState('FPV');
-
-    // Start FPV Drone Flight in 3D Engine
-    this.engine3D.startFpvFlight((event, data) => this.handle3DMissionEvent(event, data));
-    
-    // Start Gyro Minigame
-    this.startGyroMinigame();
-
-    this.showMissionWarning('🚀 FPV-ШТУРМ НАЧАТ: Наводитесь на уязвимые узлы корабля противника!');
-    if (window.tacticalAudio) window.tacticalAudio.playPhaseTransition();
-  }
-
-  handle3DMissionEvent(event, data) {
-    if (!this.sortieActive) return;
-
-    if (event === 'mine_hit') {
-      if (window.tacticalAudio) window.tacticalAudio.playHeavyExplosion();
-      this.showMissionWarning('💥 ПОДРЫВ НА МИНЕ! -35 HP КОРПУСА');
-      if (!this.sortieStats) this.sortieStats = { hitMines: 0 };
-      this.sortieStats.hitMines++;
-      if (data.hp <= 0) {
-        this.finishSortie(false, 'Корпус катера уничтожен серией взрывов морских мин');
-      }
-    } else if (event === 'crate_collected') {
-      if (window.tacticalAudio) window.tacticalAudio.playSalvagePickup();
-      if (!this.sortieStats) this.sortieStats = { crates: 0, totalCrates: 3 };
-      this.sortieStats.crates = data.collected;
-      this.sortieStats.totalCrates = data.total;
-      this.showMissionWarning(`📦 ГРУЗ СОБРАН: ${data.loot} (${data.collected}/${data.total})`);
-      const cratesEl = document.getElementById('hud-val-crates');
-      if (cratesEl) cratesEl.textContent = `${data.collected} / ${data.total}`;
-    } else if (event === 'searchlight_detected') {
-      this.showMissionWarning('⚠️ ВНИМАНИЕ: ВАС ЗАСЕКЛИ! ОГОНЬ БЕРЕГОВОЙ БАТАРЕИ!');
-      if (!this.sortieStats) this.sortieStats = { detected: 0 };
-      this.sortieStats.detected++;
-    } else if (event === 'tracer_hit') {
-      if (window.tacticalAudio) window.tacticalAudio.playEnemyShoot();
-      this.showMissionWarning('⚡ ПОПАДАНИЕ СНАРЯДА! -8 HP');
-      if (data.hp <= 0) {
-        this.finishSortie(false, 'Катер потоплен огнём береговой артиллерии');
-      }
-    } else if (event === 'waypoint_reached') {
-      if (window.tacticalAudio) window.tacticalAudio.playTargetLock();
-      this.showMissionWarning('🎯 ЗОНА ЦЕЛИ ДОСТИГНУТА! НАЖМИТЕ [ПУСК FPV] ДЛЯ УДАРА!');
-    } else if (event === 'fpv_damaged') {
-      if (!this.sortieStats) this.sortieStats = { flakHitsTaken: 0 };
-      this.sortieStats.flakHitsTaken++;
-      const glitchLayer = document.getElementById('fpv-glitch-layer');
-      if (glitchLayer) {
-        glitchLayer.classList.add('fpv-glitched');
-        setTimeout(() => glitchLayer.classList.remove('fpv-glitched'), 200);
-      }
-    } else if (event === 'fpv_crashed') {
-      this.finishSortie(false, data.reason || 'FPV-дрон потерпел крушение');
-    } else if (event === 'fpv_target_hit') {
-      if (!this.sortieStats) this.sortieStats = {};
-      this.sortieStats.targetSubsystem = data.subsystem || 'Ходовой мостик';
-      this.sortieStats.damageBonus = data.damageBonus;
-      this.sortieStats.scoreMult = data.scoreMult || 1.5;
-      
-      // Delay slightly for cinematic explosion & sinking to play
-      setTimeout(() => {
-        this.finishSortie(true, 'Успешный удар');
-      }, 2800);
-    }
-  }
 
   showMissionWarning(text) {
     const banner = document.getElementById('hud-warning-banner');
@@ -3904,6 +4143,7 @@ class BarracudaGame {
       btnGameoverBase.addEventListener('click', () => {
         const modal = document.getElementById('mission-gameover-modal');
         if (modal) modal.classList.remove('active');
+        this.setUIState('MAIN');
       });
     }
 
@@ -3923,6 +4163,7 @@ class BarracudaGame {
       btnVictoryClaim.addEventListener('click', () => {
         const modal = document.getElementById('mission-victory-modal');
         if (modal) modal.classList.remove('active');
+        this.setUIState('MAIN');
       });
     }
   }
@@ -4206,6 +4447,25 @@ class BarracudaGame {
         shallowBadge.style.display = telem.isShallow ? 'inline-block' : 'none';
       }
 
+      // Boat navigation bearing arrow — always visible so player knows where to go
+      let boatNavEl = document.getElementById('boat-nav-arrow');
+      if (!boatNavEl) {
+        boatNavEl = document.createElement('div');
+        boatNavEl.id = 'boat-nav-arrow';
+        boatNavEl.style.cssText = 'position:fixed;top:15%;left:50%;transform:translateX(-50%);font-family:Rajdhani,monospace;font-weight:900;color:#00ff88;text-shadow:0 0 12px #00ff88;z-index:200;text-align:center;pointer-events:none;letter-spacing:1px;background:rgba(0,0,0,0.55);padding:6px 18px;border:1px solid rgba(0,255,136,0.4);border-radius:6px;';
+        document.body.appendChild(boatNavEl);
+      }
+      if (telem.distToTarget > 15) {
+        boatNavEl.style.display = 'block';
+        boatNavEl.innerHTML = `<span style="font-size:13px;opacity:0.8;">📍 ЦЕЛЬ: ${telem.distToTarget} м</span><br><span style="font-size:22px;">${telem.bearingArrow || '⬆️ ПРЯМО'}</span>`;
+      } else if (telem.distToTarget <= 15) {
+        boatNavEl.style.display = 'block';
+        boatNavEl.innerHTML = `<span style="font-size:16px;color:#ff4400;">⚡ В ЗОНЕ ПОРАЖЕНИЯ — жми FPV!</span>`;
+      } else {
+        boatNavEl.style.display = 'none';
+      }
+
+
       // VSA & DPS toggle button states
       const vsaBtn = document.getElementById('btn-mission-vsa');
       const vsaText = document.getElementById('hud-vsa-text');
@@ -4221,9 +4481,13 @@ class BarracudaGame {
         dpsText.textContent = telem.dpsActive ? 'DPS: УДЕРЖАНИЕ' : 'DPS: ВЫКЛ';
       }
 
-      // Draw Sonar Waterfall if open
+      // Draw Sonar Waterfall if open — throttled to ~20fps to avoid canvas performance issues
       if (this.sonarActive) {
-        this.drawSonarWaterfall();
+        const now = Date.now();
+        if (!this._lastSonarDraw || now - this._lastSonarDraw >= 50) {
+          this._lastSonarDraw = now;
+          this.drawSonarWaterfall();
+        }
       }
 
       // ROV Magnetometer HUD update
@@ -4250,6 +4514,9 @@ class BarracudaGame {
     if (!this.sortieActive) return;
     this.sortieActive = false;
     clearInterval(this._sortieInterval);
+    // Reset input listener guard so next test/mission can attach cleanly
+    this._pilotInputsBound = false;
+    if (this.inputState) this.inputState = { throttle: 0, steer: 0, boost: false, fpvPitch: 0, fpvYaw: 0, hover: false };
 
     // Stop 3D Pilot and FPV modes
     if (this.engine3D) {
@@ -4257,27 +4524,59 @@ class BarracudaGame {
       this.engine3D.stopPilotMission();
     }
 
+
     // Clean up mission nav HUD elements
     ['boat-nav-arrow', 'fpv-bearing-arrow'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.remove();
     });
 
-    // Hide Cockpit Overlays, show Base HUD
+    // Hide all mission-specific overlays (but NOT the base HUD yet —
+    // it will be shown only after the player dismisses the result modal)
     const cockpit = document.getElementById('mission-cockpit-overlay');
     if (cockpit) {
       cockpit.classList.add('mission-hud-hidden');
       cockpit.style.display = 'none';
     }
-    this.setUIState('MAIN');
+    const rovOverlayEl = document.getElementById('rov-mission-overlay');
+    if (rovOverlayEl) rovOverlayEl.style.display = 'none';
+    const reconOverlay = document.getElementById('recon-hud-overlay');
+    if (reconOverlay) reconOverlay.style.display = 'none';
+    // Clean up REW hack overlay if present
+    const rewOverlay = document.getElementById('rew-hack-overlay');
+    if (rewOverlay) rewOverlay.remove();
+    // Ensure fpv overlay is hidden
+    const fpvOverlay = document.getElementById('fpv-flight-overlay');
+    if (fpvOverlay) fpvOverlay.classList.add('mission-hud-hidden');
+    // Hide the main HUD — it will be restored when player returns to base
+    const mainHud = document.getElementById('main-hud-layer');
+    if (mainHud) mainHud.style.display = 'none';
+    this.uiMode = 'RESULT';
+
+    // For test missions: skip result modal, return directly to lobby
+    // Only match explicit test IDs — do NOT use !m.reward as that catches real missions too
+    const m = this.activeMission;
+    const TEST_MISSION_IDS = new Set(['vsa_test', 'sonar_test', 'm1_4_rov_test']);
+    const isTestMission = !m || (m.id && TEST_MISSION_IDS.has(m.id));
+    if (isTestMission) {
+      // Clean up and restore lobby immediately
+      document.body.classList.remove('sortie-active');
+      this.activeMission = null;
+      this.setUIState('MAIN');
+      if (window.tacticalAudio) window.tacticalAudio.playPhaseTransition();
+      this.addNotification('⚓ ТЕСТ ЗАВЕРШЁН', 'Возврат на базу.');
+      this.renderCampaignDOM();
+      try { this.updateUI(); } catch(e) { /* ignore UI update errors on test exit */ }
+      return;
+    }
 
     if (!this.sortieStats) {
       this.sortieStats = { crates: 0, totalCrates: 3, hitMines: 0, detected: 0, flakHitsTaken: 0, startTime: Date.now() };
     }
     const missionElapsedSec = Math.round((Date.now() - (this.sortieStats.startTime || Date.now())) / 1000);
-    const m = this.activeMission;
 
-    if (isVictory) {
+    if (isVictory && m && m.reward) {
+
       // 🏆 VICTORY TRIUMPH MODAL
       this.completedMissions.add(m.id);
 
@@ -4383,7 +4682,7 @@ class BarracudaGame {
       // Partial salvage preserved
       const crates = this.sortieStats ? (this.sortieStats.crates || 0) : 0;
       const totalCrates = this.sortieStats ? (this.sortieStats.totalCrates || 3) : 3;
-      const salvagedCredits = Math.floor(m.reward.usd * 0.25 * (crates / Math.max(1, totalCrates)));
+      const salvagedCredits = Math.floor((m && m.reward ? m.reward.usd : 0) * 0.25 * (crates / Math.max(1, totalCrates)));
       if (salvagedCredits > 0) this.creditsUSD += salvagedCredits;
 
       if (statsEl) {
@@ -4489,35 +4788,38 @@ class BarracudaGame {
         const card = document.createElement('div');
         card.className = 'craft-card';
 
-        let costParts = [];
+        // Build per-resource cost badges with have/need info
+        const costItems = [];
         let canAfford = true;
-        if (r.cost.box) {
-          costParts.push(`📦 ${r.cost.box} ящ`);
-          if ((this.salvage.box || 0) < r.cost.box) canAfford = false;
-        }
-        if (r.cost.chips) {
-          costParts.push(`💎 ${r.cost.chips} чип`);
-          if ((this.salvage.chips || 0) < r.cost.chips) canAfford = false;
-        }
-        if (r.cost.titanium) {
-          costParts.push(`🛡️ ${r.cost.titanium} титан`);
-          if ((this.salvage.titanium || 0) < r.cost.titanium) canAfford = false;
-        }
-        if (r.cost.aicore) {
-          costParts.push(`🔮 ${r.cost.aicore} ядро`);
-          if ((this.salvage.aicore || 0) < r.cost.aicore) canAfford = false;
-        }
+
+        const checkRes = (icon, key, label) => {
+          if (!r.cost[key]) return;
+          const have = this.salvage[key] || 0;
+          const need = r.cost[key];
+          const ok = have >= need;
+          if (!ok) canAfford = false;
+          const color = isCrafted ? '#8da4af' : (ok ? '#00ff88' : '#ff5555');
+          const haveTxt = isCrafted ? '' : ` (${have}/${need})`;
+          costItems.push(`<span style="color:${color};font-size:10px;white-space:nowrap">${icon} ${need} ${label}${haveTxt}</span>`);
+        };
+
+        checkRes('📦', 'box', 'ящ');
+        checkRes('💎', 'chips', 'чип');
+        checkRes('🛡️', 'titanium', 'Ti');
+        checkRes('🔮', 'aicore', 'ИИ');
+
+        const costHtml = costItems.join('<span style="color:#333;margin:0 3px">·</span>');
 
         card.innerHTML = `
           <div>
             <div class="craft-card-header">
               <span class="craft-card-title">${r.name}</span>
-              <span class="craft-card-cost">${costParts.join(' // ')}</span>
+              <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px;align-items:center">${costHtml}</div>
             </div>
             <div class="craft-card-effect">${r.desc}</div>
           </div>
           <button class="btn-craft-action" ${isCrafted ? 'disabled' : (!canAfford ? 'disabled' : '')}>
-            ${isCrafted ? '✓ СКРАФЧЕНО (АКТИВНО)' : (canAfford ? '🛠️ СОБРАТЬ МОДУЛЬ' : 'НЕДОСТАТОЧНО ТРОФЕЕВ')}
+            ${isCrafted ? '✓ СКРАФЧЕНО (АКТИВНО)' : (canAfford ? '🛠️ СОБРАТЬ МОДУЛЬ' : '⚠️ НЕ ХВАТАЕТ РЕСУРСОВ')}
           </button>
         `;
 
@@ -4529,6 +4831,7 @@ class BarracudaGame {
         craftGrid.appendChild(card);
       });
     }
+
   }
 
   selectDronePrototype(protoId) {
@@ -4636,6 +4939,17 @@ class BarracudaGame {
     if (mainHud) {
       mainHud.style.display = (mode === 'MAIN') ? '' : 'none';
     }
+    const gameFrame = document.getElementById('game-frame');
+    if (gameFrame) {
+      if (mode === 'MAIN' || mode === 'RESULT') {
+        // RESULT: keep 3D scene visible as cinematic backdrop for result modal
+        gameFrame.style.display = '';
+        gameFrame.classList.remove('hud-hidden');
+      } else if (mode === 'ROV' || mode === 'FPV') {
+        // Only hide for full-screen overlay modes
+        gameFrame.style.display = 'none';
+      }
+    }
 
     if (this.cyberModal) {
       this.cyberModal.classList.toggle('active', mode === 'CYBER');
@@ -4654,7 +4968,16 @@ class BarracudaGame {
         fpvOverlay.classList.add('mission-hud-hidden');
       }
     }
+
+    // Manage sortie-active class: remove from body only when truly returning to lobby
+    if (mode === 'MAIN' && !this.sortieActive) {
+      document.body.classList.remove('sortie-active');
+    } else if (mode !== 'MAIN') {
+      // Any non-MAIN mode: ensure lobby elements are blocked
+      document.body.classList.add('sortie-active');
+    }
   }
+
 
   initDOM() {
     this.lblBuffer = document.getElementById('val-buffer');
@@ -4722,19 +5045,25 @@ class BarracudaGame {
   // EVENT BINDING
   // =========================================================================
   initEvents() {
-    // Primary Click Collector: Center Interact Zone & Viewport
+    // Primary Click Collector — single handler with debounce to prevent triple-fire
+    // (viewport click + center-zone click + 3D engine callback all fire on one tap)
+    this._lastClickTime = 0;
+    const handleTap = (e) => {
+      const now = Date.now();
+      if (now - this._lastClickTime < 80) return; // deduplicate within 80ms
+      this._lastClickTime = now;
+      this.handleClick(e.clientX, e.clientY);
+    };
+
     const centerZone = document.querySelector('.center-interact-zone');
     if (centerZone) {
-      centerZone.addEventListener('click', (e) => {
-        this.handleClick(e.clientX, e.clientY);
-      });
+      centerZone.addEventListener('click', handleTap);
     }
 
     const viewport = document.getElementById('drone-3d-viewport');
     if (viewport) {
-      viewport.addEventListener('click', (e) => {
-        this.handleClick(e.clientX, e.clientY);
-      });
+      // Don't add separate viewport listener — 3D engine already fires handleClick via callback
+      // Adding it here caused duplicate popups. Center-zone covers the tap area.
     }
 
     // Ring Buttons
@@ -4798,6 +5127,7 @@ class BarracudaGame {
         if (!this.flirOverlay) return;  // No FLIR overlay in lobby — do nothing
         window.tacticalAudio.playThermalModeSfx();
         this.flirOverlay.classList.add('active');
+        document.body.classList.add('flir-active'); // hide HUD via CSS
         if (this.engine3D) this.engine3D.cameraMode = 'flir';
       });
     }
@@ -4828,57 +5158,65 @@ class BarracudaGame {
     if (this.btnExitFlir) {
       this.btnExitFlir.addEventListener('click', () => {
         this.flirOverlay.classList.remove('active');
+        document.body.classList.remove('flir-active'); // restore HUD
         if (this.engine3D) this.engine3D.cameraMode = 'orbit';
       });
     }
 
     document.querySelectorAll('.flir-lock-point').forEach(btn => {
-      let holdTimer = null;
-      let progressInterval = null;
+      let lockTimer = null;
+      let lockActive = false;
       const targetType = btn.getAttribute('data-target');
+      const originalText = btn.querySelector('.lock-bracket')?.innerHTML || btn.innerHTML;
       
-      const startLock = (e) => {
+      btn.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
+
+        if (lockActive) return; // Already locking
+
+        lockActive = true;
         if (window.tacticalAudio) window.tacticalAudio.playSonarPing();
-        
         btn.classList.add('locking');
-        let progress = 0;
-        
-        progressInterval = setInterval(() => {
-          progress += 10;
-        }, 150);
 
-        holdTimer = setTimeout(() => {
-          clearInterval(progressInterval);
-          btn.classList.remove('locking');
-          
-          if (window.tacticalAudio) window.tacticalAudio.playAlert();
-          
-          let multiplier = 4;
-          if (targetType === 'ammo') multiplier = 8;
-          if (targetType === 'bridge') multiplier = 5;
+        // Show countdown on button
+        const bracket = btn.querySelector('.lock-bracket');
+        let countdown = 3;
+        const tick = () => {
+          if (bracket) bracket.innerHTML = `🎯 ЗАХВАТ... ${countdown}с`;
+          countdown--;
+          if (countdown >= 0) {
+            lockTimer = setTimeout(tick, 500);
+          } else {
+            // Fire!
+            btn.classList.remove('locking');
+            btn.classList.add('locked');
+            lockActive = false;
+            if (bracket) bracket.innerHTML = `💥 ПУСК!`;
+            
+            if (window.tacticalAudio) window.tacticalAudio.playAlert();
+            
+            let multiplier = 4;
+            if (targetType === 'engine') multiplier = 5;
+            if (targetType === 'radar') multiplier = 6;
+            if (targetType === 'missile') multiplier = 8;
 
-          this.fireMissileSalvo(multiplier);
-          this.flirOverlay.classList.remove('active');
-          if (this.engine3D) this.engine3D.cameraMode = 'orbit';
-        }, 1500);
-      };
+            this.fireMissileSalvo(multiplier);
+            this.flirOverlay.classList.remove('active');
+            document.body.classList.remove('flir-active');
+            if (this.engine3D) this.engine3D.cameraMode = 'orbit';
 
-      const cancelLock = (e) => {
-        e.preventDefault();
-        if (holdTimer) clearTimeout(holdTimer);
-        btn.classList.remove('locking');
-      };
-
-      btn.addEventListener('mousedown', startLock);
-      btn.addEventListener('touchstart', startLock, { passive: false });
-      
-      btn.addEventListener('mouseup', cancelLock);
-      btn.addEventListener('mouseleave', cancelLock);
-      btn.addEventListener('touchend', cancelLock);
-      btn.addEventListener('touchcancel', cancelLock);
+            // Reset button text after short delay
+            setTimeout(() => {
+              btn.classList.remove('locked');
+              if (bracket) bracket.innerHTML = originalText;
+            }, 500);
+          }
+        };
+        tick();
+      });
     });
+
 
     // Direct 3D Missile Fire
     if (this.btnDirectMissile) {
@@ -4948,7 +5286,8 @@ class BarracudaGame {
     if (this.btnCyberSubmit) {
       this.btnCyberSubmit.addEventListener('click', () => {
         const match = this.getCyberMatchPercent();
-        if (match >= 85) {
+        const reqMatch = 85 - (this.getCrewHackerBonus() * 100);
+        if (match >= reqMatch) {
           window.tacticalAudio.playCyberHackTone(true);
           const mult = this.getGlobalMultiplier();
           this.creditsUSD += 2000 * mult;
@@ -4957,17 +5296,18 @@ class BarracudaGame {
           this.dailyHacks++;
           this.cyberComboChannel++;
 
-          if (this.cyberComboChannel < 3) {
+          const requiredChannels = this.bossActive ? 5 : 3;
+          if (this.cyberComboChannel < requiredChannels) {
             // Spawn next channel
             this.targetFreq = 80 + Math.floor(Math.random() * 140);
             this.targetAmp = +(0.5 + Math.random() * 1.2).toFixed(1);
-            this.cyberHackTimer = Math.max(15, 30 - this.cyberComboChannel * 5);
+            this.cyberHackTimer = Math.max(15, 30 - this.cyberComboChannel * 4);
             this.addNotification('📡 КАНАЛ ВЗЛОМАН', `Combo x${this.cyberComboChannel}! Следующий канал...`);
           } else {
             // All channels hacked — big reward
-            this.creditsUSD += 10000 * mult;
-            this.addData(150 * mult);
-            this.addNotification('🏆 ПОЛНЫЙ ВЗЛОМ', 'Все 3 канала дешифрованы! Мега-бонус!');
+            this.creditsUSD += (this.bossActive ? 25000 : 10000) * mult;
+            this.addData((this.bossActive ? 300 : 150) * mult);
+            this.addNotification('🏆 ПОЛНЫЙ ВЗЛОМ', `Все ${requiredChannels} канала дешифрованы! Мега-бонус!`);
             this.cyberModal.classList.remove('active');
             this.cyberHackActive = false;
 
@@ -5119,9 +5459,10 @@ class BarracudaGame {
 
   checkCyberMatch() {
     const match = this.getCyberMatchPercent();
+    const reqMatch = 85 - (this.getCrewHackerBonus() * 100);
     if (this.cyberMatchStatus) {
       this.cyberMatchStatus.textContent = `СОВПАДЕНИЕ: ${match.toFixed(0)}% ${this.cyberComboChannel > 0 ? '// COMBO x' + this.cyberComboChannel : ''}`;
-      this.cyberMatchStatus.style.color = match >= 85 ? '#00ff66' : (match >= 50 ? '#ffcc00' : '#ff4444');
+      this.cyberMatchStatus.style.color = match >= reqMatch ? '#00ff66' : (match >= reqMatch - 35 ? '#ffcc00' : '#ff4444');
     }
   }
 
@@ -5148,6 +5489,57 @@ class BarracudaGame {
     for (let x = 0; x < W; x += 30) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
     for (let y = 0; y < H; y += 30) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
 
+    // -------- TARGET ZONE overlay (shows player where to aim sliders) --------
+    // Target frequency maps to an X-axis position on the wave, amplitude to Y amplitude
+    // Draw a vertical guide column showing where the target waveform peak should align
+    const freqRangeLow = 80, freqRangeHigh = 220;
+    const freqNorm = (this.targetFreq - freqRangeLow) / (freqRangeHigh - freqRangeLow);
+    const targetPeakX = Math.floor(W * freqNorm * 0.8 + W * 0.1); // stays off edges
+    const targetPeakY = H / 2 - this.targetAmp * 40;
+
+    // Shaded target zone band
+    const zoneHalfW = 22;
+    const matchPct = this.getCyberMatchPercent();
+    const zoneColor = matchPct >= 85 ? 'rgba(0,255,102,0.15)' : 'rgba(0,229,255,0.08)';
+    ctx.fillStyle = zoneColor;
+    ctx.fillRect(targetPeakX - zoneHalfW, 0, zoneHalfW * 2, H);
+
+    // Target peak marker — dashed vertical line
+    ctx.save();
+    ctx.strokeStyle = matchPct >= 85 ? '#00ff66' : '#00e5ff';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([5, 4]);
+    ctx.globalAlpha = 0.7;
+    ctx.beginPath();
+    ctx.moveTo(targetPeakX, 0);
+    ctx.lineTo(targetPeakX, H);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.globalAlpha = 1;
+    ctx.restore();
+
+    // Target amplitude marker — horizontal dashed line at peak y
+    ctx.save();
+    ctx.strokeStyle = matchPct >= 85 ? '#00ff66' : '#00ccff';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([3, 4]);
+    ctx.globalAlpha = 0.5;
+    ctx.beginPath();
+    ctx.moveTo(0, targetPeakY);
+    ctx.lineTo(W, targetPeakY);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.globalAlpha = 1;
+    ctx.restore();
+
+    // Label "TARGET" above zone
+    ctx.save();
+    ctx.font = '9px monospace';
+    ctx.fillStyle = matchPct >= 85 ? '#00ff66' : '#00e5ff';
+    ctx.textAlign = 'center';
+    ctx.fillText('TARGET', targetPeakX, 10);
+    ctx.restore();
+
     // Interference noise overlay
     if (this.cyberInterferenceActive) {
       ctx.fillStyle = 'rgba(255, 40, 40, 0.06)';
@@ -5168,7 +5560,7 @@ class BarracudaGame {
     ctx.stroke();
 
     // Player Wave (Green dashed)
-    ctx.strokeStyle = '#00ff66';
+    ctx.strokeStyle = matchPct >= 85 ? '#00ff66' : '#55ff88';
     ctx.lineWidth = 2;
     ctx.setLineDash([4, 2]);
     ctx.beginPath();
@@ -5178,6 +5570,11 @@ class BarracudaGame {
     }
     ctx.stroke();
     ctx.setLineDash([]);
+
+    // Match % bar across top edge of canvas
+    const barW = Math.floor(W * Math.min(1, matchPct / 100));
+    ctx.fillStyle = matchPct >= 85 ? '#00ff66' : (matchPct >= 50 ? '#ffcc00' : '#ff4444');
+    ctx.fillRect(0, H - 4, barW, 4);
 
     // Timer display on canvas
     if (this.cyberHackActive) {
@@ -5193,6 +5590,7 @@ class BarracudaGame {
       ctx.textAlign = 'left';
     }
   }
+
 
   handleClick(x, y) {
     let gainMB = this.getClickPower();
@@ -5268,14 +5666,36 @@ class BarracudaGame {
   }
 
   spawnFloatingGain(x, y, gainMB, gainUSD, isCrit) {
+    // Guard: prevent duplicate popups from multi-listener fires within 60ms
+    const now = Date.now();
+    if (this._lastGainSpawn && now - this._lastGainSpawn < 60) return;
+    this._lastGainSpawn = now;
+
     const el = document.createElement('div');
     el.className = isCrit ? 'floating-gain crit' : 'floating-gain';
+
     const mbText = gainMB < 10 ? `+${gainMB.toFixed(1)} МБ` : `+${Math.floor(gainMB)} МБ`;
-    el.textContent = isCrit ? `КРИТ! ${mbText} (+$${gainUSD})` : `${mbText} (+$${gainUSD})`;
-    el.style.left = `${x + (Math.random() * 30 - 15)}px`;
-    el.style.top = `${y - 20}px`;
+    const usdText = gainUSD >= 1000
+      ? `+$${(gainUSD / 1000).toFixed(1)}k`
+      : `+$${Math.floor(gainUSD)}`;
+
+    if (isCrit) {
+      el.innerHTML =
+        `<span style="display:block;font-size:1em;letter-spacing:2px">⚡ КРИТ!</span>` +
+        `<span style="display:block;font-size:0.85em">${mbText}</span>` +
+        `<span style="display:block;font-size:0.6em;opacity:0.8;color:#ffdd44">${usdText}</span>`;
+    } else {
+      el.innerHTML =
+        `<span style="display:block">${mbText}</span>` +
+        `<span style="display:block;font-size:0.6em;opacity:0.7">${usdText}</span>`;
+    }
+
+    el.style.left = `${x + (Math.random() * 20 - 10)}px`;
+    el.style.top  = `${y - 20}px`;
+    el.style.textAlign = 'center';
+    el.style.lineHeight = '1.25';
     document.body.appendChild(el);
-    setTimeout(() => el.remove(), 850);
+    setTimeout(() => el.remove(), 900);
   }
 
   addData(amount) {
@@ -5345,9 +5765,65 @@ class BarracudaGame {
         c.active = true;
         c.progress = 0;
         window.tacticalAudio.playMountingSfx();
+        // Rebuild card immediately so it shows "⏳ В РАБОТЕ" without waiting for game loop
+        this.rebuildContractDOM();
         this.updateUI();
+        this.addNotification('📋 ОПЕРАЦИЯ ЗАПУЩЕНА', `${c.name} — выполнится за ${c.duration}с`);
+      } else {
+        // Inform player why it failed
+        const lacks = [];
+        if (this.dataMB < c.costMB) lacks.push(`📡 ${c.costMB - Math.floor(this.dataMB)} МБ`);
+        if (this.creditsUSD < c.costUSD) lacks.push(`💰 $${(c.costUSD - Math.floor(this.creditsUSD)).toLocaleString()}`);
+        this.addNotification('⚠️ НЕДОСТАТОЧНО РЕСУРСОВ', `Нужно ещё: ${lacks.join(', ')}`);
       }
     }
+  }
+
+  // =========================================================================
+  // CONTRACT COMPLETE TOAST
+  // =========================================================================
+  _showContractCompleteToast(c) {
+    const rarityColor = c.rarity === 'elite' ? '#ff9944' : (c.rarity === 'rare' ? '#d070ff' : '#00f0ff');
+    const rarityLabel = c.rarity === 'elite' ? 'ЭЛИТА' : (c.rarity === 'rare' ? 'РЕДКИЙ' : 'ОБЫЧНЫЙ');
+    const rewardParts = [`+$${c.rewardUSD.toLocaleString()}`, `+${c.rewardMB} МБ`];
+    if (c.rewardBP > 0) rewardParts.push(`+${c.rewardBP} ЧЖ`);
+
+    const toast = document.createElement('div');
+    toast.style.cssText = `
+      position:fixed; bottom:80px; left:50%; transform:translateX(-50%) translateY(20px);
+      background:rgba(0,8,14,0.97); border:1.5px solid ${rarityColor};
+      border-radius:12px; padding:14px 20px; z-index:9800;
+      display:flex; align-items:center; gap:14px;
+      box-shadow:0 0 30px ${rarityColor}44, 0 8px 32px rgba(0,0,0,0.7);
+      font-family:Rajdhani,sans-serif; max-width:360px; width:90%;
+      opacity:0; transition:all 0.35s cubic-bezier(0.2,0.8,0.2,1);
+      pointer-events:none;
+    `;
+    toast.innerHTML = `
+      <div style="font-size:28px;flex-shrink:0">✅</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:10px;letter-spacing:2px;color:${rarityColor};margin-bottom:2px">КОНТРАКТ ВЫПОЛНЕН [${rarityLabel}]</div>
+        <div style="font-size:14px;font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.name}</div>
+        <div style="font-size:12px;color:#a0bac8;margin-top:3px;letter-spacing:0.5px">${rewardParts.join(' // ')}</div>
+      </div>
+      <div style="font-size:22px;flex-shrink:0;animation:fpvAlertBlink 0.4s 3 alternate">💰</div>
+    `;
+    document.body.appendChild(toast);
+    // Animate in
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        toast.style.opacity = '1';
+        toast.style.transform = 'translateX(-50%) translateY(0)';
+      });
+    });
+    // Animate out
+    setTimeout(() => {
+      toast.style.opacity = '0';
+      toast.style.transform = 'translateX(-50%) translateY(-10px)';
+      setTimeout(() => toast.remove(), 380);
+    }, 3800);
+    // Also show regular notification
+    this.addNotification('✅ КОНТРАКТ ВЫПОЛНЕН', `${c.name} — ${rewardParts.join(', ')}`);
   }
 
   activateOverclock() {
@@ -5561,8 +6037,13 @@ class BarracudaGame {
 
       setTimeout(() => {
         this.assaultModal.classList.remove('active');
-        const mainHud = document.getElementById('main-hud-layer');
-        if (mainHud && this.uiMode === 'MAIN') mainHud.style.display = '';
+        // Always restore HUD — uiMode may be 'RESULT' when assault is launched from campaign
+        if (!this.sortieActive) {
+          this.setUIState('MAIN');
+        } else {
+          const mainHud = document.getElementById('main-hud-layer');
+          if (mainHud) mainHud.style.display = '';
+        }
         this.updateDossier(DOSSIER_LORE[0], false);
         this.checkAllAchievements();
         this.saveGame();
@@ -5574,8 +6055,13 @@ class BarracudaGame {
 
       setTimeout(() => {
         this.assaultModal.classList.remove('active');
-        const mainHud = document.getElementById('main-hud-layer');
-        if (mainHud && this.uiMode === 'MAIN') mainHud.style.display = '';
+        // Always restore HUD regardless of uiMode
+        if (!this.sortieActive) {
+          this.setUIState('MAIN');
+        } else {
+          const mainHud = document.getElementById('main-hud-layer');
+          if (mainHud) mainHud.style.display = '';
+        }
       }, 1500);
     }
   }
@@ -5587,41 +6073,123 @@ class BarracudaGame {
     const panel = document.querySelector('#panel-contracts .upgrade-list-scroll');
     if (!panel) return;
 
-    // Keep the tech card (last child usually)
+    // Keep the tech card
     const techCard = panel.querySelector('[data-buy-tech]')?.closest('.upgrade-item-card');
 
-    // Remove contract cards
+    // Remove old contract cards
     panel.querySelectorAll('.contract-card-dynamic').forEach(c => c.remove());
 
-    // Add new contracts
+    // Build new contract cards
     this.activeContracts.forEach(c => {
       const card = document.createElement('div');
       card.className = 'upgrade-item-card contract-card-dynamic';
+      card.setAttribute('data-contract-id', c.id);
+
       const rarityColor = c.rarity === 'elite' ? '#ff9944' : (c.rarity === 'rare' ? '#d070ff' : '#00f0ff');
+      const rarityBg    = c.rarity === 'elite' ? 'rgba(255,153,68,0.06)' : (c.rarity === 'rare' ? 'rgba(208,112,255,0.06)' : 'rgba(0,240,255,0.04)');
       const rarityLabel = c.rarity === 'elite' ? '⭐ ЭЛИТА' : (c.rarity === 'rare' ? '💎 РЕДКИЙ' : '📋 ОБЫЧНЫЙ');
+
+      // Status text
+      let statusIcon, statusText, statusColor;
+      if (c.completed) {
+        statusIcon = '✓'; statusText = 'ВЫПОЛНЕН'; statusColor = '#00ff88';
+      } else if (c.active) {
+        statusIcon = '⏳'; statusText = 'В РАБОТЕ'; statusColor = '#ffcc00';
+      } else {
+        statusIcon = '◉'; statusText = 'ГОТОВ'; statusColor = rarityColor;
+      }
+
+      // Time remaining
+      const timeLeft = (c.active && !c.completed) ? Math.max(0, Math.ceil(c.duration - c.progress)) : null;
+      const timeStr = timeLeft !== null
+        ? (timeLeft >= 60 ? `${Math.floor(timeLeft/60)}м ${timeLeft%60}с` : `${timeLeft}с`)
+        : '';
+
+      // Cost
+      const costParts = [];
+      if (c.costMB > 0) costParts.push(`📡 ${c.costMB >= 1000 ? (c.costMB/1000).toFixed(1)+'ГБ' : c.costMB+' МБ'}`);
+      if (c.costUSD > 0) costParts.push(`💰 $${c.costUSD.toLocaleString()}`);
+      const costStr = costParts.length > 0 ? costParts.join(' + ') : 'БЕСПЛАТНО';
+
+      // Replace button (only when not running)
+      const canReplace = !c.active || c.completed;
+      const replaceHtml = canReplace
+        ? `<button class="btn-cancel-contract" data-cancel-contract="${c.id}"
+             title="Заменить контракт (-500 МБ)"
+             style="background:transparent;border:1px solid rgba(255,150,0,0.3);color:rgba(255,150,0,0.6);
+                    font-size:9px;font-family:Rajdhani,sans-serif;padding:2px 6px;border-radius:3px;
+                    cursor:pointer;white-space:nowrap;transition:all 0.15s"
+             onmouseover="this.style.borderColor='rgba(255,150,0,0.8)';this.style.color='rgba(255,150,0,1)'"
+             onmouseout="this.style.borderColor='rgba(255,150,0,0.3)';this.style.color='rgba(255,150,0,0.6)'">🔄 −500 МБ</button>`
+        : '';
+
+      // Action button
+      let btnHtml;
+      if (c.completed) {
+        btnHtml = `<button class="btn-buy-action" data-start-contract="${c.id}" disabled
+          style="border-color:rgba(0,255,136,0.3);color:#00ff88;background:rgba(0,255,136,0.08);opacity:1;font-size:10px">✓ ГОТОВО</button>`;
+      } else if (c.active) {
+        btnHtml = `<button class="btn-buy-action" data-start-contract="${c.id}" disabled
+          style="border-color:${rarityColor}44;color:${rarityColor};opacity:0.7;font-size:9px">⏳ ${timeStr || '...'}</button>`;
+      } else {
+        btnHtml = `<button class="btn-buy-action" data-start-contract="${c.id}"
+          style="border-color:${rarityColor}66;color:${rarityColor};font-weight:800">▶ СТАРТ</button>`;
+      }
+
+      const progPct = c.completed ? 100 : Math.min(100, (c.progress / c.duration) * 100);
+      const barPulse = (c.active && !c.completed) ? ' contract-bar-pulse' : '';
+      const timeFooter = c.active && !c.completed
+        ? `⏱ ~${timeStr} до завершения`
+        : (c.completed ? '✔ Контракт закрыт' : `⏱ ${c.duration}с выполнения`);
+
+      card.style.cssText = `border-left:2px solid ${rarityColor}66;background:${rarityBg};`;
+
       card.innerHTML = `
-        <div style="width:100%">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">
-            <div class="item-card-title" style="color:${rarityColor}">${c.name}</div>
-            <span style="font-size:9px;padding:1px 5px;border-radius:4px;border:1px solid ${rarityColor}44;color:${rarityColor};background:${rarityColor}11">${rarityLabel}</span>
+        <div style="width:100%;min-width:0">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;gap:4px">
+            <div style="flex:1;min-width:0">
+              <div class="item-card-title" style="color:${rarityColor};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.name}</div>
+              <div style="font-size:9px;color:${statusColor};letter-spacing:0.5px;margin-top:1px">${statusIcon} ${statusText}</div>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex-shrink:0">
+              ${replaceHtml}
+              <span style="font-size:9px;padding:1px 5px;border-radius:4px;border:1px solid ${rarityColor}44;color:${rarityColor};background:${rarityColor}11;white-space:nowrap">${rarityLabel}</span>
+            </div>
           </div>
-          <div class="item-card-sub text-dim-cyan">+$${c.rewardUSD.toLocaleString()} // +${c.rewardMB} МБ${c.rewardBP > 0 ? ` // +${c.rewardBP} ЧЖ` : ''}</div>
-          <div class="contract-bar-track" style="margin-top:5px">
-            <div id="prog-contract-${c.id}" class="contract-bar-fill" style="background:${rarityColor}"></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">
+            <div style="color:#667;font-size:9px">💸 ${costStr}</div>
+            <div style="color:#8da4af;font-size:9px">+$${c.rewardUSD.toLocaleString()} / +${c.rewardMB}МБ${c.rewardBP > 0 ? ` / +${c.rewardBP}ЧЖ` : ''}</div>
           </div>
+          <div class="contract-bar-track" style="height:5px;border-radius:3px;overflow:hidden;background:rgba(0,0,0,0.4)">
+            <div id="prog-contract-${c.id}" class="contract-bar-fill${barPulse}"
+              style="background:linear-gradient(90deg,${rarityColor}99,${rarityColor});width:${progPct}%;height:100%;border-radius:3px;transition:width 0.3s ease">
+            </div>
+          </div>
+          <div id="time-contract-${c.id}" style="font-size:9px;color:#556;margin-top:2px;text-align:right">${timeFooter}</div>
         </div>
-        <button class="btn-buy-action" data-start-contract="${c.id}" style="border-color:${rarityColor}66;color:${rarityColor}" ${c.completed ? 'disabled' : ''}>${c.completed ? '✓ ВЫПОЛНЕН' : c.active ? '⏳ В РАБОТЕ' : 'СТАРТ'}</button>
+        ${btnHtml}
       `;
+
       if (techCard) panel.insertBefore(card, techCard);
       else panel.appendChild(card);
 
-      // Bind event
+      // Bind start button
       card.querySelector('[data-start-contract]').addEventListener('click', (e) => {
         e.stopPropagation();
         this.startContract(c.id);
       });
+
+      // Bind replace button
+      const cancelBtn = card.querySelector('[data-cancel-contract]');
+      if (cancelBtn) {
+        cancelBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          this.cancelContract(c.id);
+        });
+      }
     });
   }
+
 
   // =========================================================================
   // MAIN GAME LOOP
@@ -5684,12 +6252,31 @@ class BarracudaGame {
             c.active = false;
             this.creditsUSD += c.rewardUSD;
             this.addData(c.rewardMB);
+            if (c.rewardBP > 0) this.blueprintsBP += c.rewardBP;
             window.tacticalAudio.playContractSfx();
-            this.addNotification('✅ КОНТРАКТ ВЫПОЛНЕН', `${c.name} — +$${c.rewardUSD.toLocaleString()}`);
+            this._showContractCompleteToast(c);
+            // Update card inline without full DOM rebuild
+            const card = document.querySelector(`[data-contract-id="${c.id}"]`);
+            if (card) {
+              const progBar = document.getElementById(`prog-contract-${c.id}`);
+              if (progBar) { progBar.style.width = '100%'; progBar.classList.remove('contract-bar-pulse'); }
+              const timeEl = document.getElementById(`time-contract-${c.id}`);
+              if (timeEl) timeEl.textContent = '\u2714 \u041a\u043e\u043d\u0442\u0440\u0430\u043a\u0442 \u0437\u0430\u043a\u0440\u044b\u0442';
+              const statusEl = card.querySelector('[style*="statusColor"], div > div:nth-child(2)');
+              const startBtn = card.querySelector('[data-start-contract]');
+              if (startBtn) {
+                startBtn.textContent = '\u2713 \u0413\u041e\u0422\u041e\u0412\u041e';
+                startBtn.style.borderColor = 'rgba(0,255,136,0.3)';
+                startBtn.style.color = '#00ff88';
+                startBtn.style.background = 'rgba(0,255,136,0.08)';
+                startBtn.disabled = true;
+              }
+            }
             this._uiDirty = true;
           }
         }
       });
+
       this.refreshContracts();
 
       // SIGINT Cyber Hack timer & interference
@@ -5869,7 +6456,23 @@ class BarracudaGame {
 
     this.activeContracts.forEach(c => {
       const progBar = document.getElementById(`prog-contract-${c.id}`);
-      if (progBar) progBar.style.width = c.completed ? '100%' : `${(c.progress / c.duration) * 100}%`;
+      if (progBar) {
+        const pct = c.completed ? 100 : Math.min(100, (c.progress / c.duration) * 100);
+        progBar.style.width = `${pct}%`;
+      }
+      // Update time label & button text for active contracts
+      const timeEl = document.getElementById(`time-contract-${c.id}`);
+      if (timeEl && c.active && !c.completed) {
+        const timeLeft = Math.max(0, Math.ceil(c.duration - c.progress));
+        const ts = timeLeft >= 60 ? `${Math.floor(timeLeft/60)}м ${timeLeft%60}с` : `${timeLeft}с`;
+        timeEl.textContent = `\u23F1 ~${ts} \u0434\u043e \u0437\u0430\u0432\u0435\u0440\u0448\u0435\u043d\u0438\u044f`;
+        // Update button countdown
+        const card = timeEl.closest('[data-contract-id]');
+        if (card) {
+          const startBtn = card.querySelector('[data-start-contract]');
+          if (startBtn && startBtn.disabled) startBtn.textContent = `\u23F3 ${ts}`;
+        }
+      }
     });
 
     if (this.boosterWidget) {
@@ -6350,6 +6953,23 @@ class BarracudaGame {
       });
     }
 
+    // Prestige Button
+    const prestigeBtn = document.getElementById('btn-prestige');
+    if (prestigeBtn) {
+      prestigeBtn.addEventListener('click', () => {
+        if (this.creditsUSD >= 1000000) {
+          if (confirm('СЕКРЕТНЫЙ ПРОТОКОЛ: Весь прогресс (деньги, данные, чертежи, экипаж) будет сброшен, но вы получите +1 к Престижу (постоянный множитель ко всем доходам). Вы уверены?')) {
+            const newPrestige = (this.prestigeLevel || 0) + 1;
+            localStorage.removeItem('barracuda_save');
+            localStorage.setItem('barracuda_save', JSON.stringify({ prestigeLevel: newPrestige }));
+            location.reload();
+          }
+        } else {
+          this.addNotification('ОТКАЗ В ДОСТУПЕ', 'Недостаточно средств. Требуется $1,000,000.');
+        }
+      });
+    }
+
     // New Game
     const newGameBtn = document.getElementById('btn-new-game');
     if (newGameBtn) {
@@ -6456,33 +7076,247 @@ class BarracudaGame {
     if (sliderExpo) { sliderExpo.value = this.pidSettings.expo || 1.0; sliderExpo.addEventListener('input', updatePid); }
     updatePid();
 
-    // 5. Underwater ROV & Data Siphon
+    // 5. Underwater ROV & Data Siphon — 3-Phase Gameplay
     const btnTriggerSiphon = document.getElementById('btn-trigger-siphon');
     const btnExitRov = document.getElementById('btn-exit-rov');
     const rovOverlay = document.getElementById('rov-mission-overlay');
+
+    // ROV Phase State
+    this.rovPhase = 'search'; // 'search' | 'align' | 'siphon' | 'done'
+    this.rovSiphonProgress = 0;
+    this._rovSiphonInterval = null;
+
+    // Update button state & phase based on magnetometer
+    this._updateRovPhaseUI = () => {
+      if (!btnTriggerSiphon) return;
+      const magVal = this.engine3D ? (this.engine3D.magnetometerValue || 0) : 0;
+      const pct = Math.min(100, (magVal / 500) * 100);
+
+      // Update phase indicators
+      const phaseSearch = document.getElementById('rov-phase-search');
+      const phaseAlign  = document.getElementById('rov-phase-align');
+      const phaseSiphon = document.getElementById('rov-phase-siphon');
+      if (phaseSearch) phaseSearch.className = 'rov-phase' + (this.rovPhase === 'search' ? ' active' : (this.rovPhase !== 'search' ? ' done' : ''));
+      if (phaseAlign)  phaseAlign.className  = 'rov-phase' + (this.rovPhase === 'align' ? ' active' : (this.rovPhase === 'siphon' || this.rovPhase === 'done' ? ' done' : ''));
+      if (phaseSiphon) phaseSiphon.className = 'rov-phase' + (this.rovPhase === 'siphon' ? ' active' : (this.rovPhase === 'done' ? ' done' : ''));
+
+      // Update big magnetometer display
+      const valEl = document.getElementById('rov-val-mag');
+      if (valEl) {
+        valEl.textContent = Math.round(magVal).toLocaleString() + ' nT';
+        valEl.className = 'mag-big-val' + (magVal < 100 ? ' low' : magVal < 350 ? ' mid' : ' high');
+      }
+      const fillEl = document.getElementById('rov-fill-mag');
+      if (fillEl) fillEl.style.width = `${pct}%`;
+      const zoneEl = document.getElementById('rov-mag-zone');
+      if (zoneEl) {
+        if (magVal < 100) zoneEl.textContent = '📡 ПОИСК КАБЕЛЯ... Сигнал слабый';
+        else if (magVal < 200) zoneEl.textContent = '📡 СИГНАЛ: СЛАБЫЙ — подплывайте ближе';
+        else if (magVal < 350) zoneEl.textContent = '⚡ СИГНАЛ: СРЕДНИЙ — ещё ближе!';
+        else zoneEl.textContent = '✅ КАБЕЛЬ НАЙДЕН! Нажмите СИФОН!';
+      }
+
+      // Update siphon progress bar
+      const siphonFill = document.getElementById('rov-siphon-fill');
+      const siphonPct = document.getElementById('rov-siphon-pct');
+      if (siphonFill) siphonFill.style.width = `${this.rovSiphonProgress || 0}%`;
+      if (siphonPct) siphonPct.textContent = `${Math.round(this.rovSiphonProgress || 0)}%`;
+
+      // Direction arrow — rotates toward cable based on mag sim angle
+      const arrow = document.getElementById('rov-direction-arrow');
+      const hint = document.getElementById('rov-dir-hint');
+      if (arrow) {
+        if (magVal >= 350) {
+          arrow.style.transform = 'rotate(0deg)';
+          arrow.className = 'rov-direction-arrow strong';
+          if (hint) hint.textContent = '✅ КАБЕЛЬ В ЗОНЕ — нажми СИФОН!';
+        } else {
+          // Simulate direction: slowly drifting angle toward cable
+          const t = Date.now() / 1000;
+          const drift = (magVal / 350) * 180; // More cable = less drift
+          const ang = Math.sin(t * 0.4) * (180 - drift);
+          arrow.style.transform = `rotate(${ang}deg)`;
+          arrow.className = 'rov-direction-arrow';
+          if (hint) hint.textContent = 'Маневрируй [WASD] — следи за стрелой';
+        }
+      }
+
+      // Draw oscilloscope
+      const osc = document.getElementById('rov-oscilloscope');
+      if (osc) {
+        const ctx = osc.getContext('2d');
+        const W = osc.width, H = osc.height;
+        // Scroll left
+        const imgData = ctx.getImageData(2, 0, W - 2, H);
+        ctx.putImageData(imgData, 0, 0);
+        ctx.fillStyle = '#000d14';
+        ctx.fillRect(W - 2, 0, 2, H);
+        // Draw new column
+        const noiseAmp = Math.max(2, (magVal / 500) * (H / 2 - 4));
+        const noise = (Math.random() - 0.5) * noiseAmp * 0.5;
+        const signal = (magVal / 500) * (H / 2 - 6);
+        const centerY = H / 2;
+        const gradient = ctx.createLinearGradient(0, centerY - signal, 0, centerY + signal);
+        gradient.addColorStop(0, magVal >= 350 ? '#00ff88' : '#ffcc00');
+        gradient.addColorStop(1, 'rgba(0,240,255,0.3)');
+        ctx.strokeStyle = gradient;
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(W - 2, centerY + noise - signal * 0.5);
+        ctx.lineTo(W - 1, centerY + noise + signal * 0.5 * (Math.sin(Date.now()/50)));
+        ctx.stroke();
+        // Threshold line
+        const threshY = centerY - (350 / 500) * (H / 2 - 6);
+        ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+        ctx.lineWidth = 0.5;
+        ctx.setLineDash([3, 3]);
+        ctx.beginPath();
+        ctx.moveTo(W - 2, threshY);
+        ctx.lineTo(W, threshY);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+
+      // Phase transitions
+      if (this.rovPhase === 'search' && magVal >= 350) {
+        this.rovPhase = 'align';
+        btnTriggerSiphon.disabled = false;
+        btnTriggerSiphon.style.background = 'rgba(0,255,136,0.25)';
+        btnTriggerSiphon.style.borderColor = '#00ff88';
+        btnTriggerSiphon.style.boxShadow = '0 0 20px rgba(0,255,136,0.6)';
+        btnTriggerSiphon.style.animation = 'pulse-ready 1s infinite';
+        btnTriggerSiphon.style.color = '#00ff88';
+        this.showMissionWarning('✅ КАБЕЛЬ В ЗОНЕ — нажмите [ПОДКЛЮЧИТЬ СИФОН]!');
+        if (window.tacticalAudio) window.tacticalAudio.playAlert();
+      } else if (this.rovPhase === 'search' && magVal < 350) {
+        btnTriggerSiphon.disabled = true;
+        btnTriggerSiphon.style.background = 'rgba(40,40,40,0.3)';
+        btnTriggerSiphon.style.borderColor = '#333';
+        btnTriggerSiphon.style.boxShadow = '';
+        btnTriggerSiphon.style.animation = '';
+        btnTriggerSiphon.style.color = '#666';
+      }
+    };
+
+
     if (btnTriggerSiphon) {
+      btnTriggerSiphon.disabled = true; // Starts disabled — need to find cable first
+      btnTriggerSiphon.style.background = 'rgba(100,100,100,0.15)';
+      btnTriggerSiphon.style.borderColor = '#444';
+
       btnTriggerSiphon.addEventListener('click', () => {
-        if (this.engine3D) {
-          this.engine3D.siphonProgress = 100;
-          this.engine3D.siphonLocked = true;
+        if (this.rovPhase === 'align') {
+          // Phase 3: Start siphon progress
+          this.rovPhase = 'siphon';
+          btnTriggerSiphon.textContent = '⏳ ЗАКАЧКА ДАННЫХ...';
+          btnTriggerSiphon.disabled = true;
           if (window.tacticalAudio) window.tacticalAudio.playSiphonLock();
-          this.checkAchievement('underwater_siphon');
-          this.dataMB += 8500;
-          this.creditsUSD += 25000;
-          this.addNotification('🔮 СИФОН ПОДКЛЮЧЕН', '+8,500 МБ и +$25,000 получены!');
-          setTimeout(() => {
-            if (rovOverlay) rovOverlay.style.display = 'none';
-            if (this.engine3D) this.engine3D.stopRovMode();
-          }, 1500);
+          this.addNotification('🔮 СИФОН ПОДКЛЮЧЁН', 'Идёт передача данных...');
+
+          const syncBar = document.querySelector('#rov-mission-overlay [id*="sync"]');
+          this.rovSiphonProgress = 0;
+          this._rovSiphonInterval = setInterval(() => {
+            this.rovSiphonProgress += 4;
+
+            if (syncBar) syncBar.style.width = `${this.rovSiphonProgress}%`;
+
+            // Random interference at 40-70% — player must click again
+            if (this.rovSiphonProgress >= 40 && this.rovSiphonProgress <= 70 && Math.random() < 0.05 && this.rovPhase === 'siphon') {
+              clearInterval(this._rovSiphonInterval);
+              this.rovSiphonProgress = Math.max(0, this.rovSiphonProgress - 25);
+              this.rovPhase = 'align';
+              btnTriggerSiphon.textContent = '⚠️ ИНТЕРФЕРЕНЦИЯ — ПЕРЕПОДКЛЮЧИТЬ';
+              btnTriggerSiphon.disabled = false;
+              btnTriggerSiphon.style.background = 'rgba(255,150,0,0.25)';
+              btnTriggerSiphon.style.borderColor = '#ff9900';
+              btnTriggerSiphon.style.boxShadow = '0 0 20px rgba(255,150,0,0.6)';
+              if (syncBar) syncBar.style.background = '#ff9900';
+              this.showMissionWarning('⚡ ИНТЕРФЕРЕНЦИЯ! Нажмите [ПЕРЕПОДКЛЮЧИТЬ СИФОН] для восстановления!');
+              if (window.tacticalAudio) window.tacticalAudio.playAlert();
+              return;
+            }
+
+            if (this.rovSiphonProgress >= 100) {
+              clearInterval(this._rovSiphonInterval);
+              this.rovPhase = 'done';
+              if (syncBar) syncBar.style.background = '#00ff88';
+              this.checkAchievement('underwater_siphon');
+              const mbGained = 8500 + Math.floor(Math.random() * 2000);
+              const usdGained = 25000 + Math.floor(Math.random() * 10000);
+              this.dataMB += mbGained;
+              this.creditsUSD += usdGained;
+              this._uiDirty = true;
+              this.addNotification('🔮 СИФОН ЗАВЕРШЁН', `+${mbGained.toLocaleString()} МБ и +$${usdGained.toLocaleString()} получены!`);
+              this.showMissionWarning('✅ ПЕРЕДАЧА ДАННЫХ ЗАВЕРШЕНА // Возврат дрона...');
+              if (window.tacticalAudio) window.tacticalAudio.playSiphonLock();
+              setTimeout(() => {
+                if (rovOverlay) rovOverlay.style.display = 'none';
+                if (this.engine3D) this.engine3D.stopRovMode();
+                this.sortieActive = false;
+                document.body.classList.remove('sortie-active');
+                this.setUIState('MAIN');
+              }, 1800);
+            }
+          }, 200);
+        } else if (this.rovPhase === 'align') {
+          // Re-connect after interference
+          this.rovPhase = 'siphon';
+          btnTriggerSiphon.textContent = '⏳ ВОССТАНОВЛЕНИЕ...';
+          btnTriggerSiphon.disabled = true;
+          btnTriggerSiphon.style.background = 'rgba(0,255,136,0.2)';
+          btnTriggerSiphon.style.borderColor = '#00ff88';
+          if (window.tacticalAudio) window.tacticalAudio.playSiphonLock();
+          this.addNotification('🔮 ПЕРЕПОДКЛЮЧЕНИЕ', 'Восстанавливаю канал данных...');
+          const syncBar2 = document.querySelector('#rov-mission-overlay [id*="sync"]');
+          if (syncBar2) syncBar2.style.background = '#00ff88';
+          // Continue from where we left off
+          this._rovSiphonInterval = setInterval(() => {
+            this.rovSiphonProgress += 4;
+            if (syncBar2) syncBar2.style.width = `${this.rovSiphonProgress}%`;
+            if (this.rovSiphonProgress >= 100) {
+              clearInterval(this._rovSiphonInterval);
+              this.rovPhase = 'done';
+              const mbGained = 8500 + Math.floor(Math.random() * 2000);
+              const usdGained = 25000 + Math.floor(Math.random() * 10000);
+              this.dataMB += mbGained;
+              this.creditsUSD += usdGained;
+              this._uiDirty = true;
+              this.addNotification('🔮 СИФОН ЗАВЕРШЁН', `+${mbGained.toLocaleString()} МБ и +$${usdGained.toLocaleString()}!`);
+              if (window.tacticalAudio) window.tacticalAudio.playSiphonLock();
+              setTimeout(() => {
+                if (rovOverlay) rovOverlay.style.display = 'none';
+                if (this.engine3D) this.engine3D.stopRovMode();
+                this.sortieActive = false;
+                document.body.classList.remove('sortie-active');
+                this.setUIState('MAIN');
+              }, 1800);
+            }
+          }, 200);
         }
       });
     }
+
     if (btnExitRov && rovOverlay) {
       btnExitRov.addEventListener('click', () => {
+        if (this._rovSiphonInterval) clearInterval(this._rovSiphonInterval);
         rovOverlay.style.display = 'none';
         if (this.engine3D) this.engine3D.stopRovMode();
+        this.sortieActive = false;
+        document.body.classList.remove('sortie-active');
+        this.setUIState('MAIN'); // restore HUD
       });
     }
+
+    // Poll magnetometer to update ROV phase UI every 500ms
+    if (this._rovPhaseTimer) clearInterval(this._rovPhaseTimer);
+    this._rovPhaseTimer = setInterval(() => {
+      if (!this.sortieActive || this.uiMode !== 'ROV') {
+        clearInterval(this._rovPhaseTimer);
+        return;
+      }
+      if (this._updateRovPhaseUI) this._updateRovPhaseUI();
+    }, 500);
+
 
     // 6. Tactical Systems Center Modal & Quick Actions
     const btnOpenTactical = document.getElementById('btn-open-tactical-hub');
@@ -6604,16 +7438,10 @@ class BarracudaGame {
     if (btnQuickBoat) {
       btnQuickBoat.addEventListener('click', (e) => {
         e.stopPropagation();
-        this.start3DMissionSortie('pilot_test');
-        setTimeout(() => {
-          if (this.engine3D) {
-            this.engine3D.setVsaState(false);
-            this.vsaEnabled = false;
-            this.showMissionWarning('🚤 ТЕСТ-ДРАЙВ КАТЕРА: Курсовая устойчивость VSA отключена для управляемого заноса!');
-          }
-        }, 600);
+        this._launchVsaTest(false); // VSA ON — stability mode
       });
     }
+
 
     // Tactical Hub Direct Launchers
     const btnThSonar = document.getElementById('btn-th-launch-sonar');
@@ -6621,15 +7449,7 @@ class BarracudaGame {
       btnThSonar.addEventListener('click', (e) => {
         e.stopPropagation();
         if (tacticalModal) tacticalModal.classList.remove('active');
-        this.start3DMissionSortie('sonar_test');
-        setTimeout(() => {
-          if (this.engine3D) {
-            this.engine3D.setSonarActive(true);
-            this.sonarActive = true;
-            const sonarPanel = document.getElementById('sonar-waterfall-panel');
-            if (sonarPanel) sonarPanel.style.display = 'block';
-          }
-        }, 500);
+        this._launchSonarTest();
       });
     }
 
@@ -6648,16 +7468,10 @@ class BarracudaGame {
       btnThBoat.addEventListener('click', (e) => {
         e.stopPropagation();
         if (tacticalModal) tacticalModal.classList.remove('active');
-        this.start3DMissionSortie('drift_test');
-        setTimeout(() => {
-          if (this.engine3D) {
-            this.engine3D.setVsaState(false);
-            this.vsaEnabled = false;
-            this.showMissionWarning('🚤 ТЕСТ VSA: Попробуйте клавиши [V] (стабилизация) и [H] (динамический якорь)!');
-          }
-        }, 600);
+        this._launchVsaTest(true); // VSA OFF — drift mode
       });
     }
+
 
     const btnThPid = document.getElementById('btn-th-open-pid');
     if (btnThPid) {
@@ -6688,42 +7502,292 @@ class BarracudaGame {
     }
   }
 
+  // =========================================================================
+  // =========================================================================
+  // SONAR TEST — opens waterfall panel + starts live rendering immediately
+  // =========================================================================
+  _launchSonarTest() {
+    document.querySelectorAll('.help-modal-overlay, .tactical-modal-overlay').forEach(el => el.classList.remove('active'));
+
+    const sonarPanel = document.getElementById('sonar-waterfall-panel');
+    if (sonarPanel) sonarPanel.style.display = 'block';
+
+    // Reset target blobs so fresh ones appear with proper types
+    this._sonarTargets = null;
+    this._sonarClickedIds = new Set();
+    this._sonarInitialized = false; // Force canvas re-init with dark background
+    this._lastSonarDraw = 0;       // Reset throttle so first frame draws immediately
+
+    if (this.engine3D) {
+      this.engine3D.setSonarActive(true);
+    }
+    this.sonarActive = true;
+
+    // Highlight the sonar button as active
+    const btnSonar = document.getElementById('btn-mission-sonar');
+    if (btnSonar) btnSonar.classList.add('active');
+    const btnQuickSonar = document.getElementById('btn-quick-sonar');
+    if (btnQuickSonar) btnQuickSonar.classList.add('active');
+
+    // === Interactive click on sonar canvas ===
+    const canvas = document.getElementById('sonar-waterfall-canvas');
+    if (canvas && !canvas._sonarClickBound) {
+      canvas._sonarClickBound = true;
+      canvas.style.cursor = 'crosshair';
+      canvas.addEventListener('click', (e) => {
+        if (!this.sonarActive || !this._sonarTargets) return;
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const clickX = (e.clientX - rect.left) * scaleX;
+        const W = canvas.width;
+
+        // Check if click hit any target zone (within ±20px)
+        let hit = null;
+        for (const t of this._sonarTargets) {
+          if (Math.abs(clickX - t.x) <= 20) {
+            hit = t;
+            break;
+          }
+        }
+
+        if (hit && !this._sonarClickedIds.has(hit.id)) {
+          this._sonarClickedIds.add(hit.id);
+          if (window.tacticalAudio) window.tacticalAudio.playSonarPing();
+
+          const dist = (50 + Math.abs(hit.x - W / 2) * 1.2).toFixed(0);
+
+          if (hit.type === 'mine') {
+            this.showMissionWarning(`💥 АНОМАЛИЯ ${dist}м — ЯКОРНАЯ МИНА! Обойдите стороной!`);
+            this.addNotification('⚠️ МИНА ОБНАРУЖЕНА', `Эхо-сигнал на ${dist}м. Держите курс!`);
+            // Flash red
+            const panel = document.getElementById('sonar-waterfall-panel');
+            if (panel) {
+              panel.style.boxShadow = '0 0 30px rgba(255,30,30,0.9)';
+              setTimeout(() => { if (panel) panel.style.boxShadow = ''; }, 800);
+            }
+          } else if (hit.type === 'ship') {
+            const mbGain = 600 + Math.floor(Math.random() * 400);
+            this.dataMB += mbGain;
+            this._uiDirty = true;
+            this.showMissionWarning(`🎯 ЦЕЛЬ ОПОЗНАНА на ${dist}м — ВРАЖЕСКИЙ КОРВЕТ // +${mbGain} МБ данных`);
+            this.addNotification('📡 ЦЕЛЬ ЗАХВАЧЕНА', `Сонар зафиксировал корабль на ${dist}м. +${mbGain} МБ`);
+            if (window.tacticalAudio) window.tacticalAudio.playAlert();
+          } else if (hit.type === 'debris') {
+            const mbGain = 120 + Math.floor(Math.random() * 80);
+            this.dataMB += mbGain;
+            this._uiDirty = true;
+            this.showMissionWarning(`📦 ОБЛОМКИ НА ${dist}м — найден подводный объект // +${mbGain} МБ`);
+            this.addNotification('📡 ОБЪЕКТ', `Обломки на дне (${dist}м). +${mbGain} МБ`);
+          }
+
+          // Visual flash on canvas at hit position
+          const ctx = canvas.getContext('2d');
+          const flashColor = hit.type === 'mine' ? 'rgba(255,30,30,0.7)' : 'rgba(0,255,136,0.6)';
+          ctx.fillStyle = flashColor;
+          ctx.fillRect(hit.x - 15, 0, 30, canvas.height);
+          setTimeout(() => {/* waterfall will overwrite naturally */}, 100);
+        } else if (!hit) {
+          // Miss click — hint
+          if (window.tacticalAudio) window.tacticalAudio.playTypewriter();
+          this.showMissionWarning('📡 НАЖМИТЕ НА АНОМАЛИИ — цветные эхо-сигналы на водопаде данных!');
+        }
+      });
+    }
+
+    this.addNotification('📡 СОНАР АКТИВЕН', 'Кликай по цветным эхо-сигналам на дисплее!');
+    this.showMissionWarning('📡 СОНАР: 🟥 = мины (опасно!) | 🟨 = корабли (цели!) | 🔲 = обломки | Кликай по сигналам!');
+
+    // === Independent sonar RAF loop (runs regardless of sortieActive) ===
+    if (this._sonarRafLoop) cancelAnimationFrame(this._sonarRafLoop);
+    const sonarLoop = () => {
+      const panel = document.getElementById('sonar-waterfall-panel');
+      if (!this.sonarActive || !panel || panel.style.display === 'none') {
+        this._sonarRafLoop = null;
+        return;
+      }
+      const now = Date.now();
+      if (!this._lastSonarDraw || now - this._lastSonarDraw >= 50) {
+        this._lastSonarDraw = now;
+        this.drawSonarWaterfall();
+      }
+      this._sonarRafLoop = requestAnimationFrame(sonarLoop);
+    };
+    this._sonarRafLoop = requestAnimationFrame(sonarLoop);
+
+    // Hook close button to stop the loop
+    const btnClose = document.querySelector('#sonar-waterfall-panel .btn-close-sonar, #sonar-waterfall-panel button[id*="close"]');
+    if (btnClose && !btnClose._sonarCloseBound) {
+      btnClose._sonarCloseBound = true;
+      btnClose.addEventListener('click', () => {
+        this.sonarActive = false;
+        if (this._sonarRafLoop) { cancelAnimationFrame(this._sonarRafLoop); this._sonarRafLoop = null; }
+      });
+    }
+  }
+
+
+  // =========================================================================
+  // VSA TEST — directly launches pilot mode without needing a campaign mission
+  // =========================================================================
+  _launchVsaTest(driftMode = false) {
+    // Block if a real campaign mission is already running
+    if (this.sortieActive && this.activeMission && this.activeMission.id !== 'vsa_test') {
+      this.addNotification('⚠️ ТЕСТ НЕДОСТУПЕН', 'Сначала заверши текущую операцию [ЭВАКУАЦИЯ] или дождись её окончания.');
+      this.showMissionWarning('⚠️ Тест ВСА недоступен во время боевого вылета. Сначала выйди через [ЭВАКУАЦИЯ]!');
+      return;
+    }
+
+    document.querySelectorAll('.help-modal-overlay, .tactical-modal-overlay').forEach(el => el.classList.remove('active'));
+
+    this.sortieActive = true;
+    this.fpvFlightPhase = false;
+    this.activeMission = { id: 'vsa_test', code: 'VSA-01', title: driftMode ? 'Тест дрейфа VSA OFF' : 'Тест стабилизатора VSA' };
+
+    // Initialize inputState BEFORE initPilotInputListeners
+    this.inputState = { throttle: 0, steer: 0, boost: false, fpvPitch: 0, fpvYaw: 0, hover: false };
+    // Reset listener guard so it can re-attach cleanly
+    this._pilotInputsBound = false;
+
+    this.setUIState('MAIN');
+    document.body.classList.add('sortie-active');
+
+    const cockpit = document.getElementById('mission-cockpit-overlay');
+    if (cockpit) {
+      cockpit.classList.remove('mission-hud-hidden');
+      cockpit.style.display = 'flex';
+    }
+
+
+    const mission3DConfig = {
+      type: 'sortie',
+      mineCount: 0,
+      crateCount: 0,
+      searchlightCount: 0,
+      targetDist: 200,
+      targetLabel: driftMode ? 'ДРЕЙФ-ТЕСТ' : 'VSA-СТАБ'
+    };
+
+    if (this.engine3D) {
+      this.engine3D.startPilotMission(mission3DConfig, null);
+      setTimeout(() => {
+        if (this.engine3D) {
+          const vsaOn = !driftMode;
+          this.engine3D.setVsaState(vsaOn);
+          this.vsaEnabled = vsaOn;
+          if (driftMode) {
+            this.showMissionWarning('🚤 ДРЕЙФ-ТЕСТ: VSA ВЫКЛ — W/S (газ), A/D (руль). [В] вкл/выкл VSA | [Х] якорь DPS');
+          } else {
+            this.showMissionWarning('🚤 ТЕСТ ВСА: VSA ВКЛ — W/S (газ), A/D (руль). [В] выкл VSA для дрейфа | [Х] якорь DPS');
+          }
+        }
+      }, 600);
+    }
+
+    this.initPilotInputListeners();
+    this.addNotification('⚓ ТЕСТ ЗАПУЩЕН', driftMode ? 'Режим дрейфа: VSA отключён!' : 'Режим стабилизации: VSA включён!');
+  }
+
   drawSonarWaterfall() {
     const canvas = document.getElementById('sonar-waterfall-canvas');
-    if (!canvas || canvas.offsetParent === null) return;
+    if (!canvas) return;
     const ctx = canvas.getContext('2d');
     const W = canvas.width;
     const H = canvas.height;
 
-    // Scroll canvas down
+    // On first draw, fill canvas with dark background
+    if (!this._sonarInitialized) {
+      this._sonarInitialized = true;
+      ctx.fillStyle = '#000d07';
+      ctx.fillRect(0, 0, W, H);
+      // Draw center line guide
+      ctx.fillStyle = 'rgba(0,255,136,0.15)';
+      ctx.fillRect(W / 2 - 1, 0, 2, H);
+    }
+
+    // Scroll existing image down by 3px
     const imgData = ctx.getImageData(0, 0, W, H - 3);
     ctx.putImageData(imgData, 0, 3);
 
-    // Top scanline
-    const depth = parseFloat((this.engine3D && this.engine3D.currentDepth) || 12.4);
-    const speed = Math.abs((this.engine3D && this.engine3D.pilotSpeed) || 0);
+
+    // Boat telemetry (works with or without pilot mission)
+    const depth  = parseFloat((this.engine3D && this.engine3D.currentDepth)  || (10 + Math.sin(Date.now() / 3000) * 3));
+    const speed  = Math.abs((this.engine3D && this.engine3D.pilotSpeed) || 0);
     const isClean = speed < 18;
 
     const depthEl = document.getElementById('sonar-telemetry-depth');
     if (depthEl) depthEl.textContent = `ГЛУБИНА: ${depth.toFixed(1)} м`;
 
-    ctx.fillStyle = '#01060a';
-    ctx.fillRect(0, 0, W, 3);
+    const freqEl = document.getElementById('sonar-telemetry-freq');
+    if (freqEl) {
+      const freqVal = 420 + Math.floor(Math.sin(Date.now() / 1200) * 30);
+      freqEl.textContent = `ЧАС: ${freqVal} кГц CHIRP`;
+    }
 
-    // Gradient backscatter
+    // Background waterfall scanline
     const grad = ctx.createLinearGradient(0, 0, W, 0);
-    grad.addColorStop(0, '#00140c');
-    grad.addColorStop(0.5, '#003822');
-    grad.addColorStop(1, '#00140c');
+    grad.addColorStop(0,   '#000d07');
+    grad.addColorStop(0.5, '#001f12');
+    grad.addColorStop(1,   '#000d07');
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, W, 3);
 
-    if (Math.random() > 0.35) {
-      ctx.fillStyle = isClean ? '#00ff88' : '#00aa55';
-      const scatterX = Math.random() * W;
-      ctx.fillRect(scatterX, 0, isClean ? 4 : 14, 2);
+    // Sediment noise scatter
+    for (let i = 0; i < 6; i++) {
+      if (Math.random() > 0.4) {
+        const intensity = isClean ? `rgba(0,255,136,${0.15 + Math.random() * 0.3})` : `rgba(0,200,100,${0.1 + Math.random() * 0.2})`;
+        ctx.fillStyle = intensity;
+        ctx.fillRect(Math.random() * W, 0, isClean ? 2 : 6, 2);
+      }
     }
 
+    // Center line (nadir / directly below boat)
+    ctx.fillStyle = 'rgba(0,255,136,0.5)';
+    ctx.fillRect(W / 2 - 1, 0, 2, 3);
+
+    // Simulated bottom return (strong echo at outer edges)
+    const bottomIntensity = 0.5 + Math.sin(Date.now() / 4000) * 0.15;
+    ctx.fillStyle = `rgba(0,255,100,${bottomIntensity})`;
+    ctx.fillRect(0, 0, 18, 3);
+    ctx.fillRect(W - 18, 0, 18, 3);
+
+    // Simulated targets / objects (persistent blobs)
+    if (!this._sonarTargets) {
+      // Generate typed target echoes: ship (yellow), mine (red), debris (grey)
+      const types = ['ship', 'mine', 'debris', 'mine'];
+      const colors = { ship: '#ffcc00', mine: '#ff2233', debris: '#558866' };
+      this._sonarTargets = types.map((type, i) => ({
+        id: `target_${i}_${Date.now()}`,
+        type,
+        x: 80 + Math.random() * (W - 160),
+        phase: Math.random() * Math.PI * 2,
+        w: type === 'ship' ? 14 : (type === 'mine' ? 8 : 6),
+        color: colors[type]
+      }));
+      if (!this._sonarClickedIds) this._sonarClickedIds = new Set();
+    }
+    this._sonarTargets.forEach(t => {
+      const bright = 0.55 + Math.sin(Date.now() / 1800 + t.phase) * 0.3;
+      const isClicked = this._sonarClickedIds && this._sonarClickedIds.has(t.id);
+      if (isClicked) return; // Don't redraw clicked targets
+      ctx.fillStyle = t.color.replace(')', `,${bright})`).replace('rgb', 'rgba').replace('#', 'rgba(').replace(/^rgba\(([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2}),/, (_, r, g, b) => `rgba(${parseInt(r,16)},${parseInt(g,16)},${parseInt(b,16)},`);
+      // Always pulse to be visible (higher probability than before)
+      if (Math.random() > 0.6) {
+        // Draw blob with glow effect
+        const hexToRgb = (hex) => {
+          const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+          return [r, g, b];
+        };
+        const [r, g, b] = hexToRgb(t.color);
+        ctx.fillStyle = `rgba(${r},${g},${b},${bright})`;
+        ctx.fillRect(t.x - t.w / 2, 0, t.w, 3);
+        // Secondary wider glow
+        ctx.fillStyle = `rgba(${r},${g},${b},${bright * 0.3})`;
+        ctx.fillRect(t.x - t.w, 0, t.w * 2, 3);
+      }
+    });
+
+
+    // Mine echoes if pilot mission is active
     if (this.engine3D && this.engine3D.missionMines && this.engine3D.missionMines.length > 0) {
       this.engine3D.missionMines.forEach(m => {
         const dx = m.position.x - this.engine3D.pilotBoatPos.x;
@@ -6731,9 +7795,21 @@ class BarracudaGame {
         if (Math.abs(dz) < 18 && Math.abs(dx) < 40) {
           const mapX = (W / 2) + (dx / 40) * (W / 2);
           ctx.fillStyle = '#ff0033';
-          ctx.fillRect(mapX - 4, 0, 8, 3);
+          ctx.fillRect(mapX - 5, 0, 10, 3);
         }
       });
+    }
+
+    // Speed alert
+    const speedAlert = document.getElementById('sonar-speed-alert');
+    if (speedAlert) {
+      if (!isClean) {
+        speedAlert.textContent = `⚠ ВЫСОКАЯ СКОРОСТЬ — помехи эхолота (${speed.toFixed(0)} уз)`;
+        speedAlert.style.color = '#ff6644';
+      } else {
+        speedAlert.textContent = `✓ РЕЖИМ СКАНИРОВАНИЯ АКТИВЕН — скорость в норме`;
+        speedAlert.style.color = '#00ff88';
+      }
     }
   }
 
@@ -6771,7 +7847,7 @@ class BarracudaGame {
     if (this.gyroSliderRoll) this.gyroSliderRoll.value = 0;
     if (this.gyroContainer) this.gyroContainer.style.display = 'block';
     
-    this.showMissionWarning('CRITICAL FAILURE: Calibrate Gyroscope!');
+    this.showMissionWarning('⚠️ КРИТИЧЕСКАЯ ОШИБКА: Откалибруйте гироскоп! Удерживайте маркер в центре!');
   }
 
   updateGyroMinigame(dt) {
@@ -6804,7 +7880,7 @@ class BarracudaGame {
     if (this.gyroProgress >= 100) {
       this.gyroActive = false;
       if (this.gyroContainer) this.gyroContainer.style.display = 'none';
-      this.showMissionWarning('CALIBRATION COMPLETE: Weapons Hot!');
+      this.showMissionWarning('✅ КАЛИБРОВКА ЗАВЕРШЕНА: Системы наведения активны. Оружие заряжено!');
       if (window.tacticalAudio) window.tacticalAudio.playSonarPing();
     }
   }
@@ -6820,36 +7896,127 @@ class BarracudaGame {
     this.renderTrophyGallery();
   }
 
+
   renderTrophyGallery() {
     const container = document.getElementById('trophy-gallery-content');
     const countLabel = document.getElementById('trophy-count-label');
     if (!container) return;
-    if (countLabel) countLabel.textContent = `ТРОФЕЕВ: ${this.trophies.length}`;
 
-    if (!this.trophies || this.trophies.length === 0) {
-      container.innerHTML = '<div style="text-align:center;color:#8da4af;padding:20px;font-size:12px">Здесь будут отображаться ваши трофеи после первой победы</div>';
-      return;
+    // --- Build two-tab layout: Trophies + Achievements ---
+    const trophyCount = (this.trophies || []).length;
+    const achieveCount = this.unlockedAchievements ? this.unlockedAchievements.size : 0;
+    if (countLabel) countLabel.textContent = `ТРОФЕЕВ: ${trophyCount} | ДОСТИЖЕНИЙ: ${achieveCount}/${ACHIEVEMENTS_DEF.length}`;
+
+    // Tab strip (re-render only if tabs not already present)
+    let tabStrip = container.querySelector('.trophy-tab-strip');
+    if (!tabStrip) {
+      container.innerHTML = `
+        <div class="trophy-tab-strip" style="display:flex;gap:0;margin-bottom:10px;border-bottom:1px solid rgba(0,240,255,0.15)">
+          <button class="trophy-tab-btn active" data-tab="trophies" style="flex:1;background:rgba(0,240,255,0.1);border:none;border-bottom:2px solid #00f0ff;color:#00f0ff;font-family:Rajdhani,sans-serif;font-size:12px;font-weight:700;letter-spacing:1px;padding:7px;cursor:pointer">🏆 ТРОФЕИ</button>
+          <button class="trophy-tab-btn" data-tab="achievements" style="flex:1;background:transparent;border:none;border-bottom:2px solid transparent;color:#8da4af;font-family:Rajdhani,sans-serif;font-size:12px;font-weight:700;letter-spacing:1px;padding:7px;cursor:pointer">🎯 ДОСТИЖЕНИЯ</button>
+        </div>
+        <div id="trophy-tab-content-trophies"></div>
+        <div id="trophy-tab-content-achievements" style="display:none"></div>
+      `;
+      tabStrip = container.querySelector('.trophy-tab-strip');
+      tabStrip.querySelectorAll('.trophy-tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          tabStrip.querySelectorAll('.trophy-tab-btn').forEach(b => {
+            b.classList.remove('active');
+            b.style.background = 'transparent';
+            b.style.borderBottomColor = 'transparent';
+            b.style.color = '#8da4af';
+          });
+          btn.classList.add('active');
+          btn.style.background = 'rgba(0,240,255,0.1)';
+          btn.style.borderBottomColor = '#00f0ff';
+          btn.style.color = '#00f0ff';
+          container.querySelectorAll('[id^="trophy-tab-content-"]').forEach(el => el.style.display = 'none');
+          const target = container.querySelector(`#trophy-tab-content-${btn.dataset.tab}`);
+          if (target) target.style.display = '';
+          if (btn.dataset.tab === 'achievements') this._renderAchievementsTab();
+        });
+      });
     }
 
-    const rankColors = { S: '#00ff88', A: '#00f0ff', B: '#ffcc00', C: '#ff9944' };
-    container.innerHTML = this.trophies.map(t => {
-      const color = rankColors[t.rank] || '#8da4af';
-      const dateStr = t.date ? new Date(t.date).toLocaleDateString('ru-RU') : '';
+    // --- Trophies tab ---
+    const trophyPane = container.querySelector('#trophy-tab-content-trophies');
+    if (trophyPane) {
+      if (!this.trophies || this.trophies.length === 0) {
+        trophyPane.innerHTML = '<div style="text-align:center;color:#8da4af;padding:20px;font-size:12px">Здесь будут отображаться ваши трофеи после первой победы</div>';
+      } else {
+        const rankColors = { S: '#00ff88', A: '#00f0ff', B: '#ffcc00', C: '#ff9944' };
+        trophyPane.innerHTML = this.trophies.map(t => {
+          const color = rankColors[t.rank] || '#8da4af';
+          const dateStr = t.date ? new Date(t.date).toLocaleDateString('ru-RU') : '';
+          return `
+            <div style="display:flex;gap:10px;padding:10px;background:rgba(0,20,35,0.8);border:1px solid ${color}33;border-radius:8px;margin-bottom:6px;align-items:center">
+              <div style="font-size:28px;min-width:36px;text-align:center">${t.icon || '🎖️'}</div>
+              <div style="flex:1;min-width:0">
+                <div style="font-size:12px;font-weight:700;color:${color};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${t.name}</div>
+                <div style="font-size:10px;color:#8da4af;margin-top:2px">${t.desc || ''}</div>
+              </div>
+              <div style="text-align:right;min-width:fit-content">
+                <div style="font-size:16px;font-weight:900;color:${color}">Ранг ${t.rank || '?'}</div>
+                <div style="font-size:9px;color:#667;letter-spacing:1px">${dateStr}</div>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+    }
+  }
+
+  _renderAchievementsTab() {
+    const pane = document.querySelector('#trophy-tab-content-achievements');
+    if (!pane) return;
+
+    // Map achievement id -> current progress value
+    const getProgress = (id) => {
+      switch (id) {
+        case 'first_click':    return { cur: Math.min(1, this.totalClicks), max: 1 };
+        case 'first_assault':  return { cur: Math.min(1, this.dailyAssaults + (this.unlockedAchievements.has(id) ? 1 : 0)), max: 1 };
+        case 'crit_master':    return { cur: Math.min(50, this.totalCrits), max: 50 };
+        case 'millionaire':    return { cur: Math.min(100000, Math.floor(this.creditsUSD)), max: 100000 };
+        case 'data_hoarder':   return { cur: Math.min(10000, Math.floor(this.totalDataMB)), max: 10000 };
+        case 'fleet_admiral':  return { cur: Math.min(10, this.sunkenShips), max: 10 };
+        case 'hacker':         return { cur: Math.min(10, this.totalHacks), max: 10 };
+        case 'overclock_5':    return { cur: Math.min(5, this.overclockUses), max: 5 };
+        case 'survivor':       return { cur: Math.min(3, this.shieldSaves), max: 3 };
+        case 'boss_slayer':    return { cur: Math.min(1, this.bossesDefeated), max: 1 };
+        case 'all_sectors':    return { cur: Math.min(4, this.visitedSectors.size), max: 4 };
+        default:               return null;
+      }
+    };
+
+    pane.innerHTML = ACHIEVEMENTS_DEF.map(a => {
+      const unlocked = this.unlockedAchievements && this.unlockedAchievements.has(a.id);
+      const prog = getProgress(a.id);
+      const borderColor = unlocked ? '#00ff88' : '#1a2a30';
+      const titleColor = unlocked ? '#00ff88' : '#8da4af';
+      const pct = prog ? Math.floor((prog.cur / prog.max) * 100) : (unlocked ? 100 : 0);
+      const barColor = unlocked ? '#00ff88' : (pct > 50 ? '#ffcc00' : '#00f0ff');
+      const lockIcon = unlocked ? a.icon : '🔒';
+      const progText = prog ? `${prog.cur.toLocaleString()} / ${prog.max.toLocaleString()}` : (unlocked ? '✓' : '—');
+
       return `
-        <div style="display:flex;gap:10px;padding:10px;background:rgba(0,20,35,0.8);border:1px solid ${color}33;border-radius:8px;margin-bottom:6px;align-items:center">
-          <div style="font-size:28px;min-width:36px;text-align:center">${t.icon || '🎖️'}</div>
+        <div style="display:flex;gap:10px;padding:8px 10px;background:rgba(0,15,25,${unlocked ? '0.9' : '0.5'});border:1px solid ${borderColor}44;border-radius:8px;margin-bottom:5px;align-items:center;opacity:${unlocked ? '1' : '0.7'}">
+          <div style="font-size:22px;min-width:28px;text-align:center;filter:${unlocked ? 'none' : 'grayscale(1)'}">${lockIcon}</div>
           <div style="flex:1;min-width:0">
-            <div style="font-size:12px;font-weight:700;color:${color};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${t.name}</div>
-            <div style="font-size:10px;color:#8da4af;margin-top:2px">${t.desc || ''}</div>
-          </div>
-          <div style="text-align:right;min-width:fit-content">
-            <div style="font-size:16px;font-weight:900;color:${color}">Ранг ${t.rank || '?'}</div>
-            <div style="font-size:9px;color:#667;letter-spacing:1px">${dateStr}</div>
+            <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:3px">
+              <span style="font-size:11px;font-weight:700;color:${titleColor};font-family:Rajdhani,sans-serif;letter-spacing:0.5px">${a.name}</span>
+              <span style="font-size:9px;color:#667;margin-left:6px;white-space:nowrap">${progText}</span>
+            </div>
+            <div style="font-size:9px;color:#667;margin-bottom:4px">${a.desc}</div>
+            <div style="height:3px;background:#0a1a20;border-radius:2px;overflow:hidden">
+              <div style="height:100%;width:${pct}%;background:${barColor};border-radius:2px;transition:width 0.4s"></div>
+            </div>
           </div>
         </div>
       `;
     }).join('');
   }
+
 
   // =========================================================================
   // CREW UPGRADE SYSTEM
@@ -6893,7 +8060,7 @@ class BarracudaGame {
     });
 
     // Crew upgrade buttons
-    ['pilot', 'tech', 'hacker'].forEach(role => {
+    ['pilot', 'tech', 'hacker', 'commander'].forEach(role => {
       const btn = document.getElementById(`btn-crew-${role}`);
       if (btn) btn.addEventListener('click', () => this._upgradeCrew(role));
     });
@@ -6904,7 +8071,7 @@ class BarracudaGame {
   }
 
   _getCrewCost(role, level) {
-    const bases = { pilot: { usd: 5000, mb: 50 }, tech: { usd: 4000, mb: 40 }, hacker: { usd: 3500, mb: 35 } };
+    const bases = { pilot: { usd: 5000, mb: 50 }, tech: { usd: 4000, mb: 40 }, hacker: { usd: 3500, mb: 35 }, commander: { usd: 8000, mb: 80 } };
     const base = bases[role] || { usd: 5000, mb: 50 };
     return {
       usd: Math.floor(base.usd * Math.pow(1.8, level - 1)),
@@ -6913,7 +8080,7 @@ class BarracudaGame {
   }
 
   _upgradeCrew(role) {
-    if (!this.crew) this.crew = { pilot: 1, tech: 1, hacker: 1 };
+    if (!this.crew) this.crew = { pilot: 1, tech: 1, hacker: 1, commander: 1 };
     const currentLevel = this.crew[role] || 1;
     if (currentLevel >= 5) {
       this.addNotification('👥 MAX УРОВЕНЬ', `Специалист уже достиг максимума!`);
@@ -6927,7 +8094,7 @@ class BarracudaGame {
     this.dataMB -= cost.mb;
     this.creditsUSD -= cost.usd;
     this.crew[role] = currentLevel + 1;
-    const roleNames = { pilot: 'ПИЛОТ FPV', tech: 'ТЕХНИК', hacker: 'ХАКЕР РЭБ' };
+    const roleNames = { pilot: 'ПИЛОТ FPV', tech: 'ТЕХНИК', hacker: 'ХАКЕР РЭБ', commander: 'КОМАНДИР' };
     this.addNotification(`👥 ${roleNames[role]} УЛУЧШЕН`, `Уровень ${this.crew[role]}/5 — эффективность повышена!`);
     if (window.tacticalAudio) window.tacticalAudio.playAchievementUnlock();
     this._renderCrewUI();
@@ -6936,9 +8103,9 @@ class BarracudaGame {
   }
 
   _renderCrewUI() {
-    if (!this.crew) this.crew = { pilot: 1, tech: 1, hacker: 1 };
-    const colors = { pilot: '#00f0ff', tech: '#ffcc00', hacker: '#ff88cc' };
-    ['pilot', 'tech', 'hacker'].forEach(role => {
+    if (!this.crew) this.crew = { pilot: 1, tech: 1, hacker: 1, commander: 1 };
+    const colors = { pilot: '#00f0ff', tech: '#ffcc00', hacker: '#ff88cc', commander: '#ff3366' };
+    ['pilot', 'tech', 'hacker', 'commander'].forEach(role => {
       const level = this.crew[role] || 1;
       const isMax = level >= 5;
       const cost = this._getCrewCost(role, level);
@@ -6964,6 +8131,7 @@ class BarracudaGame {
   getCrewPilotMult() { return 1.0 + ((this.crew?.pilot || 1) - 1) * 0.10; } // +10% FPV speed per level
   getCrewTechMult()  { return 1.0 + ((this.crew?.tech  || 1) - 1) * 0.05; } // +5% passive per level
   getCrewHackerBonus(){ return ((this.crew?.hacker || 1) - 1) * 0.05; }      // +5% REW green zone per level
+  getCrewCommanderMult(){ return 1.0 + ((this.crew?.commander || 1) - 1) * 0.05; } // +5% to all credits per level
 }
 
 window.addEventListener('DOMContentLoaded', () => {

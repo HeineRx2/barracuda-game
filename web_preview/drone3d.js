@@ -230,69 +230,31 @@ class Barracuda3DEngine {
     this.createParticlePools();
 
     this.thermalMaterial = new THREE.ShaderMaterial({
-      uniforms: {
-        uTime: { value: 0.0 }
-      },
+      uniforms: { uTime: { value: 0.0 } },
       vertexShader: `
         varying vec3 vNormal;
-        varying vec3 vWorldPos;
         void main() {
           vNormal = normalize(normalMatrix * normal);
-          vec4 worldPos4 = modelMatrix * vec4(position, 1.0);
-          vWorldPos = worldPos4.xyz;
           gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
         }
       `,
       fragmentShader: `
         uniform float uTime;
         varying vec3 vNormal;
-        varying vec3 vWorldPos;
-
-        float hash(vec2 p) {
-          return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
-        }
-
-        vec3 thermalPalette(float t) {
-          // Black -> dark blue -> red -> orange -> white (classic FLIR palette)
-          t = clamp(t, 0.0, 1.0);
-          vec3 a = vec3(0.01, 0.01, 0.04);   // cold: near-black navy
-          vec3 b = vec3(0.0,  0.35, 0.6);    // cool: deep blue
-          vec3 c = vec3(0.8,  0.1,  0.0);    // warm: red
-          vec3 d = vec3(1.0,  0.85, 0.0);    // hot: orange-yellow
-          vec3 e = vec3(1.0,  1.0,  1.0);    // very hot: white
-          if (t < 0.25) return mix(a, b, t * 4.0);
-          if (t < 0.5)  return mix(b, c, (t - 0.25) * 4.0);
-          if (t < 0.75) return mix(c, d, (t - 0.5) * 4.0);
-          return mix(d, e, (t - 0.75) * 4.0);
-        }
-
+        float hash(float n) { return fract(sin(n) * 43758.5453123); }
         void main() {
-          // Height-based thermal: objects above waterline (y > 0) are hot, below are cold
-          float heightHeat = clamp((vWorldPos.y + 0.5) / 4.0, 0.0, 1.0);
-
-          // Edge/facing heat: facing-away faces are warmer (thermal emission)
-          float facingHeat = 1.0 - max(dot(vNormal, vec3(0.0, 1.0, 0.0)), 0.0);
-          facingHeat = facingHeat * 0.4;
-
-          // Combine
-          float heat = heightHeat * 0.7 + facingHeat + 0.05;
-
-          // Grain noise (sensor noise)
-          float grain = (hash(gl_FragCoord.xy + fract(uTime * 7.3)) - 0.5) * 0.06;
-          heat += grain;
-
-          // Scanline flicker
-          float scanline = sin(gl_FragCoord.y * 2.0 + uTime * 12.0) * 0.02;
-          heat += scanline;
-
-          heat = clamp(heat, 0.0, 1.0);
-          vec3 color = thermalPalette(heat);
+          float intensity = pow(1.0 - max(dot(vNormal, vec3(0.0, 0.0, 1.0)), 0.0), 3.0);
+          float noise = hash(gl_FragCoord.x * 12.9898 + gl_FragCoord.y * 78.233 + uTime) * 0.12;
+          float scanline = sin(gl_FragCoord.y * 1.5 + uTime * 8.0) * 0.05;
+          
+          vec3 color = vec3(0.0, 1.0, 0.4) * intensity + vec3(0.0, 0.15, 0.05);
+          color += vec3(noise + scanline);
+          
           gl_FragColor = vec4(color, 1.0);
         }
       `,
       wireframe: false
     });
-
 
     this.loadGLBModel();        // Loads real GLB boat model (falls back to procedural only if error)
     this.setupEvents();
@@ -594,14 +556,12 @@ class Barracuda3DEngine {
     this._cameraMode = mode;
     if (mode === 'flir') {
       this.scene.overrideMaterial = this.thermalMaterial;
-      // Deep cold-black background — simulates thermal camera sky (cold = dark)
-      this.scene.background = new THREE.Color(0x000508);
+      this.scene.background = new THREE.Color(0x001105);
       if (this.scene.fog) {
         this.originalFog = this.scene.fog;
-        this.scene.fog = null; // No fog in FLIR — objects need to be visible
+        this.scene.fog = new THREE.FogExp2(0x001105, 0.015);
       }
       if (this.planktonSystem) this.planktonSystem.visible = false;
-
     } else if (mode === 'rov') {
       this.scene.overrideMaterial = null;
       this.scene.background = new THREE.Color(0x001a22); // Deep dark water

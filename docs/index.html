@@ -4,12 +4,20 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>BARRACUDA // Автономный Ударный Дрон</title>
-  <meta name="description" content="Тактический симулятор боевого надводного дрона Барракуда с реалистичной 3D-моделью.">
-  <link rel="stylesheet" href="style.css?v=6.0.5">
+  <meta name="description" content="Тактический симулятор боевого надводного дрона Барракуда с реалистичной 3D-моделью.">
+
+  <!-- Kill cached service workers so fresh JS always loads -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(function(r) { r.forEach(function(s){ s.unregister(); }); });
+      caches.keys().then(function(k) { k.forEach(function(c){ caches.delete(c); }); });
+    }
+  </script>
 
   <!-- Global Error Handler Overlay -->
   <script>
     // Show errors on-screen for debugging
+
     function _showErrorBanner(msg, file, line) {
       var b = document.getElementById('debug-error-banner');
       if (!b) {
@@ -49,7 +57,8 @@
   <script src="libs/GLTFLoader.js"></script>
   <script src="libs/Water.js"></script>
   <script src="libs/Sky.js"></script>
-</head>
+  <link rel="stylesheet" crossorigin href="./assets/index-DOofpsoc.css">
+<link rel="manifest" href="./manifest.webmanifest"><script id="vite-plugin-pwa:register-sw" src="./registerSW.js"></script></head>
 <body>
 <div id="barracuda-loading-screen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:linear-gradient(135deg,#020c14 0%,#030f1a 50%,#050811 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:99999;font-family:'Rajdhani',sans-serif;transition:opacity 0.6s ease,visibility 0.6s ease;">
   <div style="position:relative;width:120px;height:120px;margin-bottom:24px">
@@ -79,26 +88,53 @@
 
   <!-- FLIR Thermal Optics Fullscreen Overlay -->
   <div id="flir-overlay" class="flir-thermal-view">
+    <!-- Scanline effect layer -->
+    <div class="flir-scanlines-layer"></div>
+    <!-- Corner brackets (tactical reticle) -->
+    <div class="flir-corner flir-tl"></div>
+    <div class="flir-corner flir-tr"></div>
+    <div class="flir-corner flir-bl"></div>
+    <div class="flir-corner flir-br"></div>
     <div class="flir-crosshair"></div>
     <div class="flir-scan-line"></div>
-    <div class="flir-telemetry-box">
-      <div>РЕЖИМ: ТЕПЛОВИЗОР FLIR (LWIR)</div>
-      <div>СЕНСОР: КРИО-МАТРИЦА 640x512</div>
-      <div>СПЕКТР: 8-14 мкм // УСИЛЕНИЕ x4</div>
-      <div id="flir-target-status" style="color:#ffcc00; margin-top:4px;">ЦЕЛЬ: ВРАЖЕСКИЙ КОРАБЛЬ [ЗАХВАТ]</div>
+
+    <!-- TOP: Tactical HUD Telemetry -->
+    <div class="flir-hud-top">
+      <div class="flir-hud-badge">🔴 LIVE</div>
+      <div class="flir-hud-title">ТЕПЛОВИЗОР FLIR (LWIR) — ПРИЦЕЛ АКТИВЕН</div>
+      <div class="flir-hud-info">
+        <span>СЕНСОР: 640×512</span>
+        <span>8–14 мкм</span>
+        <span>УСИЛЕНИЕ: x4</span>
+        <span id="flir-target-status" style="color:#ffcc00;">ЦЕЛЬ: ВРАЖЕСКИЙ КОРАБЛЬ</span>
+      </div>
     </div>
-    <div class="flir-weakspots-container" style="margin-top: auto;">
-      <button class="flir-lock-point" data-target="radar" title="Радарный комплекс (Крит x4)">
-        <span class="lock-bracket"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg> РАДАРНЫЙ ПОСТ [x4 КРИТ]</span>
-      </button>
-      <button class="flir-lock-point" data-target="missile" title="Ракетные шахты (Крит x4)">
-        <span class="lock-bracket"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg> ПУСКОВЫЕ ШАХТЫ [x4 КРИТ]</span>
-      </button>
-      <button class="flir-lock-point" data-target="engine" title="Машинное отделение (Крит x4)">
-        <span class="lock-bracket"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg> МАШИННОЕ ОТДЕЛЕНИЕ [x4 КРИТ]</span>
-      </button>
+
+    <!-- BOTTOM: Target lock buttons + exit -->
+    <div class="flir-hud-bottom">
+      <div class="flir-hint">👆 НАЖМИ НА ЦЕЛЬ ДЛЯ ЗАХВАТА И АВТОМАТИЧЕСКОГО ПУСКА</div>
+      <div class="flir-weakspots-container">
+        <button class="flir-lock-point" data-target="radar">
+          <span class="lock-bracket">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+            РАДАР [x6 КРИТ]
+          </span>
+        </button>
+        <button class="flir-lock-point" data-target="missile">
+          <span class="lock-bracket">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+            ШАХТЫ [x8 КРИТ]
+          </span>
+        </button>
+        <button class="flir-lock-point" data-target="engine">
+          <span class="lock-bracket">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+            ДВИГАТЕЛЬ [x5 КРИТ]
+          </span>
+        </button>
+      </div>
+      <button id="btn-exit-flir" class="btn-flir-exit" onclick="document.getElementById('flir-overlay').classList.remove('active'); document.body.classList.remove('flir-active'); if(window.barracudaGame && window.barracudaGame.engine3D) window.barracudaGame.engine3D.cameraMode = 'orbit'; event.stopPropagation();">✕ ВЫХОД ИЗ ПРИЦЕЛА</button>
     </div>
-    <button id="btn-exit-flir" class="btn-flir-exit" style="margin-top: 16px; pointer-events: auto !important; position: relative; z-index: 10000;" onclick="document.getElementById('flir-overlay').classList.remove('active'); if(window.barracudaGame && window.barracudaGame.engine3D) window.barracudaGame.engine3D.cameraMode = 'orbit'; event.stopPropagation();">✕ ВЫХОД ИЗ ПРИЦЕЛА</button>
   </div>
 
   <!-- Screen Flash for Kinetic Strike -->
@@ -128,7 +164,7 @@
           <span class="dossier-pill-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><path d="M12 2v20M2 12h20M12 7a5 5 0 1 0 0 10 5 5 0 1 0 0-10zM12 12l5-5"/></svg></span>
           <span class="dossier-pill-text">ТАКТИКА</span>
         </button>
-        <button class="btn-dossier-pill class="btn-dossier-pill" id="btn-open-trophy" title="Галерея побед" style="border-color:rgba(255,204,0,0.6); background:rgba(255,204,0,0.12); color:#ffcc00;">
+        <button class="btn-dossier-pill" id="btn-open-trophy" title="Галерея побед" style="border-color:rgba(255,204,0,0.6); background:rgba(255,204,0,0.12); color:#ffcc00;">
           <span class="dossier-pill-icon">&#127942;</span>
           <span class="dossier-pill-text">ТРОФЕИ</span>
         </button>
@@ -1552,23 +1588,66 @@
     <div class="rov-scan-lines"></div>
 
     <header class="rov-top-hud">
-      <div class="rov-hud-chip">ТЕЛЕУПРАВЛЯЕМЫЙ МИКРО-ROV «СПРУТ-1»</div>
+      <div class="rov-hud-chip">МИКРО-ROV «СПРУТ-1» // ПОГРУЖЕНИЕ</div>
       <div class="rov-hud-chip" id="rov-hud-depth">ГЛУБИНА: 6.8 м</div>
       <div class="rov-hud-chip" id="rov-hud-tether">ТРОС: 24.5 м</div>
       <button class="btn-abort-mission" id="btn-exit-rov">✕ ВСПЛЫТИЕ</button>
     </header>
 
-    <div class="rov-center-hud">
-      <div class="rov-target-reticle">
-        <div class="rov-magnetometer-readout">
-          <div class="mag-label">МАГНИТОМЕТР (nT)</div>
-          <div class="mag-val text-yellow" id="rov-val-mag">48,250 nT</div>
-          <div class="mag-bar-track"><div class="mag-bar-fill" id="rov-fill-mag" style="width:50%;"></div></div>
-        </div>
-        <div class="rov-crosshair-bracket"></div>
+    <!-- Phase indicators -->
+    <div class="rov-phases">
+      <div class="rov-phase" id="rov-phase-search">
+        <div class="rov-phase-dot"></div>
+        <span>1. ПОИСК</span>
       </div>
+      <div class="rov-phase-arrow">→</div>
+      <div class="rov-phase" id="rov-phase-align">
+        <div class="rov-phase-dot"></div>
+        <span>2. ЛОКАЛИЗАЦИЯ</span>
+      </div>
+      <div class="rov-phase-arrow">→</div>
+      <div class="rov-phase" id="rov-phase-siphon">
+        <div class="rov-phase-dot"></div>
+        <span>3. СИФОН</span>
+      </div>
+    </div>
+
+    <div class="rov-center-hud">
+      <!-- Oscilloscope canvas for magnetic field -->
+      <div class="rov-oscilloscope-wrap">
+        <canvas id="rov-oscilloscope" width="340" height="80"></canvas>
+        <div class="rov-osc-label">МАГНИТНОЕ ПОЛЕ — КАБЕЛЬ ПОД ВОДОЙ</div>
+      </div>
+
+      <!-- Big magnetometer display -->
+      <div class="rov-magnetometer-big">
+        <div class="mag-big-val" id="rov-val-mag">0 nT</div>
+        <div class="mag-big-threshold">
+          <span class="mag-zone" id="rov-mag-zone">📡 ПОИСК КАБЕЛЯ...</span>
+        </div>
+        <div class="mag-bar-track">
+          <div class="mag-bar-fill" id="rov-fill-mag" style="width:0%;"></div>
+          <div class="mag-bar-threshold-marker"></div>
+        </div>
+        <div class="mag-bar-labels">
+          <span>0</span>
+          <span style="color:#ffcc00;">ПОРОГ: 350 nT</span>
+          <span>500+</span>
+        </div>
+      </div>
+
+      <!-- Direction arrow (points toward cable) -->
+      <div class="rov-direction-wrap">
+        <div class="rov-dir-label">ВЕКТОР ПОЛЯ</div>
+        <div class="rov-direction-arrow" id="rov-direction-arrow">↑</div>
+        <div class="rov-dir-hint" id="rov-dir-hint">Маневрируй [WASD] для усиления сигнала</div>
+      </div>
+
+      <!-- Siphon button - visible when phase >= align -->
       <div class="rov-siphon-prompt" id="rov-siphon-prompt">
-        <button class="btn-siphon-action" id="btn-trigger-siphon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/></svg> ПОДКЛЮЧИТЬ СИФОН ДАННЫХ</button>
+        <button class="btn-siphon-action" id="btn-trigger-siphon" disabled>
+          ⊙ ПОДКЛЮЧИТЬ СИФОН ДАННЫХ
+        </button>
       </div>
     </div>
 
@@ -1577,8 +1656,14 @@
         <div class="siphon-label">СИНХРОНИЗАЦИЯ СИФОНА: <b id="rov-siphon-pct">0%</b></div>
         <div class="siphon-bar-track"><div class="siphon-bar-fill" id="rov-siphon-fill" style="width:0%;"></div></div>
       </div>
+      <div class="rov-instructions">
+        🎮 <b>W/S</b> — погружение/всплытие &nbsp;|&nbsp; <b>A/D</b> — поворот &nbsp;|&nbsp; <b>↑↓←→</b> — движение
+        &nbsp;|&nbsp; Найди кабель → Сигнал 350+ nT → Нажми <b>СИФОН</b>
+      </div>
     </div>
   </div>
+
+
 
   <!-- =========================================================================
        TACTICAL SYSTEMS HUB & TEST CENTER MODAL (v3.5.0)
@@ -1679,9 +1764,9 @@
   </div>
 
   <!-- Audio, 3D Engine & Game Logic -->
-  <script src="audio.js?v=4.0.9"></script>
-  <script src="drone3d.js?v=4.0.9"></script>
-  <script src="game.js?v=6.0.5"></script>
+  <script src="audio.js?v=4.0.20"></script>
+  <script src="drone3d.js?v=4.0.25"></script>
+  <script src="game.js?v=6.1.4"></script>
 
 <!-- TROPHY GALLERY MODAL -->
 <div class="help-modal-overlay" id="trophy-gallery-modal">

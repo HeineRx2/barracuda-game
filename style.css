@@ -181,10 +181,10 @@ body {
    FLIR THERMAL SCOPE OVERLAY
    ========================================================================= */
 .flir-thermal-view {
-  position: absolute;
+  position: fixed;
   top: 0; left: 0;
-  width: 100%; height: 100%;
-  z-index: 9999;
+  width: 100vw; height: 100vh;
+  z-index: 99999;
   display: none;
   flex-direction: column;
   justify-content: space-between;
@@ -198,101 +198,157 @@ body {
   pointer-events: auto;
 }
 
-.flir-thermal-view.active { display: flex; }
+.flir-thermal-view.active { display: flex; flex-direction: column; justify-content: space-between; }
 
-.flir-grid-scope {
+/* Scanline effect */
+.flir-scanlines-layer {
   position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-  background: linear-gradient(rgb(0 255 102 / 5%) 1px, transparent 1px), linear-gradient(90deg, rgb(0 255 102 / 5%) 1px, transparent 1px);
-  background-size: 30px 30px;
+  background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.06) 3px, rgba(0,0,0,0.06) 4px);
   pointer-events: none;
+  z-index: 1;
 }
 
-.flir-crosshair-center {
-  position: absolute; top: 50%; left: 50%;
-  transform: translate(-50%, -50%);
+/* Tactical corner brackets */
+.flir-corner {
+  position: absolute;
+  width: 40px; height: 40px;
   pointer-events: none;
+  z-index: 2;
 }
+.flir-tl { top: 16px; left: 16px; border-top: 2px solid #ff6600; border-left: 2px solid #ff6600; }
+.flir-tr { top: 16px; right: 16px; border-top: 2px solid #ff6600; border-right: 2px solid #ff6600; }
+.flir-bl { bottom: 16px; left: 16px; border-bottom: 2px solid #ff6600; border-left: 2px solid #ff6600; }
+.flir-br { bottom: 16px; right: 16px; border-bottom: 2px solid #ff6600; border-right: 2px solid #ff6600; }
 
-.flir-circle {
-  width: 140px; height: 140px;
-  border: 1.5px dashed var(--tactical-green);
-  border-radius: 50%;
-  box-shadow: 0 0 15px var(--tactical-green-glow);
-  animation: flirRotate 16s linear infinite;
-}
-
-@keyframes flirRotate { 100% { transform: rotate(360deg); } }
-
-.flir-ticks-h {
-  position: absolute; top: 50%; left: -60px; width: 260px; height: 1px;
-  background: linear-gradient(90deg, var(--tactical-green), transparent 40%, transparent 60%, var(--tactical-green));
-}
-
-.flir-ticks-v {
-  position: absolute; top: -60px; left: 50%; width: 1px; height: 260px;
-  background: linear-gradient(180deg, var(--tactical-green), transparent 40%, transparent 60%, var(--tactical-green));
-}
-
-.flir-telemetry-hud {
-  background: rgb(0 25 12 / 85%);
-  border: 1px solid var(--tactical-green);
-  border-radius: 4px;
-  padding: 8px 18px;
+/* TOP HUD Panel */
+.flir-hud-top {
+  position: relative; z-index: 5;
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  padding: 12px 24px;
+  background: linear-gradient(180deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0) 100%);
+  pointer-events: none;
   text-align: center;
-  backdrop-filter: blur(8px);
-  box-shadow: 0 0 16px var(--tactical-green-glow);
 }
-.flir-tag { font-size: 11px; font-weight: 800; color: var(--tactical-green); letter-spacing: 1px; }
-.flir-target-readout { font-size: 13px; color: #fff; margin-top: 2px; font-family: Rajdhani, sans-serif; font-weight: 700; }
-
-.flir-interactive-targets {
-  display: flex;
-  gap: 16px;
-  margin-top: auto;
-  margin-bottom: 24px;
-  z-index: 65;
-  flex-wrap: wrap;
-  justify-content: center;
+.flir-hud-badge {
+  display: inline-block;
+  background: rgba(255,0,0,0.85);
+  color: #fff;
+  font-family: 'Rajdhani', monospace;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 3px;
+  padding: 3px 12px;
+  border-radius: 2px;
+  animation: flirLivePulse 1.2s ease-in-out infinite alternate;
+}
+@keyframes flirLivePulse {
+  from { opacity: 1; box-shadow: 0 0 8px rgba(255,0,0,0.5); }
+  to   { opacity: 0.7; box-shadow: 0 0 16px rgba(255,0,0,0.9); }
+}
+.flir-hud-title {
+  font-family: 'Rajdhani', monospace;
+  font-size: 16px;
+  font-weight: 800;
+  color: #ff8800;
+  letter-spacing: 2px;
+  text-shadow: 0 0 12px rgba(255,136,0,0.8);
+}
+.flir-hud-info {
+  display: flex; gap: 20px; flex-wrap: wrap; justify-content: center;
+  font-family: monospace;
+  font-size: 11px;
+  color: rgba(255,200,100,0.7);
+  letter-spacing: 1px;
 }
 
+/* BOTTOM HUD Panel */
+.flir-hud-bottom {
+  position: relative; z-index: 10;
+  display: flex; flex-direction: column; align-items: center; gap: 12px;
+  padding: 16px 24px 20px;
+  background: linear-gradient(0deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0) 100%);
+  pointer-events: auto;
+}
+.flir-hint {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: rgba(255,200,100,0.9);
+  letter-spacing: 1.5px;
+  text-align: center;
+  animation: flirHintPulse 2s ease-in-out infinite alternate;
+}
+@keyframes flirHintPulse {
+  from { opacity: 0.7; }
+  to   { opacity: 1; text-shadow: 0 0 10px rgba(255,200,100,0.6); }
+}
+
+/* FLIR lock-point buttons */
+.flir-weakspots-container {
+  display: flex; gap: 12px; flex-wrap: wrap; justify-content: center;
+}
 .flir-lock-point {
-  background: rgb(0 35 18 / 90%);
-  border: 1.5px solid var(--hazard-yellow);
-  color: var(--hazard-yellow);
-  padding: 10px 16px;
+  background: rgba(0, 20, 10, 0.92);
+  border: 1.5px solid #ff8800;
+  color: #ff8800;
+  padding: 10px 20px;
   border-radius: 4px;
-  font-family: Rajdhani, sans-serif;
+  font-family: 'Rajdhani', sans-serif;
   font-size: 14px;
   font-weight: 800;
   cursor: pointer;
-  box-shadow: 0 0 16px rgb(255 204 0 / 35%);
-  transition: all 0.2s ease;
+  pointer-events: auto !important;
+  box-shadow: 0 0 16px rgba(255,136,0,0.3), inset 0 0 12px rgba(255,136,0,0.05);
+  transition: all 0.15s ease;
+  letter-spacing: 1px;
+  position: relative;
+  overflow: hidden;
 }
-
 .flir-lock-point:hover {
-  background: var(--hazard-yellow);
-  color: #000;
-  box-shadow: 0 0 24px var(--hazard-yellow);
-  transform: scale(1.08);
+  background: rgba(255, 136, 0, 0.25);
+  box-shadow: 0 0 28px rgba(255,136,0,0.7);
+  transform: scale(1.06);
+  color: #ffcc00;
+  border-color: #ffcc00;
+}
+.flir-lock-point.locking {
+  border-color: #ff4400;
+  color: #ff4400;
+  background: rgba(255, 60, 0, 0.15);
+  animation: flirLockBlink 0.3s ease-in-out infinite alternate;
+  box-shadow: 0 0 30px rgba(255,60,0,0.7);
+}
+.flir-lock-point.locked {
+  border-color: #00ff88;
+  color: #00ff88;
+  background: rgba(0, 255, 136, 0.15);
+  box-shadow: 0 0 30px rgba(0,255,136,0.7);
+}
+@keyframes flirLockBlink {
+  from { box-shadow: 0 0 20px rgba(255,60,0,0.5); }
+  to   { box-shadow: 0 0 40px rgba(255,60,0,1); }
 }
 
 .btn-flir-exit {
-  background: rgb(40 10 10 / 90%);
-  border: 1px solid var(--alarm-red);
+  background: rgba(60, 10, 10, 0.92);
+  border: 1px solid #cc3333;
   color: #fff;
-  padding: 8px 20px;
+  padding: 9px 28px;
   border-radius: 4px;
-  font-family: Rajdhani, sans-serif;
+  font-family: 'Rajdhani', sans-serif;
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
+  pointer-events: auto !important;
   transition: all 0.15s ease;
+  letter-spacing: 1.5px;
+}
+.btn-flir-exit:hover {
+  background: rgba(200, 40, 40, 0.85);
+  box-shadow: 0 0 16px rgba(200,40,40,0.7);
+  border-color: #ff4444;
 }
 
-.btn-flir-exit:hover {
-  background: var(--alarm-red);
-  box-shadow: 0 0 16px var(--alarm-red);
-}
 
 /* =========================================================================
    FLOATING TACTICAL BOOSTER WIDGET
@@ -692,11 +748,20 @@ body {
 .item-card-extra { font-size: 10px; color: #888; }
 
 .contract-bar-track {
-  width: 100%; height: 4px; background: #000; margin-top: 4px; border-radius: 2px; overflow: hidden;
+  width: 100%; height: 4px; background: rgba(0,0,0,0.4); margin-top: 4px; border-radius: 2px; overflow: hidden;
 }
 
 .contract-bar-fill {
-  width: 0%; height: 100%; background: var(--credit-cyan); transition: width 0.1s;
+  width: 0%; height: 100%; background: var(--credit-cyan); transition: width 0.3s ease;
+}
+
+@keyframes contractBarPulse {
+  0%, 100% { opacity: 1; filter: brightness(1); }
+  50% { opacity: 0.75; filter: brightness(1.4); }
+}
+
+.contract-bar-pulse {
+  animation: contractBarPulse 1.8s ease-in-out infinite;
 }
 
 .btn-buy-action {
@@ -813,38 +878,50 @@ body {
 
 /* Floating gain text */
 .floating-gain {
-  position: absolute;
+  position: fixed;
   font-family: Rajdhani, sans-serif;
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 800;
   color: var(--tactical-green);
   text-shadow: var(--text-outline), 0 0 12px var(--tactical-green);
   pointer-events: none;
-  animation: floatDrift 0.85s cubic-bezier(0.1,0.8,0.3,1) forwards;
-  z-index: 40;
+  animation: floatDrift 0.9s cubic-bezier(0.15, 0.85, 0.35, 1) forwards;
+  z-index: 9999;
+  transform: translateX(-50%);
+  white-space: nowrap;
 }
 
 .floating-gain.crit {
-  font-size: 32px;
+  font-size: 28px;
   color: var(--hazard-yellow);
-  text-shadow: var(--text-outline), 0 0 18px var(--hazard-yellow);
+  text-shadow: var(--text-outline), 0 0 22px var(--hazard-yellow), 0 0 40px rgba(255,220,0,0.4);
+  animation: floatDriftCrit 0.95s cubic-bezier(0.1, 0.9, 0.3, 1) forwards;
 }
 
 @keyframes floatDrift {
-  0% { opacity: 1; transform: translate(-50%, 0) scale(0.85); }
-  30% { transform: translate(-50%, -30px) scale(1.2); }
-  100% { opacity: 0; transform: translate(-50%, -75px) scale(1.0); }
+  0%   { opacity: 0; transform: translateX(-50%) translateY(0)   scale(0.6); }
+  15%  { opacity: 1; transform: translateX(-50%) translateY(-8px) scale(1.15); }
+  60%  { opacity: 1; transform: translateX(-50%) translateY(-35px) scale(1.0); }
+  100% { opacity: 0; transform: translateX(-50%) translateY(-70px) scale(0.9); }
 }
+
+@keyframes floatDriftCrit {
+  0%   { opacity: 0; transform: translateX(-50%) translateY(0)    scale(0.5); }
+  12%  { opacity: 1; transform: translateX(-50%) translateY(-10px) scale(1.25); }
+  55%  { opacity: 1; transform: translateX(-50%) translateY(-40px) scale(1.05); }
+  100% { opacity: 0; transform: translateX(-50%) translateY(-85px) scale(0.95); }
+}
+
 
 /* =========================================================================
    TACTICAL MODALS (SECTOR MAP & SIGINT CYBER HACK)
    ========================================================================= */
 .tactical-modal-overlay {
-  position: absolute;
+  position: fixed;
   top: 0; left: 0;
   width: 100%; height: 100%;
   background: rgb(2 8 14 / 92%);
-  z-index: 90;
+  z-index: 200;
   display: none;
   align-items: center;
   justify-content: center;
@@ -5496,14 +5573,163 @@ body {
   gap: 20px;
 }
 
+/* Old readout (keep for backward compat) */
 .rov-magnetometer-readout {
-  background: rgb(2 12 20 / 90%);
-  border: 1px solid rgb(255 204 0 / 50%);
-  padding: 10px 16px;
+  display: none; /* replaced by new big display */
+}
+
+/* Phase pipeline */
+.rov-phases {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+  padding: 8px 0;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+}
+.rov-phase {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: rgba(0,240,255,0.35);
+  transition: color 0.4s ease;
+}
+.rov-phase.active {
+  color: #00f0ff;
+  text-shadow: 0 0 8px rgba(0,240,255,0.7);
+}
+.rov-phase.done {
+  color: #00ff88;
+  text-shadow: 0 0 8px rgba(0,255,136,0.5);
+}
+.rov-phase-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 6px currentColor;
+}
+.rov-phase-arrow { color: rgba(0,240,255,0.25); font-size: 16px; }
+
+/* Oscilloscope */
+.rov-oscilloscope-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin: 0 auto;
+}
+#rov-oscilloscope {
+  border: 1px solid rgba(0,240,255,0.3);
+  border-radius: 4px;
+  background: #000d14;
+  display: block;
+}
+.rov-osc-label {
+  font-family: monospace;
+  font-size: 9px;
+  color: rgba(0,240,255,0.5);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+
+/* Big magnetometer display */
+.rov-magnetometer-big {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 20px;
+  background: rgba(0,10,20,0.85);
+  border: 1px solid rgba(255,204,0,0.4);
   border-radius: 8px;
+  box-shadow: 0 0 20px rgba(255,204,0,0.12);
+  min-width: 240px;
+}
+.mag-big-val {
+  font-family: 'Share Tech Mono', 'Courier New', monospace;
+  font-size: 36px;
+  font-weight: 700;
+  color: #ffcc00;
+  text-shadow: 0 0 16px rgba(255,204,0,0.7);
+  transition: color 0.3s ease, text-shadow 0.3s ease;
+}
+.mag-big-val.low  { color: rgba(255,204,0,0.4); text-shadow: none; }
+.mag-big-val.mid  { color: #ffaa00; text-shadow: 0 0 12px rgba(255,170,0,0.5); }
+.mag-big-val.high { color: #00ff88; text-shadow: 0 0 20px rgba(0,255,136,0.8); }
+.mag-big-threshold { font-family: 'Rajdhani', sans-serif; font-size: 13px; font-weight: 700; }
+.mag-zone { color: rgba(255,204,0,0.7); letter-spacing: 1px; }
+.mag-bar-track {
+  width: 220px; height: 8px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 4px;
+  overflow: visible;
+  position: relative;
+}
+.mag-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, rgba(255,204,0,0.4), #ffcc00, #00ff88);
+  border-radius: 4px;
+  transition: width 0.15s ease;
+}
+.mag-bar-threshold-marker {
+  position: absolute;
+  top: -3px;
+  left: 70%; /* 350/500 = 70% */
+  width: 2px; height: 14px;
+  background: rgba(255,255,255,0.6);
+  border-radius: 1px;
+}
+.mag-bar-labels {
+  display: flex;
+  justify-content: space-between;
+  width: 220px;
+  font-family: monospace;
+  font-size: 9px;
+  color: rgba(255,255,255,0.35);
+  letter-spacing: 0.5px;
+}
+
+/* Direction arrow */
+.rov-direction-wrap {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+}
+.rov-dir-label {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  color: rgba(0,240,255,0.5);
+  letter-spacing: 1.5px;
+}
+.rov-direction-arrow {
+  font-size: 32px;
+  color: rgba(0,240,255,0.7);
+  text-shadow: 0 0 12px rgba(0,240,255,0.5);
+  transition: transform 0.3s ease, color 0.3s ease;
+  line-height: 1;
+}
+.rov-direction-arrow.strong {
+  color: #00ff88;
+  text-shadow: 0 0 20px rgba(0,255,136,0.8);
+}
+.rov-dir-hint {
+  font-family: monospace;
+  font-size: 10px;
+  color: rgba(0,240,255,0.45);
+  letter-spacing: 0.5px;
   text-align: center;
-  font-family: Rajdhani, sans-serif;
-  box-shadow: 0 0 20px rgb(255 204 0 / 20%);
+}
+
+/* Instructions bar */
+.rov-instructions {
+  font-size: 11px;
+  color: rgba(0,255,200,0.75);
+  text-align: center;
+  padding: 6px 0 2px;
+  letter-spacing: 0.5px;
+  font-family: monospace;
 }
 
 .mag-label {
@@ -5520,20 +5746,6 @@ body {
   margin: 4px 0;
 }
 
-.mag-bar-track {
-  width: 140px;
-  height: 6px;
-  background: rgb(255 255 255 / 10%);
-  border-radius: 3px;
-  overflow: hidden;
-  margin: 0 auto;
-}
-
-.mag-bar-fill {
-  height: 100%;
-  background: linear-gradient(90deg, #0f8, #fc0, #f03);
-  transition: width 0.15s ease;
-}
 
 .rov-crosshair-bracket {
   width: 80px;
@@ -6539,7 +6751,21 @@ body::after {
   font-size: 15px !important;
   border-radius: 8px;
   letter-spacing: 1px;
+  transition: box-shadow 0.3s, background 0.3s, border-color 0.3s;
 }
+
+@keyframes assaultReadyPulse {
+  0%   { box-shadow: 0 0 10px rgba(255, 50, 50, 0.5), 0 0 20px rgba(255, 50, 50, 0.2); border-color: rgba(255, 80, 80, 0.8); }
+  50%  { box-shadow: 0 0 22px rgba(255, 80, 80, 0.9), 0 0 40px rgba(255, 60, 60, 0.5), 0 0 60px rgba(255, 40, 40, 0.25); border-color: #ff3333; }
+  100% { box-shadow: 0 0 10px rgba(255, 50, 50, 0.5), 0 0 20px rgba(255, 50, 50, 0.2); border-color: rgba(255, 80, 80, 0.8); }
+}
+
+#btn-assault.ready {
+  animation: assaultReadyPulse 1.1s ease-in-out infinite !important;
+  background: rgba(80, 10, 10, 0.95) !important;
+  color: #ff8888 !important;
+}
+
 
 /* ACTION RINGS (Menu buttons): Natural flex right above FPV panel */
 .concept-action-rings {
@@ -6617,7 +6843,8 @@ body::after {
 
 
 /* FIX 5.1.4: Guarantee all modals and overlays stay above the HUD */
-#assault-modal, #cyber-modal, #victory-modal, #game-over-modal, .help-modal-overlay {
+#assault-modal, #cyber-modal, #victory-modal, #game-over-modal, .help-modal-overlay,
+#mission-victory-modal, #mission-gameover-modal {
   z-index: 9999 !important;
 }
 
@@ -6656,4 +6883,63 @@ body::after {
 .crew-member-card:hover {
   border-color: rgba(255,255,255,0.18);
   transform: translateY(-1px);
+}
+
+/* FIX: Hide main HUD completely when any modal is open to prevent overlapping.
+   Secondary safety rule — main fix is now z-index:200 on .tactical-modal-overlay */
+body:has(.tactical-modal-overlay.active) #main-hud-layer,
+body:has(.help-modal-overlay.active) #main-hud-layer,
+body:has(#comms-terminal-modal[style*="display: flex"]) #main-hud-layer {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transition: opacity 0.2s ease;
+}
+
+/* ==========================================================================
+   SORTIE-ACTIVE: Hide lobby-only elements during campaign/mission mode
+   Prevents clicking lobby buttons, hides irrelevant HUD panels
+   ========================================================================== */
+body.sortie-active #btn-assault,
+body.sortie-active #btn-direct-missile,
+body.sortie-active .combat-quick-btn,
+body.sortie-active #panel-dossier,
+body.sortie-active #booster-widget,
+body.sortie-active .dossier-pill-row,
+body.sortie-active .bottom-mission-subrow,
+body.sortie-active #main-stat-bar,
+body.sortie-active .ship-target-section,
+body.sortie-active #progress-ring-container,
+body.sortie-active .top-nav-row,
+body.sortie-active .top-stats-row,
+body.sortie-active .top-hud-bar,
+body.sortie-active .quick-combat-actions-bar {
+  pointer-events: none !important;
+  opacity: 0 !important;
+  transition: opacity 0.25s ease;
+}
+
+/* ==========================================================================
+   FLIR-ACTIVE: Hide ALL UI elements during FLIR mode (3D scene stays visible)
+   The #flir-overlay is position:fixed z-index:99999 so it covers everything.
+   We also need game-frame visible for 3D scene rendering.
+   ========================================================================== */
+body.flir-active #game-frame {
+  display: block !important;
+}
+body.flir-active #mission-cockpit-overlay,
+body.flir-active #main-hud-layer,
+body.flir-active .top-nav-bar,
+body.flir-active .main-top-bar,
+body.flir-active nav {
+  pointer-events: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  transition: opacity 0.2s ease, visibility 0.2s ease;
+}
+
+/* ROV Siphon button ready-to-connect pulse animation */
+@keyframes pulse-ready {
+  0%   { box-shadow: 0 0 10px rgba(0,255,136,0.4); transform: scale(1); }
+  50%  { box-shadow: 0 0 30px rgba(0,255,136,0.9), 0 0 60px rgba(0,255,136,0.3); transform: scale(1.03); }
+  100% { box-shadow: 0 0 10px rgba(0,255,136,0.4); transform: scale(1); }
 }

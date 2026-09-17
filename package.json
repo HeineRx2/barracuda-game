@@ -7,10 +7,13 @@
     "doc": "docs"
   },
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
+    "prebundle": "node build_three.mjs",
+    "bundle": "node build_three.mjs",
+    "dev": "node build_three.mjs && vite",
+    "build": "node build_three.mjs && vite build && powershell -c \"Copy-Item -Recurse libs docs/libs -Force; Copy-Item audio.js, drone3d.js, game.js docs/\"",
     "preview": "vite preview"
   },
+
   "repository": {
     "type": "git",
     "url": "git+https://github.com/HeineRx2/barracuda-game.git"
@@ -24,5 +27,9 @@
   "homepage": "https://github.com/HeineRx2/barracuda-game#readme",
   "devDependencies": {
     "vite": "^8.2.2"
+  },
+  "dependencies": {
+    "three": "^0.185.1",
+    "vite-plugin-pwa": "^1.3.0"
   }
 }

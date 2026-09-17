@@ -165,7 +165,13 @@ class Barracuda3DEngine {
     // Cinematic Orbit Camera on Strike
     this.cinematicOrbit = { active: false, center: new THREE.Vector3(), angle: 0, radius: 30, height: 10, speed: 0.4 };
 
-    this.clock = new THREE.Clock();
+    // THREE.Clock is deprecated in r185+ — use Timer or performance.now() fallback
+    if (typeof THREE.Clock === 'function') {
+      this.clock = new THREE.Clock();
+    } else {
+      const _t0 = performance.now();
+      this.clock = { getElapsedTime: () => (performance.now() - _t0) / 1000 };
+    }
     this.isDragging = false;
     this.mouseDownPos = { x: 0, y: 0 };
     this.prevMouse = { x: 0, y: 0 };
@@ -192,6 +198,7 @@ class Barracuda3DEngine {
     this.camera = new THREE.PerspectiveCamera(initFov, W / H, 0.1, 20000);
     this.camera.position.set(7, 4.5, 10);
     this.camera.lookAt(0, 0, 0);
+    this.camera.layers.enable(1); // Enable layer 1 for heavy ship models (excludes them from water reflection)
 
     this.renderer = new THREE.WebGLRenderer({
       antialias: !this.isMobile,  // Disable antialiasing on mobile
@@ -200,10 +207,10 @@ class Barracuda3DEngine {
     });
     this.renderer.setSize(W, H);
     this.renderer.setClearColor(0x05131e, 1.0);
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, this.isMobile ? 1.0 : 1.75));
-    this.renderer.shadowMap.enabled = !this.isMobile;  // Disable shadows on mobile
-    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, this.isMobile ? 1.0 : 1.25));
+    this.renderer.shadowMap.enabled = false;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    this.renderer.toneMappingExposure = 1.2;
     this.renderer.domElement.style.position = 'absolute';
     this.renderer.domElement.style.top = '0';
     this.renderer.domElement.style.left = '0';
@@ -223,31 +230,69 @@ class Barracuda3DEngine {
     this.createParticlePools();
 
     this.thermalMaterial = new THREE.ShaderMaterial({
-      uniforms: { uTime: { value: 0.0 } },
+      uniforms: {
+        uTime: { value: 0.0 }
+      },
       vertexShader: `
         varying vec3 vNormal;
+        varying vec3 vWorldPos;
         void main() {
           vNormal = normalize(normalMatrix * normal);
+          vec4 worldPos4 = modelMatrix * vec4(position, 1.0);
+          vWorldPos = worldPos4.xyz;
           gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
         }
       `,
       fragmentShader: `
         uniform float uTime;
         varying vec3 vNormal;
-        float hash(float n) { return fract(sin(n) * 43758.5453123); }
+        varying vec3 vWorldPos;
+
+        float hash(vec2 p) {
+          return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
+        }
+
+        vec3 thermalPalette(float t) {
+          // Black -> dark blue -> red -> orange -> white (classic FLIR palette)
+          t = clamp(t, 0.0, 1.0);
+          vec3 a = vec3(0.01, 0.01, 0.04);   // cold: near-black navy
+          vec3 b = vec3(0.0,  0.35, 0.6);    // cool: deep blue
+          vec3 c = vec3(0.8,  0.1,  0.0);    // warm: red
+          vec3 d = vec3(1.0,  0.85, 0.0);    // hot: orange-yellow
+          vec3 e = vec3(1.0,  1.0,  1.0);    // very hot: white
+          if (t < 0.25) return mix(a, b, t * 4.0);
+          if (t < 0.5)  return mix(b, c, (t - 0.25) * 4.0);
+          if (t < 0.75) return mix(c, d, (t - 0.5) * 4.0);
+          return mix(d, e, (t - 0.75) * 4.0);
+        }
+
         void main() {
-          float intensity = pow(1.0 - max(dot(vNormal, vec3(0.0, 0.0, 1.0)), 0.0), 3.0);
-          float noise = hash(gl_FragCoord.x * 12.9898 + gl_FragCoord.y * 78.233 + uTime) * 0.12;
-          float scanline = sin(gl_FragCoord.y * 1.5 + uTime * 8.0) * 0.05;
-          
-          vec3 color = vec3(0.0, 1.0, 0.4) * intensity + vec3(0.0, 0.15, 0.05);
-          color += vec3(noise + scanline);
-          
+          // Height-based thermal: objects above waterline (y > 0) are hot, below are cold
+          float heightHeat = clamp((vWorldPos.y + 0.5) / 4.0, 0.0, 1.0);
+
+          // Edge/facing heat: facing-away faces are warmer (thermal emission)
+          float facingHeat = 1.0 - max(dot(vNormal, vec3(0.0, 1.0, 0.0)), 0.0);
+          facingHeat = facingHeat * 0.4;
+
+          // Combine
+          float heat = heightHeat * 0.7 + facingHeat + 0.05;
+
+          // Grain noise (sensor noise)
+          float grain = (hash(gl_FragCoord.xy + fract(uTime * 7.3)) - 0.5) * 0.06;
+          heat += grain;
+
+          // Scanline flicker
+          float scanline = sin(gl_FragCoord.y * 2.0 + uTime * 12.0) * 0.02;
+          heat += scanline;
+
+          heat = clamp(heat, 0.0, 1.0);
+          vec3 color = thermalPalette(heat);
           gl_FragColor = vec4(color, 1.0);
         }
       `,
       wireframe: false
     });
+
 
     this.loadGLBModel();        // Loads real GLB boat model (falls back to procedural only if error)
     this.setupEvents();
@@ -267,20 +312,22 @@ class Barracuda3DEngine {
 
     if (typeof THREE.Sky !== 'undefined') {
       this.sky = new THREE.Sky();
-      this.sky.scale.setScalar(12000);
-      if (this.sky.material) {
-        this.sky.material.fog = false;
-      }
+      this.sky.scale.setScalar(10000);
       this.scene.add(this.sky);
 
       const skyUniforms = this.sky.material.uniforms;
-      skyUniforms['turbidity'].value = 6.0;
-      skyUniforms['rayleigh'].value = 1.6;
+      skyUniforms['turbidity'].value = 10;
+      skyUniforms['rayleigh'].value = 2;
       skyUniforms['mieCoefficient'].value = 0.005;
-      skyUniforms['mieDirectionalG'].value = 0.85;
+      skyUniforms['mieDirectionalG'].value = 0.8;
       skyUniforms['sunPosition'].value.copy(this.sun);
+      
+      const pmremGenerator = new THREE.PMREMGenerator(this.renderer);
+      const envMap = pmremGenerator.fromScene(this.sky).texture;
+      this.scene.environment = envMap;
+      this.scene.background = envMap;
     } else {
-      this.scene.background = new THREE.Color(0x0a2234);
+      this.scene.background = new THREE.Color(0x050c14); // Very dark navy
     }
 
     // Procedural Clouds
@@ -492,31 +539,34 @@ class Barracuda3DEngine {
     this._poolGeomSphere = new THREE.SphereGeometry(0.15, 6, 6);
     this._poolGeomBlast = new THREE.DodecahedronGeometry(0.8, 1);
 
-    // Fire pool (burning warship) — 40 meshes
-    for (let i = 0; i < 40; i++) {
+    // Fire pool (burning warship) — 20 meshes (was 40, reduced for draw call budget)
+    for (let i = 0; i < 20; i++) {
       const mat = new THREE.MeshBasicMaterial({ color: 0xff3300, transparent: true, opacity: 0 });
       const mesh = new THREE.Mesh(this._poolGeomDodeca, mat);
       mesh.visible = false;
+      mesh.layers.set(1); // CRITICAL: exclude from water reflection render pass
       mesh.userData = { vy: 0, life: 0, maxLife: 0, active: false };
       this.scene.add(mesh);
       this._firePool.push(mesh);
     }
 
-    // Smoke pool (missile trails) — 30 meshes
-    for (let i = 0; i < 30; i++) {
+    // Smoke pool (missile trails) — 15 meshes (was 30)
+    for (let i = 0; i < 15; i++) {
       const mat = new THREE.MeshBasicMaterial({ color: 0xcccccc, transparent: true, opacity: 0 });
       const mesh = new THREE.Mesh(this._poolGeomSphere, mat);
       mesh.visible = false;
+      mesh.layers.set(1); // CRITICAL: exclude from water reflection render pass
       mesh.userData = { life: 0, maxLife: 0, active: false };
       this.scene.add(mesh);
       this._smokePool.push(mesh);
     }
 
-    // Explosion pool — 30 meshes
-    for (let i = 0; i < 30; i++) {
+    // Explosion pool — 15 meshes (was 30)
+    for (let i = 0; i < 15; i++) {
       const mat = new THREE.MeshBasicMaterial({ color: 0xff4400, transparent: true, opacity: 0 });
       const mesh = new THREE.Mesh(this._poolGeomBlast, mat);
       mesh.visible = false;
+      mesh.layers.set(1); // CRITICAL: exclude from water reflection render pass
       mesh.userData = { vx: 0, vy: 0, vz: 0, life: 0, maxLife: 0, active: false };
       this.scene.add(mesh);
       this._explosionPool.push(mesh);
@@ -544,12 +594,14 @@ class Barracuda3DEngine {
     this._cameraMode = mode;
     if (mode === 'flir') {
       this.scene.overrideMaterial = this.thermalMaterial;
-      this.scene.background = new THREE.Color(0x001105);
+      // Deep cold-black background — simulates thermal camera sky (cold = dark)
+      this.scene.background = new THREE.Color(0x000508);
       if (this.scene.fog) {
         this.originalFog = this.scene.fog;
-        this.scene.fog = new THREE.FogExp2(0x001105, 0.015);
+        this.scene.fog = null; // No fog in FLIR — objects need to be visible
       }
       if (this.planktonSystem) this.planktonSystem.visible = false;
+
     } else if (mode === 'rov') {
       this.scene.overrideMaterial = null;
       this.scene.background = new THREE.Color(0x001a22); // Deep dark water
@@ -589,7 +641,7 @@ class Barracuda3DEngine {
           }
         );
 
-        const waterRes = this.isMobile ? 512 : 1024;
+        const waterRes = this.isMobile ? 256 : 512;
         this.water = new THREE.Water(waterGeometry, {
           textureWidth: waterRes,
           textureHeight: waterRes,
@@ -603,6 +655,7 @@ class Barracuda3DEngine {
 
         this.water.rotation.x = -Math.PI / 2;
         this.water.position.y = 0.0;
+        this.water.receiveShadow = false; // Prevents black circle shadow artifacts
         this.scene.add(this.water);
 
         // Create river banks
@@ -698,95 +751,95 @@ class Barracuda3DEngine {
       this.riverBanks.add(mudStrip);
     }
 
-    // ===== DENSE REED / ТРОСТНИК CLUSTERS =====
-    const reedColors = [0x4a6028, 0x506830, 0x3d5020, 0x5a7035, 0x445825];
-    const reedStemGeo = new THREE.CylinderGeometry(0.06, 0.12, 1, 4); // Thin stem
-    const reedTopGeo = new THREE.ConeGeometry(0.2, 0.6, 4); // Bushy top
-    const reedTallStemGeo = new THREE.CylinderGeometry(0.05, 0.1, 1, 4);
-    const reedBrushGeo = new THREE.ConeGeometry(0.35, 0.8, 5); // Thick cattail head
+    // ===== DENSE REED / ТРОСТНИК CLUSTERS — InstancedMesh (1 draw call each) =====
+    const reedStemGeo = new THREE.CylinderGeometry(0.06, 0.12, 1, 4);
+    const reedTopGeo  = new THREE.ConeGeometry(0.25, 0.7, 4);
+    const stemMat = new THREE.MeshStandardMaterial({ color: 0x4a6028, roughness: 0.9 });
+    const topMat  = new THREE.MeshStandardMaterial({ color: 0x3a2810, roughness: 0.95 });
+    const bushGeoI = new THREE.SphereGeometry(1, 5, 4);
+    const bushMatI = new THREE.MeshStandardMaterial({ color: 0x2a4a18, roughness: 0.92 });
+
+    const REED_COUNT = 600;  // was ~2400 individual meshes
+    const TOP_COUNT  = 400;
+    const BUSH_COUNT = 80;
+    const LOG_COUNT  = 30;
+
+    const iStem = new THREE.InstancedMesh(reedStemGeo, stemMat, REED_COUNT);
+    const iTop  = new THREE.InstancedMesh(reedTopGeo,  topMat,  TOP_COUNT);
+    const iBush = new THREE.InstancedMesh(bushGeoI,    bushMatI, BUSH_COUNT);
+    iStem.layers.set(1); // skip water reflection
+    iTop.layers.set(1);
+    iBush.layers.set(1);
+
+    const _dummy = new THREE.Object3D();
+    let sIdx = 0, tIdx = 0, bIdx = 0;
 
     for (let side = -1; side <= 1; side += 2) {
-      // Dense reed patches along entire water edge
-      for (let patch = 0; patch < 120; patch++) {
+      for (let patch = 0; patch < 60; patch++) {   // was 120 patches × 2 sides
         const patchX = (Math.random() - 0.5) * bankLength * 0.85;
         const patchZ = side * (riverHalfWidth + Math.random() * 25);
-        const reedsInPatch = 6 + Math.floor(Math.random() * 10);
-        const patchColor = reedColors[Math.floor(Math.random() * reedColors.length)];
-        const reedMat = new THREE.MeshStandardMaterial({
-          color: patchColor,
-          roughness: 0.9,
-          metalness: 0.0
-        });
-
-        for (let r = 0; r < reedsInPatch; r++) {
-          const rh = 2.0 + Math.random() * 3.5; // Height 2-5.5 units
+        const count = 4 + Math.floor(Math.random() * 6);  // 4-10 reeds
+        for (let r = 0; r < count && sIdx < REED_COUNT; r++) {
+          const rh = 2.0 + Math.random() * 3.5;
           const rx = patchX + (Math.random() - 0.5) * 5;
           const rz = patchZ + (Math.random() - 0.5) * 4;
+          _dummy.position.set(rx, rh / 2, rz);
+          _dummy.scale.set(1, rh, 1);
+          _dummy.rotation.set((Math.random() - 0.5) * 0.12, 0, (Math.random() - 0.5) * 0.12);
+          _dummy.updateMatrix();
+          iStem.setMatrixAt(sIdx++, _dummy.matrix);
 
-          // Stem
-          const stem = new THREE.Mesh(reedStemGeo, reedMat);
-          stem.scale.set(1, rh, 1);
-          stem.position.set(rx, rh / 2, rz);
-          stem.rotation.x = (Math.random() - 0.5) * 0.12;
-          stem.rotation.z = (Math.random() - 0.5) * 0.12;
-          this.riverBanks.add(stem);
-
-          // Top (cone) — cattail brush or leaf tip
-          if (Math.random() > 0.3) {
-            const isCattail = Math.random() > 0.5;
-            const top = new THREE.Mesh(isCattail ? reedBrushGeo : reedTopGeo, 
-              new THREE.MeshStandardMaterial({
-                color: isCattail ? 0x3a2810 : patchColor,
-                roughness: 0.95
-              })
-            );
-            top.position.set(rx, rh + (isCattail ? 0.3 : 0.2), rz);
-            top.rotation.x = (Math.random() - 0.5) * 0.1;
-            this.riverBanks.add(top);
+          if (tIdx < TOP_COUNT && Math.random() > 0.3) {
+            _dummy.position.set(rx, rh + 0.3, rz);
+            _dummy.scale.set(1, 1, 1);
+            _dummy.updateMatrix();
+            iTop.setMatrixAt(tIdx++, _dummy.matrix);
           }
         }
       }
-
-      // Low bushes further from water (squashed spheres)
-      const bushMat = new THREE.MeshStandardMaterial({
-        color: 0x2a4a18,
-        roughness: 0.92,
-        metalness: 0.0
-      });
-      const bushGeo = new THREE.SphereGeometry(1, 5, 4);
-      for (let b = 0; b < 40; b++) {
+      // Bushes
+      for (let b = 0; b < 40 && bIdx < BUSH_COUNT; b++) {
         const bx = (Math.random() - 0.5) * bankLength * 0.8;
         const bz = side * (riverHalfWidth + 25 + Math.random() * 80);
-        const bush = new THREE.Mesh(bushGeo, bushMat.clone());
-        bush.material.color.setHSL(0.25 + Math.random() * 0.08, 0.45 + Math.random() * 0.15, 0.15 + Math.random() * 0.08);
         const scale = 0.8 + Math.random() * 1.5;
-        bush.scale.set(scale, scale * 0.4, scale); // Flat/wide bushes
-        bush.position.set(bx, scale * 0.3, bz);
-        this.riverBanks.add(bush);
+        _dummy.position.set(bx, scale * 0.3, bz);
+        _dummy.scale.set(scale, scale * 0.4, scale);
+        _dummy.rotation.set(0, 0, 0);
+        _dummy.updateMatrix();
+        iBush.setMatrixAt(bIdx++, _dummy.matrix);
       }
     }
+    iStem.count = sIdx;
+    iTop.count  = tIdx;
+    iBush.count = bIdx;
+    iStem.instanceMatrix.needsUpdate = true;
+    iTop.instanceMatrix.needsUpdate  = true;
+    iBush.instanceMatrix.needsUpdate = true;
+    this.riverBanks.add(iStem, iTop, iBush);
 
-    // ===== FLOATING DEBRIS near banks (logs, trash) =====
-    const debrisMat = new THREE.MeshStandardMaterial({
-      color: 0x2a1e10,
-      roughness: 0.95
-    });
-    const logGeo = new THREE.CylinderGeometry(0.2, 0.3, 4, 5);
-    for (let i = 0; i < 30; i++) {
+    // ===== FLOATING DEBRIS — also instanced =====
+    const logGeo  = new THREE.CylinderGeometry(0.2, 0.3, 4, 5);
+    const debrisMat = new THREE.MeshStandardMaterial({ color: 0x2a1e10, roughness: 0.95 });
+    const iLog = new THREE.InstancedMesh(logGeo, debrisMat, LOG_COUNT);
+    iLog.layers.set(1);
+    for (let i = 0; i < LOG_COUNT; i++) {
       const side = Math.random() > 0.5 ? 1 : -1;
-      const log = new THREE.Mesh(logGeo, debrisMat);
-      log.position.set(
+      _dummy.position.set(
         (Math.random() - 0.5) * bankLength * 0.6,
         0.1,
         side * (riverHalfWidth - 10 + Math.random() * 20)
       );
-      log.rotation.z = Math.PI / 2;
-      log.rotation.y = Math.random() * Math.PI;
-      this.riverBanks.add(log);
+      _dummy.scale.set(1, 1, 1);
+      _dummy.rotation.set(0, Math.random() * Math.PI, Math.PI / 2);
+      _dummy.updateMatrix();
+      iLog.setMatrixAt(i, _dummy.matrix);
     }
+    iLog.instanceMatrix.needsUpdate = true;
+    this.riverBanks.add(iLog);
 
     this.scene.add(this.riverBanks);
   }
+
 
   // =========================================================================
   // RECON TARGET 3D MARKERS — Glowing pillars of light over target positions
@@ -968,9 +1021,11 @@ class Barracuda3DEngine {
     const wakeGeom = new THREE.CircleGeometry(0.14, 8);
     wakeGeom.rotateX(-Math.PI / 2);
 
-    for (let i = 0; i < 40; i++) {
+    // Reduced from 40 to 20 particles; all on Layer 1 to skip water reflection pass
+    for (let i = 0; i < 20; i++) {
       const p = new THREE.Mesh(wakeGeom, wakeMat.clone());
       p.visible = false;
+      p.layers.set(1); // CRITICAL: skip water reflection render pass
       p.userData = { life: 0, maxLife: 1.2, vx: 0, vz: 0 };
       this.wakeGroup.add(p);
       this.wakeParticles.push(p);
@@ -997,27 +1052,30 @@ class Barracuda3DEngine {
   setupLighting() {
     this.hemiLight = new THREE.HemisphereLight(0x80ccee, 0x082030, 2.4);
     this.scene.add(this.hemiLight);
-
-    this.sunLight = new THREE.DirectionalLight(0xfff8ee, 3.8);
-    this.sunLight.position.set(18, 28, 20);
-    this.sunLight.castShadow = true;
-    this.sunLight.shadow.mapSize.set(1024, 1024);
-    this.sunLight.shadow.camera.left = -10;
-    this.sunLight.shadow.camera.right = 10;
-    this.sunLight.shadow.camera.top = 10;
-    this.sunLight.shadow.camera.bottom = -10;
-    this.sunLight.shadow.bias = -0.0008;
+       this.sunLight = new THREE.DirectionalLight(0xfff8ee, 5.5);
+    this.sunLight.position.copy(this.sun).multiplyScalar(100);
+    this.sunLight.castShadow = !this.isMobile;
+    this.sunLight.shadow.mapSize.width = 2048;
+    this.sunLight.shadow.mapSize.height = 2048;
+    this.sunLight.shadow.camera.near = 10;
+    this.sunLight.shadow.camera.far = 300;
+    this.sunLight.shadow.camera.left = -60;
+    this.sunLight.shadow.camera.right = 60;
+    this.sunLight.shadow.camera.top = 60;
+    this.sunLight.shadow.camera.bottom = -60;
     this.scene.add(this.sunLight);
 
-    this.fillLight = new THREE.DirectionalLight(0x3090b8, 1.6);
-    this.fillLight.position.set(-14, 12, -12);
+    // Subtle blueish fill light from opposite side
+    this.fillLight = new THREE.DirectionalLight(0x3090b8, 2.5);
+    this.fillLight.position.set(-this.sun.x, this.sun.y, -this.sun.z).multiplyScalar(100);
     this.scene.add(this.fillLight);
 
+    // Green under-glow / cockpit ambient
     this.greenGlow = new THREE.PointLight(0x00ff88, 3.0, 14, 1.4);
-    this.greenGlow.position.set(0, 0.5, 0);
+    this.greenGlow.position.set(0, 0, 0);
     this.scene.add(this.greenGlow);
 
-    this.ambientLight = new THREE.AmbientLight(0x1a3d52, 1.5);
+    this.ambientLight = new THREE.AmbientLight(0x1a3d52, 3.5);
     this.scene.add(this.ambientLight);
   }
 
@@ -1025,75 +1083,64 @@ class Barracuda3DEngine {
   // 3D ENEMY WARSHIP ON HORIZON + SEARCHLIGHT + SUBSYSTEMS & CIWS
   // =========================================================================
   createEnemyWarship() {
+    if (this.enemyShip) {
+      this.scene.remove(this.enemyShip);
+    }
     this.enemyShip = new THREE.Group();
 
-    const warshipGreyMat = new THREE.MeshStandardMaterial({ color: 0x3a444c, roughness: 0.35, metalness: 0.75 });
-    const darkDeckMat = new THREE.MeshStandardMaterial({ color: 0x222a30, roughness: 0.5, metalness: 0.6 });
-    const radomeMat = new THREE.MeshStandardMaterial({ color: 0xe0e8f0, roughness: 0.1, metalness: 0.8 });
+    let modelPath = 'assets/models/kotor-class_frigate.glb?v=' + Date.now();
+    if (this.currentSector === 'sector-3' || this.currentSector === 'sector-4' || this.currentSector === 'c3' || this.currentSector === 'c4') {
+      modelPath = 'assets/models/barge_ship.glb?v=' + Date.now();
+    }
 
-    // Main Warship Hull (Corvette / Frigate silhouette)
-    const hullGeom = new THREE.BoxGeometry(7, 3.5, 38);
-    const hull = new THREE.Mesh(hullGeom, warshipGreyMat);
-    hull.position.y = 0.5;
-    this.enemyShip.add(hull);
+    if (typeof THREE.GLTFLoader !== 'undefined') {
+      const loader = new THREE.GLTFLoader();
+      loader.load(
+        modelPath,
+        (gltf) => {
+          const box = new THREE.Box3().setFromObject(gltf.scene);
+          const size = box.getSize(new THREE.Vector3());
+          const maxDim = Math.max(size.x, size.y, size.z);
+          const targetSize = modelPath.includes('barge') ? 60.0 : 45.0;
+          const scale = targetSize / maxDim;
+          
+          gltf.scene.scale.setScalar(scale);
+          gltf.scene.updateMatrixWorld(true);
 
-    // Bow Wedge
-    const bowGeom = new THREE.CylinderGeometry(0.1, 3.5, 10, 4);
-    bowGeom.rotateX(Math.PI / 2);
-    bowGeom.rotateY(Math.PI / 4);
-    const bow = new THREE.Mesh(bowGeom, warshipGreyMat);
-    bow.position.set(0, 0.5, 23);
-    this.enemyShip.add(bow);
+          // Recompute box after scale
+          const scaledBox = new THREE.Box3().setFromObject(gltf.scene);
+          const center = scaledBox.getCenter(new THREE.Vector3());
+          gltf.scene.position.sub(center);
+          gltf.scene.position.y += scaledBox.getSize(new THREE.Vector3()).y / 2 - 1.0; 
 
-    // Superstructure & Bridge (Subsystem 1: Bridge)
-    const bridge = new THREE.Mesh(new THREE.BoxGeometry(5.5, 4.0, 14), warshipGreyMat);
-    bridge.position.set(0, 4.0, 2);
-    this.enemyShip.add(bridge);
+          this.enemyShip.add(gltf.scene);
 
-    const bridgeWindows = new THREE.Mesh(
-      new THREE.BoxGeometry(5.6, 0.6, 3),
-      new THREE.MeshStandardMaterial({ color: 0x051520, roughness: 0.05, metalness: 0.95, emissive: 0x00e5ff, emissiveIntensity: 0.4 })
-    );
-    bridgeWindows.position.set(0, 5.0, 7.5);
-    this.enemyShip.add(bridgeWindows);
+          gltf.scene.traverse((child) => {
+            if (child.isMesh) {
+              // Disable shadows on complex enemy models to save performance
+              child.castShadow = false;
+              child.receiveShadow = false;
+              child.layers.set(1); // Skip water reflection
+              if (child.material) {
+                child.material.roughness = 0.4;
+                child.material.metalness = 0.6;
+              }
+            }
+          });
 
-    // Radar Mast & Rotating Phased Array (Subsystem 2: Radar)
-    const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.5, 7.0, 8), darkDeckMat);
-    mast.position.set(0, 8.5, 0);
-    this.enemyShip.add(mast);
+          // Force shader compilation immediately to prevent stutter when rotating camera
+          if (this.renderer && this.camera) {
+            this.renderer.compile(this.scene, this.camera);
+          }
+        }
+      );
+    } else {
+      const hull = new THREE.Mesh(new THREE.BoxGeometry(7, 3.5, 38), new THREE.MeshStandardMaterial({ color: 0x3a444c }));
+      this.enemyShip.add(hull);
+    }
 
-    this.enemyRadarDish = new THREE.Mesh(new THREE.BoxGeometry(3.5, 1.2, 0.2), radomeMat);
-    this.enemyRadarDish.position.set(0, 12.0, 0);
-    this.enemyShip.add(this.enemyRadarDish);
-
-    // Naval Gun Turret on Bow (Subsystem 3: Main Gun Ammo Magazine)
-    const turretBase = new THREE.Mesh(new THREE.CylinderGeometry(1.6, 1.8, 1.2, 12), darkDeckMat);
-    turretBase.position.set(0, 2.8, 14);
-    const turretBarrel = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 4.5, 8), darkDeckMat);
-    turretBarrel.rotation.x = Math.PI / 2.3;
-    turretBarrel.position.set(0, 0.4, 2.5);
-    turretBase.add(turretBarrel);
-    this.enemyShip.add(turretBase);
-
-    // CIWS Gatling Flak Turrets (Port & Starboard)
-    const ciwsMat = new THREE.MeshStandardMaterial({ color: 0x1a2228, metalness: 0.9, roughness: 0.3 });
-    const ciwsGeom = new THREE.BoxGeometry(0.8, 0.8, 1.2);
-    
-    this.ciwsPort = new THREE.Mesh(ciwsGeom, ciwsMat);
-    this.ciwsPort.position.set(-3.2, 4.2, -4);
-    this.enemyShip.add(this.ciwsPort);
-
-    this.ciwsStbd = new THREE.Mesh(ciwsGeom, ciwsMat);
-    this.ciwsStbd.position.set(3.2, 4.2, -4);
-    this.enemyShip.add(this.ciwsStbd);
-
-    // Searchlight on Bridge Roof
+    // Searchlight on Bridge Roof (keep it around for aesthetics)
     this.searchlightMount = new THREE.Group();
-    this.searchlightMount.position.set(0, 6.5, 7);
-
-    const lampHousing = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.7, 0.8, 12), darkDeckMat);
-    lampHousing.rotation.x = Math.PI / 2;
-    this.searchlightMount.add(lampHousing);
 
     // Spotlight cone beam
     this.enemySearchlight = new THREE.SpotLight(0xfffae0, 5.0, 180, Math.PI / 9, 0.4, 1.5);
@@ -1598,15 +1645,15 @@ class Barracuda3DEngine {
         const euler = new THREE.Euler(this.fpvPitch, this.fpvYaw, this.fpvRoll, 'YXZ');
         this.fpvDroneMesh.quaternion.setFromEuler(euler);
 
-        // Linear Flight Velocity & Thrust (smooth and controllable)
+        // Linear Flight Velocity & Thrust — reduced speed for better playability
         const forwardVector = new THREE.Vector3(0, 0, -1).applyQuaternion(this.fpvDroneMesh.quaternion);
-        const speed = (this.fpvBoost ? 34.0 : 20.0) * (0.5 + this.fpvThrottle * 0.5);
+        const speed = (this.fpvBoost ? 20.0 : 12.0) * (0.5 + this.fpvThrottle * 0.5);
 
-        // Very smooth forward acceleration (lerp damped by D-Gain)
+        // Smooth forward acceleration
         this.fpvVel.lerp(forwardVector.multiplyScalar(speed), Math.min(1.0, 4.5 * dGain * dt));
 
-        // Aerodynamic gravity when diving / climbing
-        this.fpvVel.y -= 1.4 * dt;
+        // Gentle gravity (not too strong so drone is controllable)
+        this.fpvVel.y -= 0.7 * dt;
       }
 
       // Update 3D guide line from drone toward enemy ship
@@ -2055,7 +2102,7 @@ class Barracuda3DEngine {
   // =========================================================================
   setWeatherSector(sectorId) {
     this.currentSector = sectorId;
-    const skyUniforms = this.sky.material.uniforms;
+    const skyUniforms = this.sky ? this.sky.material.uniforms : null;
 
     switch (sectorId) {
       case 'c1': // Antonivskyi Bridge (Storm)
@@ -2063,11 +2110,12 @@ class Barracuda3DEngine {
         this.weatherType = 'storm';
         this.scene.fog.color.setHex(0x152820);
         this.scene.fog.density = 0.0035;
-        this.water.material.uniforms['waterColor'].value.setHex(0x142818);
-        skyUniforms['turbidity'].value = 3.5;
-        skyUniforms['rayleigh'].value = 2.4;
-        this.sunLight.intensity = 2.2;
+        if(this.water) this.water.material.uniforms['waterColor'].value.setHex(0x142818);
+        if(skyUniforms) skyUniforms['turbidity'].value = 3.5;
+        if(skyUniforms) skyUniforms['rayleigh'].value = 2.4;
+        this.sunLight.intensity = 4.5;
         this.sunLight.color.setHex(0xd8c8a0);
+        this.ambientLight.intensity = 3.0;
         break;
 
       case 'c2': // Kakhovka Dam (Night Infiltration)
@@ -2075,35 +2123,47 @@ class Barracuda3DEngine {
         this.weatherType = 'night';
         this.scene.fog.color.setHex(0x04100a);
         this.scene.fog.density = 0.005;
-        this.water.material.uniforms['waterColor'].value.setHex(0x081208);
-        skyUniforms['turbidity'].value = 8.0;
-        skyUniforms['rayleigh'].value = 0.2;
-        this.sunLight.intensity = 0.6;
+        if(this.water) this.water.material.uniforms['waterColor'].value.setHex(0x081208);
+        if(skyUniforms) skyUniforms['turbidity'].value = 8.0;
+        if(skyUniforms) skyUniforms['rayleigh'].value = 0.2;
+        this.sunLight.intensity = 2.5;
         this.sunLight.color.setHex(0x5588cc);
-        this.greenGlow.intensity = 2.4;
+        this.ambientLight.intensity = 2.0;
+        this.greenGlow.intensity = 4.0;
         break;
 
       case 'sector-3': // Kherson Port (Sunset)
         this.weatherType = 'sunset';
         this.scene.fog.color.setHex(0x382418);
         this.scene.fog.density = 0.003;
-        this.water.material.uniforms['waterColor'].value.setHex(0x1a1508);
-        skyUniforms['turbidity'].value = 4.0;
-        skyUniforms['rayleigh'].value = 4.5;
-        this.sunLight.intensity = 3.0;
+        if(this.water) this.water.material.uniforms['waterColor'].value.setHex(0x1a1508);
+        if(skyUniforms) skyUniforms['turbidity'].value = 4.0;
+        if(skyUniforms) skyUniforms['rayleigh'].value = 4.5;
+        this.sunLight.intensity = 5.5;
         this.sunLight.color.setHex(0xff7733);
+        this.ambientLight.intensity = 3.5;
         break;
 
       case 'sector-4': // Dnipro Delta (Dawn Mist)
         this.weatherType = 'dawn';
         this.scene.fog.color.setHex(0x1a2e20);
         this.scene.fog.density = 0.0045;
-        this.water.material.uniforms['waterColor'].value.setHex(0x102218);
-        skyUniforms['turbidity'].value = 2.0;
-        skyUniforms['rayleigh'].value = 2.0;
-        this.sunLight.intensity = 2.4;
+        if(this.water) this.water.material.uniforms['waterColor'].value.setHex(0x102218);
+        if(skyUniforms) skyUniforms['turbidity'].value = 2.0;
+        if(skyUniforms) skyUniforms['rayleigh'].value = 2.0;
+        this.sunLight.intensity = 4.5;
         this.sunLight.color.setHex(0xfff0d0);
+        this.ambientLight.intensity = 3.0;
         break;
+    }
+
+    // Regenerate PMREM environment map after weather change
+    if (this.sky && this.renderer) {
+      const pmremGenerator = new THREE.PMREMGenerator(this.renderer);
+      const envMap = pmremGenerator.fromScene(this.sky).texture;
+      this.scene.environment = envMap;
+      this.scene.background = envMap;
+      pmremGenerator.dispose();
     }
   }
 
@@ -2120,7 +2180,7 @@ class Barracuda3DEngine {
 
     const loader = new THREE.GLTFLoader();
     loader.load(
-      'assets/barracuda.glb?v=4.0.2',
+      'assets/barracuda.glb?v=' + Date.now(),
       (gltf) => {
         try {
           if (this.boatModel) {
@@ -2140,23 +2200,28 @@ class Barracuda3DEngine {
           this.modelScale = scale;
           this.modelBBox = { min: box.min.clone(), max: box.max.clone(), size: size.clone(), center: center.clone() };
 
-          this.boatModel.scale.setScalar(scale);
+          // Wrap gltf.scene in a group so we can offset it without the game loop overwriting it
+          const container = new THREE.Group();
+          gltf.scene.scale.setScalar(scale);
+          
           const bottomY = box.min.y * scale;
           const hullDepth = size.y * scale * 0.35;
-          this.boatModel.position.set(
+          gltf.scene.position.set(
             -center.x * scale,
             -bottomY - hullDepth,
             -center.z * scale
           );
-
+          
+          container.add(gltf.scene);
+          this.boatModel = container;
           this.scene.add(this.boatModel);
-          this.boatBaseY = this.boatModel.position.y;
+          this.boatBaseY = 0; // container is at origin, offset is inside gltf.scene
 
-          // Preserve and enhance original PBR materials without texture corruption
-          this.boatModel.traverse((child) => {
+          gltf.scene.traverse((child) => {
             if (child.isMesh) {
-              child.castShadow = true;
-              child.receiveShadow = true;
+              child.castShadow = false; // Disabled to prevent massive shadow map lag on 12MB model
+              child.receiveShadow = false;
+              child.layers.set(1); // Skip water reflection
               if (child.material) {
                 child.material.roughness = Math.max(0.15, (child.material.roughness !== undefined ? child.material.roughness : 0.4) * 0.9);
                 child.material.metalness = Math.min(0.9, (child.material.metalness !== undefined ? child.material.metalness : 0.6) + 0.1);
@@ -2164,6 +2229,11 @@ class Barracuda3DEngine {
               }
             }
           });
+
+          // Force shader compilation immediately to prevent stutter
+          if (this.renderer && this.camera) {
+            this.renderer.compile(this.scene, this.camera);
+          }
 
           if (window.barracudaGame) {
             this.syncActiveUpgrades(window.barracudaGame.hw, window.barracudaGame.cyber);
@@ -2588,8 +2658,8 @@ class Barracuda3DEngine {
     }
 
     // Water
-    if (this.water && this.water.material && this.water.material.uniforms['time']) {
-      this.water.material.uniforms['time'].value += dt * 0.9;
+    if (this.water && this.water.material && this.water.material.uniforms && this.water.material.uniforms['time'] !== undefined) {
+      this.water.material.uniforms['time'].value += dt * 0.2; // Slower wave speed
     }
 
     // Enemy Warship animation & searchlight sweep
@@ -2761,11 +2831,11 @@ class Barracuda3DEngine {
         }
       } else {
         // Normal Manual Piloting
-        const maxForwardSpeed = (this.pilotBoost ? 36.0 : 22.0) * (this.currentDepth < 0.85 ? 0.55 : 1.0);
-        const maxReverseSpeed = -8.0;
-        const accelRate = (this.pilotThrottle > 0 ? 12.0 : 18.0) * dt;
+        const maxForwardSpeed = (this.pilotBoost ? 22.0 : 14.0) * (this.currentDepth < 0.85 ? 0.55 : 1.0);
+        const maxReverseSpeed = -6.0;
+        const accelRate = (this.pilotThrottle > 0 ? 8.0 : 14.0) * dt;
 
-        // Update speed with inertia:
+        // Update speed with inertia
         const targetSpeed = this.pilotThrottle > 0 ? this.pilotThrottle * maxForwardSpeed : this.pilotThrottle * (-maxReverseSpeed);
         this.pilotSpeed += (targetSpeed - this.pilotSpeed) * Math.min(1.0, accelRate);
 
@@ -2808,11 +2878,12 @@ class Barracuda3DEngine {
       }
 
       // Realistic hydrodynamic pitch and roll based on smoothed angular velocity & wave interaction
-      const waveHeave = Math.sin(t * 2.6) * 0.04 + Math.cos(t * 1.8) * 0.02;
+      const waveHeave = Math.sin(t * 0.3) * 0.04 + Math.cos(t * 0.2) * 0.02;
+      const speedPitch = (this.pilotSpeed / 36.0) * 0.12 + (this.pilotBoost ? 0.04 : 0.0);
+      const targetPitch = speedPitch + Math.sin(t * 0.4) * 0.02 + Math.cos(t * 0.5) * 0.015;
       const targetRoll = this.vsaEnabled
         ? this.pilotAngularVelocity * 0.32
-        : (this.pilotAngularVelocity * 0.68 + (this.lateralSlipVel / 8.0) * 0.35 + Math.sin(t * 3.2) * 0.08);
-      const targetPitch = (this.pilotSpeed / 36.0) * 0.12 + (this.pilotBoost ? 0.04 : 0.0);
+        : (this.pilotAngularVelocity * 0.68 + (this.lateralSlipVel / 8.0) * 0.35 + Math.sin(t * 0.4) * 0.08);
 
       this.pilotRoll += (targetRoll - this.pilotRoll) * Math.min(1.0, 6.0 * dt);
       this.pilotPitch += (targetPitch - this.pilotPitch) * Math.min(1.0, 6.0 * dt);
@@ -2883,9 +2954,9 @@ class Barracuda3DEngine {
         lobbyHeading = Math.atan2(nextX - lobbyX, nextZ - lobbyZ);
       }
 
-      const lobbyHeave = Math.sin(t * 2.2) * 0.08 + Math.cos(t * 1.4) * 0.03;
-      const lobbyPitch = 0.03 + Math.sin(t * 1.8) * 0.025;
-      const lobbyRoll = Math.sin(t * 0.8) * 0.05;
+      const lobbyHeave = Math.sin(t * 0.5) * 0.08 + Math.cos(t * 0.3) * 0.03;
+      const lobbyPitch = 0.03 + Math.sin(t * 0.4) * 0.025;
+      const lobbyRoll = Math.sin(t * 0.2) * 0.05;
 
       this.boatModel.position.set(lobbyX, this.boatBaseY + lobbyHeave - (this.bounceImpulse * 0.05), lobbyZ);
       this.boatModel.rotation.set(lobbyPitch + (this.bounceImpulse * 0.012), lobbyHeading, lobbyRoll);
@@ -2982,7 +3053,11 @@ class Barracuda3DEngine {
 
     this.renderer.render(this.scene, this.camera);
     } catch (e) {
-      console.error('Animate error:', e);
+      const _n = Date.now();
+      if (!this._lastAnimErr || _n - this._lastAnimErr > 2000) {
+        this._lastAnimErr = _n;
+        console.error('Animate error:', e);
+      }
     }
   }
 
@@ -3220,27 +3295,53 @@ class Barracuda3DEngine {
     if (!this.missionPatrolBoats) this.missionPatrolBoats = [];
     [-18, 18].forEach((offsetX, idx) => {
       const pBoat = new THREE.Group();
-      const pMat = new THREE.MeshStandardMaterial({ color: 0x222a30, roughness: 0.4, metalness: 0.7 });
-      const pGlow = new THREE.MeshBasicMaterial({ color: 0xff3300 });
-
-      const pHull = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.8, 6.5), pMat);
-      pHull.position.y = 0.4;
-      pBoat.add(pHull);
-
-      const pCab = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.6, 2.2), pMat);
-      pCab.position.set(0, 0.9, -0.4);
-      pBoat.add(pCab);
-
-      const pBeacon = new THREE.Mesh(new THREE.SphereGeometry(0.2, 6, 6), pGlow);
-      pBeacon.position.set(0, 1.4, -0.4);
-      pBoat.add(pBeacon);
-
-      const pLight = new THREE.PointLight(0xff2200, 2.0, 15);
-      pLight.position.set(0, 1.5, -0.4);
-      pBoat.add(pLight);
-
       pBoat.position.set(wx + offsetX, 0, wz - 18 + (idx * 6));
       pBoat.lookAt(0, 0, 0);
+      
+      if (typeof THREE.GLTFLoader !== 'undefined') {
+        const loader = new THREE.GLTFLoader();
+        loader.load('assets/models/lowpoly_uss_hurricane_pc-3.glb?v=' + Date.now(), (gltf) => {
+          const model = gltf.scene;
+          const box = new THREE.Box3().setFromObject(gltf.scene);
+          const size = box.getSize(new THREE.Vector3());
+          const maxDim = Math.max(size.x, size.y, size.z);
+          const targetSize = 12.0;
+          const scale = targetSize / maxDim;
+          
+          model.scale.setScalar(scale);
+          model.updateMatrixWorld(true);
+          
+          const scaledBox = new THREE.Box3().setFromObject(model);
+          const center = scaledBox.getCenter(new THREE.Vector3());
+          model.position.sub(center);
+          model.position.y += scaledBox.getSize(new THREE.Vector3()).y / 2 - 0.5;
+
+          model.traverse((child) => {
+            if (child.isMesh) {
+              // Disable shadows on complex patrol boat models to save performance
+              child.castShadow = false;
+              child.receiveShadow = false;
+              child.layers.set(1); // Skip water reflection
+              if (child.material) {
+                child.material.roughness = 0.5;
+                child.material.metalness = 0.5;
+              }
+            }
+          });
+          pBoat.add(model);
+
+          // Force shader compilation immediately to prevent stutter
+          if (this.renderer && this.camera) {
+            this.renderer.compile(this.scene, this.camera);
+          }
+        });
+      } else {
+        const pMat = new THREE.MeshStandardMaterial({ color: 0x222a30, roughness: 0.4, metalness: 0.7 });
+        const pHull = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.8, 6.5), pMat);
+        pHull.position.y = 0.4;
+        pBoat.add(pHull);
+      }
+
       this.scene.add(pBoat);
       this.missionPatrolBoats.push(pBoat);
     });

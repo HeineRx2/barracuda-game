@@ -3,7 +3,7 @@ import socketserver
 import os
 import sys
 
-DIRECTORY = r"c:\Users\User\barracuda\web_preview"
+DIRECTORY = r"c:\Users\User\barracuda"
 PORT = 8088
 
 class Handler(http.server.SimpleHTTPRequestHandler):

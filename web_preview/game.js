@@ -3160,26 +3160,8 @@ class BarracudaGame {
       window.tacticalAudio.playRovThruster();
     }
     this.startSortieTimer();
-
-    // Reset ROV phase — always start in search mode regardless of previous state
-    this.rovPhase = 'search';
-    this.rovSiphonProgress = 0;
-    if (this._rovSiphonInterval) { clearInterval(this._rovSiphonInterval); this._rovSiphonInterval = null; }
-
-    // Force siphon button to locked/disabled state immediately
-    const btnSiphon = document.getElementById('btn-trigger-siphon');
-    if (btnSiphon) {
-      btnSiphon.disabled = true;
-      btnSiphon.textContent = '⊙ ПОДКЛЮЧИТЬ СИФОН ДАННЫХ';
-      btnSiphon.style.background = 'rgba(50,50,50,0.3)';
-      btnSiphon.style.borderColor = '#333';
-      btnSiphon.style.boxShadow = '';
-      btnSiphon.style.animation = '';
-      btnSiphon.style.color = '#666';
-    }
-
-    this.addNotification('🔮 МИКРО-ROV СПУЩЕН', '📡 Найди кабель: ориентируйся по магнитометру — нужно 350+ нТл!');
-    this.showMissionWarning('🔮 ROV АКТИВЕН: маневрируй [WASD] до 350+ нТл на магнитометре → кнопка СИФОН загорится!');
+    this.addNotification('🔮 МИКРО-ROV СПУЩЕН', 'Ориентируйтесь по шкале магнитометра и подключите сифон данных!');
+    this.showMissionWarning('🔮 Подводный дрон активен. Нажмите [ПОДКЛЮЧИТЬ СИФОН], когда магнитометр зафиксирует максимум поля!');
   }
 
   // =========================================================================
@@ -3434,40 +3416,23 @@ class BarracudaGame {
     this.engine3D.isBoss = this.bossActive;
     this.engine3D.fpvSpeedMult = this.getCrewPilotMult();
 
-    // Launch countdown — show 3-2-1 overlay then start FPV (no gyro blocking controls)
-    const fpvOverlayEl = document.getElementById('fpv-flight-overlay');
-    let countEl = document.getElementById('fpv-launch-countdown');
-    if (!countEl && fpvOverlayEl) {
-      countEl = document.createElement('div');
-      countEl.id = 'fpv-launch-countdown';
-      countEl.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,0,0,0.72);z-index:9999;pointer-events:none;';
-      fpvOverlayEl.appendChild(countEl);
-    }
+    // Start FPV Drone Flight in 3D Engine
+    this.engine3D.startFpvFlight((event, data) => this.handle3DMissionEvent(event, data));
 
-    const targetName = this.activeMission ? this.activeMission.title : 'цель';
-    let tick = 3;
-    const updateCount = () => {
-      if (!countEl) return;
-      if (tick > 0) {
-        countEl.innerHTML = `<div style="font-family:'Rajdhani',monospace;font-size:clamp(60px,16vw,110px);font-weight:900;color:#00ff88;text-shadow:0 0 40px #00ff88,0 0 80px #00ff88;letter-spacing:4px;animation:fpvAlertBlink 0.4s alternate 1;">${tick}</div><div style="font-family:'Rajdhani',monospace;font-size:clamp(13px,3vw,18px);color:#00f0ff;letter-spacing:3px;margin-top:8px;">FPV-ДРОН // ОБРАТНЫЙ ОТСЧЁТ</div>`;
-        tick--;
-        setTimeout(updateCount, 700);
-      } else {
-        // LAUNCH!
-        countEl.innerHTML = `<div style="font-family:'Rajdhani',monospace;font-size:clamp(36px,10vw,72px);font-weight:900;color:#ffcc00;text-shadow:0 0 30px #ffcc00;letter-spacing:6px;">🚀 ПУСК!</div>`;
-        // Start FPV flight now
-        this.engine3D.startFpvFlight((event, data) => this.handle3DMissionEvent(event, data));
-        setTimeout(() => {
-          if (countEl && countEl.parentNode) countEl.parentNode.removeChild(countEl);
-          this.showMissionWarning(`🎯 FPV АКТИВЕН: W/S — тангаж | A/D — рыскание | Лети к «${targetName}»! Зелёная линия — наводка!`);
-        }, 600);
+    // Show gyro briefly but auto-complete — calibration mid-FPV launch is disorienting
+    this.startGyroMinigame();
+    setTimeout(() => {
+      if (this.gyroActive) {
+        this.gyroProgress = 100;
+        this.gyroActive = false;
+        if (this.gyroContainer) this.gyroContainer.style.display = 'none';
       }
-    };
-    updateCount();
+      const targetName = this.activeMission ? this.activeMission.title : 'цель';
+      this.showMissionWarning(`🎯 FPV АКТИВЕН: W/S — тангаж | A/D — рыскание | Удерживай W и лети к «${targetName}»! Зелёная линия — наводка!`);
+    }, 1200);
 
     this.showMissionWarning('🚀 FPV-ШТУРМ НАЧАТ: Наводитесь на уязвимые узлы корабля противника!');
     if (window.tacticalAudio) window.tacticalAudio.playPhaseTransition();
-
   }
 
   handle3DMissionEvent(event, data) {
@@ -3817,8 +3782,6 @@ class BarracudaGame {
 
     // Hide base HUD, show 3D Mission Boat Cockpit Overlay
     this.setUIState('MAIN');
-    // Mark body as "in sortie" so CSS hides lobby-only elements
-    document.body.classList.add('sortie-active');
 
     const cockpit = document.getElementById('mission-cockpit-overlay');
     if (cockpit) {
@@ -4481,13 +4444,9 @@ class BarracudaGame {
         dpsText.textContent = telem.dpsActive ? 'DPS: УДЕРЖАНИЕ' : 'DPS: ВЫКЛ';
       }
 
-      // Draw Sonar Waterfall if open — throttled to ~20fps to avoid canvas performance issues
+      // Draw Sonar Waterfall if open
       if (this.sonarActive) {
-        const now = Date.now();
-        if (!this._lastSonarDraw || now - this._lastSonarDraw >= 50) {
-          this._lastSonarDraw = now;
-          this.drawSonarWaterfall();
-        }
+        this.drawSonarWaterfall();
       }
 
       // ROV Magnetometer HUD update
@@ -4551,32 +4510,16 @@ class BarracudaGame {
     // Hide the main HUD — it will be restored when player returns to base
     const mainHud = document.getElementById('main-hud-layer');
     if (mainHud) mainHud.style.display = 'none';
+    // Store that we need to restore MAIN on modal dismiss
     this.uiMode = 'RESULT';
 
-    // For test missions: skip result modal, return directly to lobby
-    // Only match explicit test IDs — do NOT use !m.reward as that catches real missions too
-    const m = this.activeMission;
-    const TEST_MISSION_IDS = new Set(['vsa_test', 'sonar_test', 'm1_4_rov_test']);
-    const isTestMission = !m || (m.id && TEST_MISSION_IDS.has(m.id));
-    if (isTestMission) {
-      // Clean up and restore lobby immediately
-      document.body.classList.remove('sortie-active');
-      this.activeMission = null;
-      this.setUIState('MAIN');
-      if (window.tacticalAudio) window.tacticalAudio.playPhaseTransition();
-      this.addNotification('⚓ ТЕСТ ЗАВЕРШЁН', 'Возврат на базу.');
-      this.renderCampaignDOM();
-      try { this.updateUI(); } catch(e) { /* ignore UI update errors on test exit */ }
-      return;
-    }
-
-    if (!this.sortieStats) {
+    if (!this.sortieStats || !this.activeMission || !this.activeMission.reward) {
       this.sortieStats = { crates: 0, totalCrates: 3, hitMines: 0, detected: 0, flakHitsTaken: 0, startTime: Date.now() };
     }
     const missionElapsedSec = Math.round((Date.now() - (this.sortieStats.startTime || Date.now())) / 1000);
+    const m = this.activeMission;
 
     if (isVictory && m && m.reward) {
-
       // 🏆 VICTORY TRIUMPH MODAL
       this.completedMissions.add(m.id);
 
@@ -4682,7 +4625,7 @@ class BarracudaGame {
       // Partial salvage preserved
       const crates = this.sortieStats ? (this.sortieStats.crates || 0) : 0;
       const totalCrates = this.sortieStats ? (this.sortieStats.totalCrates || 3) : 3;
-      const salvagedCredits = Math.floor((m && m.reward ? m.reward.usd : 0) * 0.25 * (crates / Math.max(1, totalCrates)));
+      const salvagedCredits = Math.floor(m.reward.usd * 0.25 * (crates / Math.max(1, totalCrates)));
       if (salvagedCredits > 0) this.creditsUSD += salvagedCredits;
 
       if (statsEl) {
@@ -4968,16 +4911,7 @@ class BarracudaGame {
         fpvOverlay.classList.add('mission-hud-hidden');
       }
     }
-
-    // Manage sortie-active class: remove from body only when truly returning to lobby
-    if (mode === 'MAIN' && !this.sortieActive) {
-      document.body.classList.remove('sortie-active');
-    } else if (mode !== 'MAIN') {
-      // Any non-MAIN mode: ensure lobby elements are blocked
-      document.body.classList.add('sortie-active');
-    }
   }
-
 
   initDOM() {
     this.lblBuffer = document.getElementById('val-buffer');
@@ -5127,7 +5061,6 @@ class BarracudaGame {
         if (!this.flirOverlay) return;  // No FLIR overlay in lobby — do nothing
         window.tacticalAudio.playThermalModeSfx();
         this.flirOverlay.classList.add('active');
-        document.body.classList.add('flir-active'); // hide HUD via CSS
         if (this.engine3D) this.engine3D.cameraMode = 'flir';
       });
     }
@@ -5158,65 +5091,50 @@ class BarracudaGame {
     if (this.btnExitFlir) {
       this.btnExitFlir.addEventListener('click', () => {
         this.flirOverlay.classList.remove('active');
-        document.body.classList.remove('flir-active'); // restore HUD
         if (this.engine3D) this.engine3D.cameraMode = 'orbit';
       });
     }
 
     document.querySelectorAll('.flir-lock-point').forEach(btn => {
-      let lockTimer = null;
-      let lockActive = false;
+      let holdTimer = null;
       const targetType = btn.getAttribute('data-target');
-      const originalText = btn.querySelector('.lock-bracket')?.innerHTML || btn.innerHTML;
       
-      btn.addEventListener('click', (e) => {
+      const startLock = (e) => {
         e.preventDefault();
         e.stopPropagation();
-
-        if (lockActive) return; // Already locking
-
-        lockActive = true;
         if (window.tacticalAudio) window.tacticalAudio.playSonarPing();
+        
         btn.classList.add('locking');
 
-        // Show countdown on button
-        const bracket = btn.querySelector('.lock-bracket');
-        let countdown = 3;
-        const tick = () => {
-          if (bracket) bracket.innerHTML = `🎯 ЗАХВАТ... ${countdown}с`;
-          countdown--;
-          if (countdown >= 0) {
-            lockTimer = setTimeout(tick, 500);
-          } else {
-            // Fire!
-            btn.classList.remove('locking');
-            btn.classList.add('locked');
-            lockActive = false;
-            if (bracket) bracket.innerHTML = `💥 ПУСК!`;
-            
-            if (window.tacticalAudio) window.tacticalAudio.playAlert();
-            
-            let multiplier = 4;
-            if (targetType === 'engine') multiplier = 5;
-            if (targetType === 'radar') multiplier = 6;
-            if (targetType === 'missile') multiplier = 8;
+        holdTimer = setTimeout(() => {
+          btn.classList.remove('locking');
+          
+          if (window.tacticalAudio) window.tacticalAudio.playAlert();
+          
+          let multiplier = 4;
+          if (targetType === 'ammo') multiplier = 8;
+          if (targetType === 'bridge') multiplier = 5;
 
-            this.fireMissileSalvo(multiplier);
-            this.flirOverlay.classList.remove('active');
-            document.body.classList.remove('flir-active');
-            if (this.engine3D) this.engine3D.cameraMode = 'orbit';
+          this.fireMissileSalvo(multiplier);
+          this.flirOverlay.classList.remove('active');
+          if (this.engine3D) this.engine3D.cameraMode = 'orbit';
+        }, 1500);
+      };
 
-            // Reset button text after short delay
-            setTimeout(() => {
-              btn.classList.remove('locked');
-              if (bracket) bracket.innerHTML = originalText;
-            }, 500);
-          }
-        };
-        tick();
-      });
+      const cancelLock = (e) => {
+        e.preventDefault();
+        if (holdTimer) { clearTimeout(holdTimer); holdTimer = null; }
+        btn.classList.remove('locking');
+      };
+
+      btn.addEventListener('mousedown', startLock);
+      btn.addEventListener('touchstart', startLock, { passive: false });
+      
+      btn.addEventListener('mouseup', cancelLock);
+      btn.addEventListener('mouseleave', cancelLock);
+      btn.addEventListener('touchend', cancelLock);
+      btn.addEventListener('touchcancel', cancelLock);
     });
-
 
     // Direct 3D Missile Fire
     if (this.btnDirectMissile) {
@@ -5765,16 +5683,7 @@ class BarracudaGame {
         c.active = true;
         c.progress = 0;
         window.tacticalAudio.playMountingSfx();
-        // Rebuild card immediately so it shows "⏳ В РАБОТЕ" without waiting for game loop
-        this.rebuildContractDOM();
         this.updateUI();
-        this.addNotification('📋 ОПЕРАЦИЯ ЗАПУЩЕНА', `${c.name} — выполнится за ${c.duration}с`);
-      } else {
-        // Inform player why it failed
-        const lacks = [];
-        if (this.dataMB < c.costMB) lacks.push(`📡 ${c.costMB - Math.floor(this.dataMB)} МБ`);
-        if (this.creditsUSD < c.costUSD) lacks.push(`💰 $${(c.costUSD - Math.floor(this.creditsUSD)).toLocaleString()}`);
-        this.addNotification('⚠️ НЕДОСТАТОЧНО РЕСУРСОВ', `Нужно ещё: ${lacks.join(', ')}`);
       }
     }
   }
@@ -6037,13 +5946,8 @@ class BarracudaGame {
 
       setTimeout(() => {
         this.assaultModal.classList.remove('active');
-        // Always restore HUD — uiMode may be 'RESULT' when assault is launched from campaign
-        if (!this.sortieActive) {
-          this.setUIState('MAIN');
-        } else {
-          const mainHud = document.getElementById('main-hud-layer');
-          if (mainHud) mainHud.style.display = '';
-        }
+        const mainHud = document.getElementById('main-hud-layer');
+        if (mainHud && this.uiMode === 'MAIN') mainHud.style.display = '';
         this.updateDossier(DOSSIER_LORE[0], false);
         this.checkAllAchievements();
         this.saveGame();
@@ -6055,13 +5959,8 @@ class BarracudaGame {
 
       setTimeout(() => {
         this.assaultModal.classList.remove('active');
-        // Always restore HUD regardless of uiMode
-        if (!this.sortieActive) {
-          this.setUIState('MAIN');
-        } else {
-          const mainHud = document.getElementById('main-hud-layer');
-          if (mainHud) mainHud.style.display = '';
-        }
+        const mainHud = document.getElementById('main-hud-layer');
+        if (mainHud && this.uiMode === 'MAIN') mainHud.style.display = '';
       }, 1500);
     }
   }
@@ -7076,247 +6975,37 @@ class BarracudaGame {
     if (sliderExpo) { sliderExpo.value = this.pidSettings.expo || 1.0; sliderExpo.addEventListener('input', updatePid); }
     updatePid();
 
-    // 5. Underwater ROV & Data Siphon — 3-Phase Gameplay
+    // 5. Underwater ROV & Data Siphon
     const btnTriggerSiphon = document.getElementById('btn-trigger-siphon');
     const btnExitRov = document.getElementById('btn-exit-rov');
     const rovOverlay = document.getElementById('rov-mission-overlay');
-
-    // ROV Phase State
-    this.rovPhase = 'search'; // 'search' | 'align' | 'siphon' | 'done'
-    this.rovSiphonProgress = 0;
-    this._rovSiphonInterval = null;
-
-    // Update button state & phase based on magnetometer
-    this._updateRovPhaseUI = () => {
-      if (!btnTriggerSiphon) return;
-      const magVal = this.engine3D ? (this.engine3D.magnetometerValue || 0) : 0;
-      const pct = Math.min(100, (magVal / 500) * 100);
-
-      // Update phase indicators
-      const phaseSearch = document.getElementById('rov-phase-search');
-      const phaseAlign  = document.getElementById('rov-phase-align');
-      const phaseSiphon = document.getElementById('rov-phase-siphon');
-      if (phaseSearch) phaseSearch.className = 'rov-phase' + (this.rovPhase === 'search' ? ' active' : (this.rovPhase !== 'search' ? ' done' : ''));
-      if (phaseAlign)  phaseAlign.className  = 'rov-phase' + (this.rovPhase === 'align' ? ' active' : (this.rovPhase === 'siphon' || this.rovPhase === 'done' ? ' done' : ''));
-      if (phaseSiphon) phaseSiphon.className = 'rov-phase' + (this.rovPhase === 'siphon' ? ' active' : (this.rovPhase === 'done' ? ' done' : ''));
-
-      // Update big magnetometer display
-      const valEl = document.getElementById('rov-val-mag');
-      if (valEl) {
-        valEl.textContent = Math.round(magVal).toLocaleString() + ' nT';
-        valEl.className = 'mag-big-val' + (magVal < 100 ? ' low' : magVal < 350 ? ' mid' : ' high');
-      }
-      const fillEl = document.getElementById('rov-fill-mag');
-      if (fillEl) fillEl.style.width = `${pct}%`;
-      const zoneEl = document.getElementById('rov-mag-zone');
-      if (zoneEl) {
-        if (magVal < 100) zoneEl.textContent = '📡 ПОИСК КАБЕЛЯ... Сигнал слабый';
-        else if (magVal < 200) zoneEl.textContent = '📡 СИГНАЛ: СЛАБЫЙ — подплывайте ближе';
-        else if (magVal < 350) zoneEl.textContent = '⚡ СИГНАЛ: СРЕДНИЙ — ещё ближе!';
-        else zoneEl.textContent = '✅ КАБЕЛЬ НАЙДЕН! Нажмите СИФОН!';
-      }
-
-      // Update siphon progress bar
-      const siphonFill = document.getElementById('rov-siphon-fill');
-      const siphonPct = document.getElementById('rov-siphon-pct');
-      if (siphonFill) siphonFill.style.width = `${this.rovSiphonProgress || 0}%`;
-      if (siphonPct) siphonPct.textContent = `${Math.round(this.rovSiphonProgress || 0)}%`;
-
-      // Direction arrow — rotates toward cable based on mag sim angle
-      const arrow = document.getElementById('rov-direction-arrow');
-      const hint = document.getElementById('rov-dir-hint');
-      if (arrow) {
-        if (magVal >= 350) {
-          arrow.style.transform = 'rotate(0deg)';
-          arrow.className = 'rov-direction-arrow strong';
-          if (hint) hint.textContent = '✅ КАБЕЛЬ В ЗОНЕ — нажми СИФОН!';
-        } else {
-          // Simulate direction: slowly drifting angle toward cable
-          const t = Date.now() / 1000;
-          const drift = (magVal / 350) * 180; // More cable = less drift
-          const ang = Math.sin(t * 0.4) * (180 - drift);
-          arrow.style.transform = `rotate(${ang}deg)`;
-          arrow.className = 'rov-direction-arrow';
-          if (hint) hint.textContent = 'Маневрируй [WASD] — следи за стрелой';
-        }
-      }
-
-      // Draw oscilloscope
-      const osc = document.getElementById('rov-oscilloscope');
-      if (osc) {
-        const ctx = osc.getContext('2d');
-        const W = osc.width, H = osc.height;
-        // Scroll left
-        const imgData = ctx.getImageData(2, 0, W - 2, H);
-        ctx.putImageData(imgData, 0, 0);
-        ctx.fillStyle = '#000d14';
-        ctx.fillRect(W - 2, 0, 2, H);
-        // Draw new column
-        const noiseAmp = Math.max(2, (magVal / 500) * (H / 2 - 4));
-        const noise = (Math.random() - 0.5) * noiseAmp * 0.5;
-        const signal = (magVal / 500) * (H / 2 - 6);
-        const centerY = H / 2;
-        const gradient = ctx.createLinearGradient(0, centerY - signal, 0, centerY + signal);
-        gradient.addColorStop(0, magVal >= 350 ? '#00ff88' : '#ffcc00');
-        gradient.addColorStop(1, 'rgba(0,240,255,0.3)');
-        ctx.strokeStyle = gradient;
-        ctx.lineWidth = 1.5;
-        ctx.beginPath();
-        ctx.moveTo(W - 2, centerY + noise - signal * 0.5);
-        ctx.lineTo(W - 1, centerY + noise + signal * 0.5 * (Math.sin(Date.now()/50)));
-        ctx.stroke();
-        // Threshold line
-        const threshY = centerY - (350 / 500) * (H / 2 - 6);
-        ctx.strokeStyle = 'rgba(255,255,255,0.15)';
-        ctx.lineWidth = 0.5;
-        ctx.setLineDash([3, 3]);
-        ctx.beginPath();
-        ctx.moveTo(W - 2, threshY);
-        ctx.lineTo(W, threshY);
-        ctx.stroke();
-        ctx.setLineDash([]);
-      }
-
-      // Phase transitions
-      if (this.rovPhase === 'search' && magVal >= 350) {
-        this.rovPhase = 'align';
-        btnTriggerSiphon.disabled = false;
-        btnTriggerSiphon.style.background = 'rgba(0,255,136,0.25)';
-        btnTriggerSiphon.style.borderColor = '#00ff88';
-        btnTriggerSiphon.style.boxShadow = '0 0 20px rgba(0,255,136,0.6)';
-        btnTriggerSiphon.style.animation = 'pulse-ready 1s infinite';
-        btnTriggerSiphon.style.color = '#00ff88';
-        this.showMissionWarning('✅ КАБЕЛЬ В ЗОНЕ — нажмите [ПОДКЛЮЧИТЬ СИФОН]!');
-        if (window.tacticalAudio) window.tacticalAudio.playAlert();
-      } else if (this.rovPhase === 'search' && magVal < 350) {
-        btnTriggerSiphon.disabled = true;
-        btnTriggerSiphon.style.background = 'rgba(40,40,40,0.3)';
-        btnTriggerSiphon.style.borderColor = '#333';
-        btnTriggerSiphon.style.boxShadow = '';
-        btnTriggerSiphon.style.animation = '';
-        btnTriggerSiphon.style.color = '#666';
-      }
-    };
-
-
     if (btnTriggerSiphon) {
-      btnTriggerSiphon.disabled = true; // Starts disabled — need to find cable first
-      btnTriggerSiphon.style.background = 'rgba(100,100,100,0.15)';
-      btnTriggerSiphon.style.borderColor = '#444';
-
       btnTriggerSiphon.addEventListener('click', () => {
-        if (this.rovPhase === 'align') {
-          // Phase 3: Start siphon progress
-          this.rovPhase = 'siphon';
-          btnTriggerSiphon.textContent = '⏳ ЗАКАЧКА ДАННЫХ...';
-          btnTriggerSiphon.disabled = true;
+        if (this.engine3D) {
+          this.engine3D.siphonProgress = 100;
+          this.engine3D.siphonLocked = true;
           if (window.tacticalAudio) window.tacticalAudio.playSiphonLock();
-          this.addNotification('🔮 СИФОН ПОДКЛЮЧЁН', 'Идёт передача данных...');
-
-          const syncBar = document.querySelector('#rov-mission-overlay [id*="sync"]');
-          this.rovSiphonProgress = 0;
-          this._rovSiphonInterval = setInterval(() => {
-            this.rovSiphonProgress += 4;
-
-            if (syncBar) syncBar.style.width = `${this.rovSiphonProgress}%`;
-
-            // Random interference at 40-70% — player must click again
-            if (this.rovSiphonProgress >= 40 && this.rovSiphonProgress <= 70 && Math.random() < 0.05 && this.rovPhase === 'siphon') {
-              clearInterval(this._rovSiphonInterval);
-              this.rovSiphonProgress = Math.max(0, this.rovSiphonProgress - 25);
-              this.rovPhase = 'align';
-              btnTriggerSiphon.textContent = '⚠️ ИНТЕРФЕРЕНЦИЯ — ПЕРЕПОДКЛЮЧИТЬ';
-              btnTriggerSiphon.disabled = false;
-              btnTriggerSiphon.style.background = 'rgba(255,150,0,0.25)';
-              btnTriggerSiphon.style.borderColor = '#ff9900';
-              btnTriggerSiphon.style.boxShadow = '0 0 20px rgba(255,150,0,0.6)';
-              if (syncBar) syncBar.style.background = '#ff9900';
-              this.showMissionWarning('⚡ ИНТЕРФЕРЕНЦИЯ! Нажмите [ПЕРЕПОДКЛЮЧИТЬ СИФОН] для восстановления!');
-              if (window.tacticalAudio) window.tacticalAudio.playAlert();
-              return;
-            }
-
-            if (this.rovSiphonProgress >= 100) {
-              clearInterval(this._rovSiphonInterval);
-              this.rovPhase = 'done';
-              if (syncBar) syncBar.style.background = '#00ff88';
-              this.checkAchievement('underwater_siphon');
-              const mbGained = 8500 + Math.floor(Math.random() * 2000);
-              const usdGained = 25000 + Math.floor(Math.random() * 10000);
-              this.dataMB += mbGained;
-              this.creditsUSD += usdGained;
-              this._uiDirty = true;
-              this.addNotification('🔮 СИФОН ЗАВЕРШЁН', `+${mbGained.toLocaleString()} МБ и +$${usdGained.toLocaleString()} получены!`);
-              this.showMissionWarning('✅ ПЕРЕДАЧА ДАННЫХ ЗАВЕРШЕНА // Возврат дрона...');
-              if (window.tacticalAudio) window.tacticalAudio.playSiphonLock();
-              setTimeout(() => {
-                if (rovOverlay) rovOverlay.style.display = 'none';
-                if (this.engine3D) this.engine3D.stopRovMode();
-                this.sortieActive = false;
-                document.body.classList.remove('sortie-active');
-                this.setUIState('MAIN');
-              }, 1800);
-            }
-          }, 200);
-        } else if (this.rovPhase === 'align') {
-          // Re-connect after interference
-          this.rovPhase = 'siphon';
-          btnTriggerSiphon.textContent = '⏳ ВОССТАНОВЛЕНИЕ...';
-          btnTriggerSiphon.disabled = true;
-          btnTriggerSiphon.style.background = 'rgba(0,255,136,0.2)';
-          btnTriggerSiphon.style.borderColor = '#00ff88';
-          if (window.tacticalAudio) window.tacticalAudio.playSiphonLock();
-          this.addNotification('🔮 ПЕРЕПОДКЛЮЧЕНИЕ', 'Восстанавливаю канал данных...');
-          const syncBar2 = document.querySelector('#rov-mission-overlay [id*="sync"]');
-          if (syncBar2) syncBar2.style.background = '#00ff88';
-          // Continue from where we left off
-          this._rovSiphonInterval = setInterval(() => {
-            this.rovSiphonProgress += 4;
-            if (syncBar2) syncBar2.style.width = `${this.rovSiphonProgress}%`;
-            if (this.rovSiphonProgress >= 100) {
-              clearInterval(this._rovSiphonInterval);
-              this.rovPhase = 'done';
-              const mbGained = 8500 + Math.floor(Math.random() * 2000);
-              const usdGained = 25000 + Math.floor(Math.random() * 10000);
-              this.dataMB += mbGained;
-              this.creditsUSD += usdGained;
-              this._uiDirty = true;
-              this.addNotification('🔮 СИФОН ЗАВЕРШЁН', `+${mbGained.toLocaleString()} МБ и +$${usdGained.toLocaleString()}!`);
-              if (window.tacticalAudio) window.tacticalAudio.playSiphonLock();
-              setTimeout(() => {
-                if (rovOverlay) rovOverlay.style.display = 'none';
-                if (this.engine3D) this.engine3D.stopRovMode();
-                this.sortieActive = false;
-                document.body.classList.remove('sortie-active');
-                this.setUIState('MAIN');
-              }, 1800);
-            }
-          }, 200);
+          this.checkAchievement('underwater_siphon');
+          this.dataMB += 8500;
+          this.creditsUSD += 25000;
+          this.addNotification('🔮 СИФОН ПОДКЛЮЧЕН', '+8,500 МБ и +$25,000 получены!');
+          setTimeout(() => {
+            if (rovOverlay) rovOverlay.style.display = 'none';
+            if (this.engine3D) this.engine3D.stopRovMode();
+            this.sortieActive = false;
+            this.setUIState('MAIN'); // restore HUD
+          }, 1500);
         }
       });
     }
-
     if (btnExitRov && rovOverlay) {
       btnExitRov.addEventListener('click', () => {
-        if (this._rovSiphonInterval) clearInterval(this._rovSiphonInterval);
         rovOverlay.style.display = 'none';
         if (this.engine3D) this.engine3D.stopRovMode();
         this.sortieActive = false;
-        document.body.classList.remove('sortie-active');
         this.setUIState('MAIN'); // restore HUD
       });
     }
-
-    // Poll magnetometer to update ROV phase UI every 500ms
-    if (this._rovPhaseTimer) clearInterval(this._rovPhaseTimer);
-    this._rovPhaseTimer = setInterval(() => {
-      if (!this.sortieActive || this.uiMode !== 'ROV') {
-        clearInterval(this._rovPhaseTimer);
-        return;
-      }
-      if (this._updateRovPhaseUI) this._updateRovPhaseUI();
-    }, 500);
-
 
     // 6. Tactical Systems Center Modal & Quick Actions
     const btnOpenTactical = document.getElementById('btn-open-tactical-hub');
@@ -7512,11 +7201,8 @@ class BarracudaGame {
     const sonarPanel = document.getElementById('sonar-waterfall-panel');
     if (sonarPanel) sonarPanel.style.display = 'block';
 
-    // Reset target blobs so fresh ones appear with proper types
+    // Reset target blobs so fresh ones appear
     this._sonarTargets = null;
-    this._sonarClickedIds = new Set();
-    this._sonarInitialized = false; // Force canvas re-init with dark background
-    this._lastSonarDraw = 0;       // Reset throttle so first frame draws immediately
 
     if (this.engine3D) {
       this.engine3D.setSonarActive(true);
@@ -7529,102 +7215,9 @@ class BarracudaGame {
     const btnQuickSonar = document.getElementById('btn-quick-sonar');
     if (btnQuickSonar) btnQuickSonar.classList.add('active');
 
-    // === Interactive click on sonar canvas ===
-    const canvas = document.getElementById('sonar-waterfall-canvas');
-    if (canvas && !canvas._sonarClickBound) {
-      canvas._sonarClickBound = true;
-      canvas.style.cursor = 'crosshair';
-      canvas.addEventListener('click', (e) => {
-        if (!this.sonarActive || !this._sonarTargets) return;
-        const rect = canvas.getBoundingClientRect();
-        const scaleX = canvas.width / rect.width;
-        const clickX = (e.clientX - rect.left) * scaleX;
-        const W = canvas.width;
-
-        // Check if click hit any target zone (within ±20px)
-        let hit = null;
-        for (const t of this._sonarTargets) {
-          if (Math.abs(clickX - t.x) <= 20) {
-            hit = t;
-            break;
-          }
-        }
-
-        if (hit && !this._sonarClickedIds.has(hit.id)) {
-          this._sonarClickedIds.add(hit.id);
-          if (window.tacticalAudio) window.tacticalAudio.playSonarPing();
-
-          const dist = (50 + Math.abs(hit.x - W / 2) * 1.2).toFixed(0);
-
-          if (hit.type === 'mine') {
-            this.showMissionWarning(`💥 АНОМАЛИЯ ${dist}м — ЯКОРНАЯ МИНА! Обойдите стороной!`);
-            this.addNotification('⚠️ МИНА ОБНАРУЖЕНА', `Эхо-сигнал на ${dist}м. Держите курс!`);
-            // Flash red
-            const panel = document.getElementById('sonar-waterfall-panel');
-            if (panel) {
-              panel.style.boxShadow = '0 0 30px rgba(255,30,30,0.9)';
-              setTimeout(() => { if (panel) panel.style.boxShadow = ''; }, 800);
-            }
-          } else if (hit.type === 'ship') {
-            const mbGain = 600 + Math.floor(Math.random() * 400);
-            this.dataMB += mbGain;
-            this._uiDirty = true;
-            this.showMissionWarning(`🎯 ЦЕЛЬ ОПОЗНАНА на ${dist}м — ВРАЖЕСКИЙ КОРВЕТ // +${mbGain} МБ данных`);
-            this.addNotification('📡 ЦЕЛЬ ЗАХВАЧЕНА', `Сонар зафиксировал корабль на ${dist}м. +${mbGain} МБ`);
-            if (window.tacticalAudio) window.tacticalAudio.playAlert();
-          } else if (hit.type === 'debris') {
-            const mbGain = 120 + Math.floor(Math.random() * 80);
-            this.dataMB += mbGain;
-            this._uiDirty = true;
-            this.showMissionWarning(`📦 ОБЛОМКИ НА ${dist}м — найден подводный объект // +${mbGain} МБ`);
-            this.addNotification('📡 ОБЪЕКТ', `Обломки на дне (${dist}м). +${mbGain} МБ`);
-          }
-
-          // Visual flash on canvas at hit position
-          const ctx = canvas.getContext('2d');
-          const flashColor = hit.type === 'mine' ? 'rgba(255,30,30,0.7)' : 'rgba(0,255,136,0.6)';
-          ctx.fillStyle = flashColor;
-          ctx.fillRect(hit.x - 15, 0, 30, canvas.height);
-          setTimeout(() => {/* waterfall will overwrite naturally */}, 100);
-        } else if (!hit) {
-          // Miss click — hint
-          if (window.tacticalAudio) window.tacticalAudio.playTypewriter();
-          this.showMissionWarning('📡 НАЖМИТЕ НА АНОМАЛИИ — цветные эхо-сигналы на водопаде данных!');
-        }
-      });
-    }
-
-    this.addNotification('📡 СОНАР АКТИВЕН', 'Кликай по цветным эхо-сигналам на дисплее!');
-    this.showMissionWarning('📡 СОНАР: 🟥 = мины (опасно!) | 🟨 = корабли (цели!) | 🔲 = обломки | Кликай по сигналам!');
-
-    // === Independent sonar RAF loop (runs regardless of sortieActive) ===
-    if (this._sonarRafLoop) cancelAnimationFrame(this._sonarRafLoop);
-    const sonarLoop = () => {
-      const panel = document.getElementById('sonar-waterfall-panel');
-      if (!this.sonarActive || !panel || panel.style.display === 'none') {
-        this._sonarRafLoop = null;
-        return;
-      }
-      const now = Date.now();
-      if (!this._lastSonarDraw || now - this._lastSonarDraw >= 50) {
-        this._lastSonarDraw = now;
-        this.drawSonarWaterfall();
-      }
-      this._sonarRafLoop = requestAnimationFrame(sonarLoop);
-    };
-    this._sonarRafLoop = requestAnimationFrame(sonarLoop);
-
-    // Hook close button to stop the loop
-    const btnClose = document.querySelector('#sonar-waterfall-panel .btn-close-sonar, #sonar-waterfall-panel button[id*="close"]');
-    if (btnClose && !btnClose._sonarCloseBound) {
-      btnClose._sonarCloseBound = true;
-      btnClose.addEventListener('click', () => {
-        this.sonarActive = false;
-        if (this._sonarRafLoop) { cancelAnimationFrame(this._sonarRafLoop); this._sonarRafLoop = null; }
-      });
-    }
+    this.addNotification('📡 СОНАР АКТИВЕН', 'Боковое сканирование SSS-500 запущено. Следи за эхо-сигналами на дисплее!');
+    this.showMissionWarning('📡 СОНАР 3D: Нарастающая полоса показывает эхо дна и объектов. 🟥 = цели / ⬛ = мины!');
   }
-
 
   // =========================================================================
   // VSA TEST — directly launches pilot mode without needing a campaign mission
@@ -7649,14 +7242,12 @@ class BarracudaGame {
     this._pilotInputsBound = false;
 
     this.setUIState('MAIN');
-    document.body.classList.add('sortie-active');
 
     const cockpit = document.getElementById('mission-cockpit-overlay');
     if (cockpit) {
       cockpit.classList.remove('mission-hud-hidden');
       cockpit.style.display = 'flex';
     }
-
 
     const mission3DConfig = {
       type: 'sortie',
@@ -7690,24 +7281,14 @@ class BarracudaGame {
   drawSonarWaterfall() {
     const canvas = document.getElementById('sonar-waterfall-canvas');
     if (!canvas) return;
+    // offsetParent is null when display:none — but we set display:block before calling, so just check canvas
     const ctx = canvas.getContext('2d');
     const W = canvas.width;
     const H = canvas.height;
 
-    // On first draw, fill canvas with dark background
-    if (!this._sonarInitialized) {
-      this._sonarInitialized = true;
-      ctx.fillStyle = '#000d07';
-      ctx.fillRect(0, 0, W, H);
-      // Draw center line guide
-      ctx.fillStyle = 'rgba(0,255,136,0.15)';
-      ctx.fillRect(W / 2 - 1, 0, 2, H);
-    }
-
     // Scroll existing image down by 3px
     const imgData = ctx.getImageData(0, 0, W, H - 3);
     ctx.putImageData(imgData, 0, 3);
-
 
     // Boat telemetry (works with or without pilot mission)
     const depth  = parseFloat((this.engine3D && this.engine3D.currentDepth)  || (10 + Math.sin(Date.now() / 3000) * 3));
@@ -7752,40 +7333,22 @@ class BarracudaGame {
 
     // Simulated targets / objects (persistent blobs)
     if (!this._sonarTargets) {
-      // Generate typed target echoes: ship (yellow), mine (red), debris (grey)
-      const types = ['ship', 'mine', 'debris', 'mine'];
-      const colors = { ship: '#ffcc00', mine: '#ff2233', debris: '#558866' };
-      this._sonarTargets = types.map((type, i) => ({
-        id: `target_${i}_${Date.now()}`,
-        type,
-        x: 80 + Math.random() * (W - 160),
+      // Generate random fixed target echoes
+      this._sonarTargets = Array.from({ length: 4 }, () => ({
+        x: 60 + Math.random() * (W - 120),
         phase: Math.random() * Math.PI * 2,
-        w: type === 'ship' ? 14 : (type === 'mine' ? 8 : 6),
-        color: colors[type]
+        w: 6 + Math.floor(Math.random() * 10),
+        color: Math.random() > 0.5 ? '#ff3333' : '#ffaa00'
       }));
-      if (!this._sonarClickedIds) this._sonarClickedIds = new Set();
     }
     this._sonarTargets.forEach(t => {
-      const bright = 0.55 + Math.sin(Date.now() / 1800 + t.phase) * 0.3;
-      const isClicked = this._sonarClickedIds && this._sonarClickedIds.has(t.id);
-      if (isClicked) return; // Don't redraw clicked targets
-      ctx.fillStyle = t.color.replace(')', `,${bright})`).replace('rgb', 'rgba').replace('#', 'rgba(').replace(/^rgba\(([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2}),/, (_, r, g, b) => `rgba(${parseInt(r,16)},${parseInt(g,16)},${parseInt(b,16)},`);
-      // Always pulse to be visible (higher probability than before)
-      if (Math.random() > 0.6) {
-        // Draw blob with glow effect
-        const hexToRgb = (hex) => {
-          const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
-          return [r, g, b];
-        };
-        const [r, g, b] = hexToRgb(t.color);
-        ctx.fillStyle = `rgba(${r},${g},${b},${bright})`;
+      const bright = 0.6 + Math.sin(Date.now() / 2000 + t.phase) * 0.2;
+      ctx.fillStyle = t.color.replace(')', `,${bright})` ).replace('rgb', 'rgba');
+      // Draw echo blob when "in range" (scrolls in over ~5 seconds)
+      if (Math.random() > 0.94) { // occasionally pulse
         ctx.fillRect(t.x - t.w / 2, 0, t.w, 3);
-        // Secondary wider glow
-        ctx.fillStyle = `rgba(${r},${g},${b},${bright * 0.3})`;
-        ctx.fillRect(t.x - t.w, 0, t.w * 2, 3);
       }
     });
-
 
     // Mine echoes if pilot mission is active
     if (this.engine3D && this.engine3D.missionMines && this.engine3D.missionMines.length > 0) {
